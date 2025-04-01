@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { ITest } from 'src/common/interfaces/test.interface';
 import { DatabaseService } from 'src/database/database.service';
-import { ITest } from 'src/interfaces/test.interface';
 
 @Injectable()
 export class TestService {

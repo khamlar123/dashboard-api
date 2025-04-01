@@ -1,16 +1,20 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { TestService } from './test.service';
-import { JwtUtilsService } from '../jwt/jwtDecoder';
-import { JwtPayload } from 'src/interfaces/jwtPayload.interface';
+import { JwtUtilsService } from 'src/common/jwt/jwtDecoder';
+import { JwtPayload } from 'src/common/interfaces/jwtPayload.interface';
+import { AuthGuard } from 'src/common/guards/auth.guard';
 
 @Controller('test')
 export class TestController {
   constructor(
     private readonly testService: TestService,
     private readonly jwt: JwtUtilsService,
-  ) {}
+  ) {
+    // super();
+  }
 
   @Get()
+  @UseGuards(AuthGuard)
   async findAll() {
     return this.testService.findAll();
   }
@@ -33,6 +37,11 @@ export class TestController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.testService.findOne(+id);
+    const findOne = await this.testService.findOne(+id);
+
+    return {
+      ...findOne,
+      message: 'Test findOne',
+    };
   }
 }

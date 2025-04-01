@@ -1,7 +1,7 @@
 // src/auth/jwt-utils.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
-import { JwtPayload } from 'src/interfaces/jwtPayload.interface';
+import { JwtPayload } from '../interfaces/jwtPayload.interface';
 
 @Injectable()
 export class JwtUtilsService {
