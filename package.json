@@ -20,17 +20,23 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@ccmos/nestjs-moment": "^0.1.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.0",
-    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-express": "^11.0.12",
+    "@nestjs/sequelize": "^11.0.0",
     "@nestjs/swagger": "^11.1.0",
     "@nestjs/typeorm": "^11.0.0",
+    "date-fns": "^4.1.0",
+    "fast-csv": "^5.0.2",
+    "multer": "^1.4.5-lts.2",
     "mysql2": "^3.14.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.21"
+    "typeorm": "^0.3.21",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -42,6 +48,8 @@
     "@swc/core": "^1.10.7",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
+    "@types/moment": "^2.11.29",
+    "@types/multer": "^1.4.12",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
@@ -49,6 +57,7 @@
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^16.0.0",
     "jest": "^29.7.0",
+    "moment": "^2.30.1",
     "prettier": "^3.4.2",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
