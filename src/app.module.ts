@@ -16,6 +16,7 @@ import { ExpenseMonthlyModule } from './modules/expense-monthly/expense-monthly.
 import { PlAllMonthlyModule } from './modules/pl-all-monthly/pl-all-monthly.module';
 import { TreasureModule } from './modules/treasure/treasure.module';
 import { InExProYearModule } from './modules/in_ex_pro_year/in_ex_pro_year.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { InExProYearModule } from './modules/in_ex_pro_year/in_ex_pro_year.modul
     PlAllMonthlyModule,
     TreasureModule,
     InExProYearModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

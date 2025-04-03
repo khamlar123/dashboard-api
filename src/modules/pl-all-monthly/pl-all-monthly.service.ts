@@ -11,20 +11,33 @@ export class PlAllMonthlyService {
     @InjectRepository(PlAllMonthly)
     private readonly pl: Repository<PlAllMonthly>,
   ) {}
-  async findAll() {
+  async findAll(branch?: string, date?: string) {
     try {
-      const findAll = await this.pl.find();
+      const where: any = {};
+
+      if (branch) {
+        where.branch = branch;
+      }
+
+      if (date) {
+        where.date = date;
+      }
+
+      const findAll = await this.pl.find({
+        where,
+      });
+
       return findAll;
     } catch (err) {
       throw new BadRequestException(err.message);
     }
   }
 
-  async findByDate(date: string): Promise<any> {
+  async findByMonth(month: string): Promise<any> {
     try {
       const findByDate = await this.pl.find({
         where: {
-          date,
+          date: month,
         },
       });
       return findByDate;

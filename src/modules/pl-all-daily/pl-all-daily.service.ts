@@ -11,9 +11,22 @@ export class PlAllDailyService {
     @InjectRepository(PlAllDaily)
     private readonly pl: Repository<PlAllDaily>,
   ) {}
-  async findAll() {
+  async findAll(branch?: string, date?: string) {
     try {
-      const findAll = await this.pl.find();
+      const where: any = {};
+
+      if (branch) {
+        where.branch = branch;
+      }
+
+      if (date) {
+        where.date = date;
+      }
+
+      const findAll = await this.pl.find({
+        where,
+      });
+
       return findAll;
     } catch (err) {
       throw new BadRequestException(err.message);

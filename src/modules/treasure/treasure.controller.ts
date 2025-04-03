@@ -20,6 +20,14 @@ export class TreasureController {
     return await this.treasureService.findAll();
   }
 
+  @Get('by-month')
+  async findByDate(
+    @Query('month', new DefaultValuePipe(''))
+    month: string,
+  ) {
+    return await this.treasureService.findByMonth(month);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.treasureService.findOne(+id);

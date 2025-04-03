@@ -8,16 +8,23 @@ import {
   Post,
   UploadedFile,
 } from '@nestjs/common';
-import moment from 'moment';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { IncomeDailyService } from './income-daily.service';
+import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('income-daily')
 export class IncomeDailyController {
   constructor(private readonly incomeDailyService: IncomeDailyService) {}
   @Get()
-  async findAll() {
-    return await this.incomeDailyService.findAll();
+  @ApiQuery({ name: 'branch', required: false })
+  @ApiQuery({ name: 'date', required: false })
+  async findAll(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.incomeDailyService.findAll(branch, date);
   }
 
   @Get('by-date')
@@ -26,6 +33,14 @@ export class IncomeDailyController {
     date: string,
   ) {
     return await this.incomeDailyService.findByDate(date);
+  }
+
+  @Get('by-branch')
+  async findByBranch(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+  ) {
+    return await this.incomeDailyService.findBranch(branch);
   }
 
   @Get(':id')

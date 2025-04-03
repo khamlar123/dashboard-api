@@ -11,20 +11,30 @@ export class ExpenseMonthlyService {
     @InjectRepository(ExpenseMonthly)
     private readonly exp: Repository<ExpenseMonthly>,
   ) {}
-  async findAll() {
+  async findAll(branch: string, date: string) {
     try {
-      const findAll = await this.exp.find();
+      const where: any = {};
+      if (branch) {
+        where.branch = branch;
+      }
+
+      if (date) {
+        where.date = date;
+      }
+      const findAll = await this.exp.find({
+        where,
+      });
       return findAll;
     } catch (err) {
       throw new BadRequestException(err.message);
     }
   }
 
-  async findByDate(date: string): Promise<any> {
+  async findByMonth(month: string): Promise<any> {
     try {
       const findByDate = await this.exp.find({
         where: {
-          date,
+          date: month,
         },
       });
       return findByDate;

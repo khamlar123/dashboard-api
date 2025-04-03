@@ -10,22 +10,30 @@ import {
 } from '@nestjs/common';
 import { InExProYearService } from './in_ex_pro_year.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('in-ex-pro-year')
 export class InExProYearController {
   constructor(private readonly inExProYearService: InExProYearService) {}
 
   @Get()
-  findAll() {
-    return this.inExProYearService.findAll();
+  @ApiQuery({ name: 'branch', required: false })
+  @ApiQuery({ name: 'year', required: false })
+  findAll(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    year: string,
+  ) {
+    return this.inExProYearService.findAll(branch, year);
   }
 
-  @Get('by-date')
+  @Get('by-year')
   async findByDate(
-    @Query('date', new DefaultValuePipe(''))
-    date: string,
+    @Query('year', new DefaultValuePipe(''))
+    year: string,
   ) {
-    return await this.inExProYearService.findByDate(date);
+    return await this.inExProYearService.findByYear(year);
   }
 
   @Get(':id')

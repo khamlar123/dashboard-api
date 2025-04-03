@@ -59,4 +59,17 @@ export class TreasureService {
 
     return await this.treasure.save(mapData);
   }
+
+  async findByMonth(month: string): Promise<any> {
+    try {
+      const findByDate = await this.treasure.find({
+        where: {
+          date: month,
+        },
+      });
+      return findByDate;
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
 }

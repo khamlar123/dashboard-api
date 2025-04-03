@@ -1,10 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import moment from 'moment';
 import { IncomeDaily } from 'src/entity/income-daily.entity';
 import { checkNan } from 'src/share/check-nan';
 import { Repository } from 'typeorm';
-const { Readable } = require('stream');
 import * as XLSX from 'xlsx';
 
 @Injectable()
@@ -13,9 +11,22 @@ export class IncomeDailyService {
     @InjectRepository(IncomeDaily)
     private readonly inc: Repository<IncomeDaily>,
   ) {}
-  async findAll() {
+  async findAll(branch?: string, date?: string) {
     try {
-      const findAll = await this.inc.find();
+      const where: any = {};
+
+      if (branch) {
+        where.branch = branch;
+      }
+
+      if (date) {
+        where.date = date;
+      }
+
+      const findAll = await this.inc.find({
+        where,
+      });
+
       return findAll;
     } catch (err) {
       throw new BadRequestException(err.message);
@@ -27,6 +38,19 @@ export class IncomeDailyService {
       const findByDate = await this.inc.find({
         where: {
           date,
+        },
+      });
+      return findByDate;
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  async findBranch(branch: string): Promise<any> {
+    try {
+      const findByDate = await this.inc.find({
+        where: {
+          name: branch,
         },
       });
       return findByDate;

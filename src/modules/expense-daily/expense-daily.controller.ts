@@ -10,14 +10,22 @@ import {
 } from '@nestjs/common';
 import { ExpenseDailyService } from './expense-daily.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('expense-daily')
 export class ExpenseDailyController {
   constructor(private readonly expenseDailyService: ExpenseDailyService) {}
 
   @Get()
-  findAll() {
-    return this.expenseDailyService.findAll();
+  @ApiQuery({ name: 'branch', required: false })
+  @ApiQuery({ name: 'date', required: false })
+  findAll(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return this.expenseDailyService.findAll(branch, date);
   }
 
   @Get('by-date')

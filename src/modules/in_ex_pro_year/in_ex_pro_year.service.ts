@@ -11,20 +11,30 @@ export class InExProYearService {
     @InjectRepository(InExProYear)
     private readonly iep: Repository<InExProYear>,
   ) {}
-  async findAll() {
+  async findAll(branch?: string, year?: string) {
     try {
-      const findAll = await this.iep.find();
+      const where: any = {};
+      if (branch) {
+        where.branch = branch;
+      }
+
+      if (year) {
+        where.year = year;
+      }
+      const findAll = await this.iep.find({
+        where,
+      });
       return findAll;
     } catch (err) {
       throw new BadRequestException(err.message);
     }
   }
 
-  async findByDate(date: string): Promise<any> {
+  async findByYear(year: string): Promise<any> {
     try {
       const findByDate = await this.iep.find({
         where: {
-          year: date,
+          year,
         },
       });
       return findByDate;

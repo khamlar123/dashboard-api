@@ -12,9 +12,19 @@ export class ExpenseDailyService {
     private readonly exp: Repository<ExpenseDaily>,
   ) {}
 
-  async findAll() {
+  async findAll(branch?: string, date?: string) {
     try {
-      const findAll = await this.exp.find();
+      const where: any = {};
+      if (branch) {
+        where.branch = branch;
+      }
+
+      if (date) {
+        where.date = date;
+      }
+      const findAll = await this.exp.find({
+        where,
+      });
       return findAll;
     } catch (err) {
       throw new BadRequestException(err.message);

@@ -10,22 +10,30 @@ import {
 } from '@nestjs/common';
 import { IncomeMonthlyService } from './income-monthly.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('income-monthly')
 export class IncomeMonthlyController {
   constructor(private readonly incomeMonthlyService: IncomeMonthlyService) {}
 
   @Get()
-  async findAll() {
-    return await this.incomeMonthlyService.findAll();
+  @ApiQuery({ name: 'branch', required: false })
+  @ApiQuery({ name: 'date', required: false })
+  async findAll(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.incomeMonthlyService.findAll(branch, date);
   }
 
   @Get('by-date')
   async findByDate(
-    @Query('date', new DefaultValuePipe(''))
-    date: string,
+    @Query('month', new DefaultValuePipe(''))
+    month: string,
   ) {
-    return await this.incomeMonthlyService.findByDate(date);
+    return await this.incomeMonthlyService.findByMonth(month);
   }
 
   @Get(':id')

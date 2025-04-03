@@ -10,14 +10,22 @@ import {
 } from '@nestjs/common';
 import { PlAllDailyService } from './pl-all-daily.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('pl-all-daily')
 export class PlAllDailyController {
   constructor(private readonly plAllDailyService: PlAllDailyService) {}
 
   @Get()
-  async findAll() {
-    return await this.plAllDailyService.findAll();
+  @ApiQuery({ name: 'branch', required: false })
+  @ApiQuery({ name: 'date', required: false })
+  async findAll(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.plAllDailyService.findAll(branch, date);
   }
 
   @Get('by-date')
