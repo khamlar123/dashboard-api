@@ -21,8 +21,8 @@ export class IncomePlan {
   @JoinColumn({ name: 'branch_id' })
   branch: Branch;
 
-  @Column()
-  date: Date;
+  @Column() // ✅ Ensure correct type
+  year: string;
 
   @Column({ type: 'decimal', precision: 30, scale: 2 }) // Adjusted decimal size
   amount: number;

@@ -30,6 +30,6 @@ export class Expense {
   @Column()
   description: string;
 
-  @Column()
+  @Column({ type: 'date' }) // ✅ Ensure correct type
   date: Date;
 }

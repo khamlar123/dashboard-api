@@ -26,13 +26,8 @@ export class IncomeController {
   }
 
   @Get()
-  async findAll(
-    @Query('branch', new DefaultValuePipe(''))
-    branch: string,
-    @Query('date', new DefaultValuePipe(''))
-    date: string,
-  ) {
-    return await this.incomeService.findAll(branch, date);
+  async findAll() {
+    return await this.incomeService.findAll();
   }
 
   @Get(':id')

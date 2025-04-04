@@ -14,11 +14,11 @@ export class Income {
   id: number;
 
   @ManyToOne(() => Branch, (branch) => branch.income)
-  @JoinColumn()
+  @JoinColumn({ name: 'branch_id' })
   branch: Branch;
 
   @ManyToOne(() => IncomeCode, (income_code) => income_code.income)
-  @JoinColumn()
+  @JoinColumn({ name: 'income_code_id' })
   income_code: IncomeCode;
 
   @Column({ type: 'decimal', precision: 30, scale: 2 }) // Adjusted decimal size
@@ -30,6 +30,6 @@ export class Income {
   @Column({ nullable: true })
   description: string;
 
-  @Column()
+  @Column({ type: 'date' }) // ✅ Ensure correct type
   date: Date;
 }

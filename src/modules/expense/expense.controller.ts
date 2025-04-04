@@ -6,10 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ExpenseService } from './expense.service';
 import { CreateExpenseDto } from '../../dto/create-expense.dto';
 import { UpdateExpenseDto } from '../../dto/update-expense.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('expense')
 export class ExpenseController {
@@ -38,5 +41,14 @@ export class ExpenseController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return await this.expenseService.remove(+id);
+  }
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file')) // Multer will handle file uploads
+  async uploadExcel(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new Error('No file uploaded');
+    }
+    return this.expenseService.importData(file);
   }
 }

@@ -8,11 +8,14 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
+  Query,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
 import { CreateBranchDto } from '../../dto/create-branch.dto';
 import { UpdateBranchDto } from '../../dto/update-branch.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('branch')
 export class BranchController {
@@ -26,6 +29,44 @@ export class BranchController {
   @Get()
   async findAll() {
     return await this.branchService.findAll();
+  }
+
+  @Get('income')
+  @ApiQuery({ name: 'bcode', required: false })
+  async income(
+    @Query('bcode', new DefaultValuePipe(''))
+    bcode: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.branchService.income(bcode, date);
+  }
+
+  @Get('income-all')
+  async incomeAll(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.branchService.incomeAll(date);
+  }
+
+  @Get('expense')
+  @ApiQuery({ name: 'bcode', required: false })
+  async expense(
+    @Query('bcode', new DefaultValuePipe(''))
+    bcode: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.branchService.expense(bcode, date);
+  }
+
+  @Get('expense-all')
+  async expenseAll(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.branchService.expenseAll(date);
   }
 
   @Get(':id')
