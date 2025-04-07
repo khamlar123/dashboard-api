@@ -13,35 +13,35 @@ export class TestController {
     // super();
   }
 
-  @Get()
-  @UseGuards(AuthGuard)
-  async findAll() {
-    return this.testService.findAll();
-  }
-  @Get('/test-token')
-  async testToken(): Promise<JwtPayload> {
-    const token =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibGFyIiwiaWQiOjEsImlhdCI6MTc0MzQxNTEwNiwiZXhwIjoxNzQzNDE4NzA2fQ.omQfhtfrAbnI0sbplnjXrLu6Qnk3KhiJVglrUM__1m0';
-    const key = 'superman';
-    const verifyToken = this.jwt.verifyToken(token, key);
+  // @Get()
+  // @UseGuards(AuthGuard)
+  // async findAll() {
+  //   return this.testService.findAll();
+  // }
+  // @Get('/test-token')
+  // async testToken(): Promise<JwtPayload> {
+  //   const token =
+  //     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibGFyIiwiaWQiOjEsImlhdCI6MTc0MzQxNTEwNiwiZXhwIjoxNzQzNDE4NzA2fQ.omQfhtfrAbnI0sbplnjXrLu6Qnk3KhiJVglrUM__1m0';
+  //   const key = 'superman';
+  //   const verifyToken = this.jwt.verifyToken(token, key);
 
-    return verifyToken;
-  }
+  //   return verifyToken;
+  // }
 
-  @Get('/test-sign')
-  async signToken(): Promise<string> {
-    const token = this.jwt.sign({ name: 'lar', id: 1 }, 'superman');
+  // @Get('/test-sign')
+  // async signToken(): Promise<string> {
+  //   const token = this.jwt.sign({ name: 'lar', id: 1 }, 'superman');
 
-    return token;
-  }
+  //   return token;
+  // }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const findOne = await this.testService.findOne(+id);
+  // @Get(':id')
+  // async findOne(@Param('id') id: string) {
+  //   const findOne = await this.testService.findOne(+id);
 
-    return {
-      ...findOne,
-      message: 'Test findOne',
-    };
-  }
+  //   return {
+  //     ...findOne,
+  //     message: 'Test findOne',
+  //   };
+  // }
 }

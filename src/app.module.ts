@@ -16,6 +16,9 @@ import { IncomeModule } from './modules/income/income.module';
 import { ExpensePlanModule } from './modules/expense_plan/expense_plan.module';
 import { ExpenseCodeModule } from './modules/expense_code/expense_code.module';
 import { ExpenseModule } from './modules/expense/expense.module';
+import { CronjobModule } from './modules/cronjob/cronjob.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ProfitModule } from './modules/profit/profit.module';
 
 @Module({
   imports: [
@@ -36,6 +39,7 @@ import { ExpenseModule } from './modules/expense/expense.module';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true, // Sync models with database (disable in production)
     }),
+    ScheduleModule.forRoot(),
     AuthModule,
     BranchModule,
     IncomePlanModule,
@@ -44,6 +48,8 @@ import { ExpenseModule } from './modules/expense/expense.module';
     ExpensePlanModule,
     ExpenseCodeModule,
     ExpenseModule,
+    CronjobModule,
+    ProfitModule,
   ],
   controllers: [AppController],
   providers: [AppService],
