@@ -117,8 +117,8 @@ export class IncomePlanService {
       const incomeCode = getIncomeCode(m.INC_CODE);
       return {
         income_code: { id: incomeCode?.id },
-        branch: { id: branch?.id },
-        date: moment(m.Date).endOf('day').toDate(),
+        branch: { code: branch?.code },
+        year: moment(m.Date).year().toString(),
         amount: m['INC-PLAN'],
       };
     });

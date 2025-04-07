@@ -3,12 +3,11 @@ import { CreateIncomeDto } from '../../dto/create-income.dto';
 import { UpdateIncomeDto } from '../../dto/update-income.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Income } from 'src/entity/income.entity';
-import { Between, DeleteResult, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import * as XLSX from 'xlsx';
 import { Branch } from 'src/entity/branch.entity';
 import { IncomeCode } from 'src/entity/income_code.entity';
 import * as moment from 'moment';
-import { IncomePlan } from 'src/entity/income_plan.entity';
 
 @Injectable()
 export class IncomeService {
@@ -19,8 +18,6 @@ export class IncomeService {
     private readonly branchRepository: Repository<Branch>,
     @InjectRepository(IncomeCode)
     private readonly incomeCodeRepository: Repository<IncomeCode>,
-    @InjectRepository(IncomePlan)
-    private readonly incomePlanRepository: Repository<IncomePlan>,
   ) {}
   async create(dto: CreateIncomeDto): Promise<Income> {
     try {
@@ -34,7 +31,7 @@ export class IncomeService {
       } = dto;
 
       const req = {
-        branch: { id: branch_id },
+        branch: { code: branch_id },
         amount,
         scaled_amount,
         date,
@@ -48,70 +45,9 @@ export class IncomeService {
     }
   }
 
-  async findAll(branch: string, date: string) {
+  async findAll() {
     try {
-      const searchDate = moment(date, 'YYYY-MM-DD').toDate();
-      const item = await this.incomeRepository.find({
-        where: { branch: { id: +branch }, date: searchDate },
-        relations: { branch: true, income_code: true },
-        select: {
-          id: true,
-          amount: true,
-          scaled_amount: true,
-          date: true,
-          description: true,
-          branch: {
-            id: true,
-            name: true, // Now correctly selecting branch.name
-          },
-          income_code: {
-            id: true,
-            code: true,
-            description: true,
-            incomePlans: {
-              amount: true,
-            },
-          },
-        },
-      });
-
-      const year = moment(searchDate).year();
-      const findPlan = await this.incomePlanRepository.find({
-        where: {
-          branch: { id: +branch },
-          date: Between(
-            new Date(`${year}-01-01`), // Start of year
-            new Date(`${year}-12-31`), // End of year
-          ),
-        },
-        relations: { branch: true, income_code: true },
-        select: {
-          id: true,
-          date: true,
-          amount: true,
-          income_code: {
-            id: true,
-            code: true,
-          },
-          branch: {
-            id: true,
-            name: true,
-          },
-        },
-      });
-
-      const mapRes = item.map((m) => {
-        return {
-          ...m,
-          plan: findPlan.find(
-            (f) =>
-              f.branch.id === m.branch.id &&
-              f.income_code.id === m.income_code.id,
-          ),
-        };
-      });
-
-      return mapRes;
+      await this.incomeRepository.find();
     } catch (e) {
       return e.message;
     }
@@ -146,7 +82,7 @@ export class IncomeService {
     }
   }
 
-  async importData(file: Express.Multer.File): Promise<Income[]> {
+  async importData(file: Express.Multer.File): Promise<any[]> {
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0]; // Get the first sheet
     const worksheet = workbook.Sheets[sheetName];
@@ -169,10 +105,10 @@ export class IncomeService {
       const branch = getBranch(m.branch_code.padEnd(6, '0'));
       const incomeCode = getIncomeCode(m.id);
       return {
-        branch: { id: branch?.id },
+        branch: { code: branch?.code },
         amount: m.bal,
         scaled_amount: m.balM,
-        date: moment(m.ac_date, 'YYYYMMDD').format('YYYY-MM-DD'),
+        date: moment(m.ac_date, 'YYYYMMDD').endOf('day').format('YYYY-MM-DD'),
         income_code: { id: incomeCode?.id },
         description: '',
       };

@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
 import { ExpensePlan } from './expense_plan.entity';
 import { Expense } from './expense.entity';
 import { IncomePlan } from './income_plan.entity';
@@ -6,11 +6,8 @@ import { Income } from './income.entity';
 
 @Entity()
 export class Branch {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  code: number;
+  @PrimaryColumn() // Changed from @PrimaryGeneratedColumn()
+  code: number; // This will be your manually assigned primary key
 
   @Column()
   name: string;
