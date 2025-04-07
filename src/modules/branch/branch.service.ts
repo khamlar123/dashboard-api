@@ -110,8 +110,8 @@ export class BranchService {
         if (bcode) {
           newRes.name = item.name;
           newRes.code = item.code;
-          newRes.incomePlans = incomePlans;
-          newRes.income = income;
+          newRes.incomePlans = incomePlans.map((m) => m.amount);
+          newRes.income = income.map((m) => m.amount);
         } else {
           allIncomePlans.push(incomePlans);
           allIncome.push(income);
@@ -131,6 +131,13 @@ export class BranchService {
         this.incomeCodeRepository.find(),
       ]);
 
+      newRes.incomeCodes = incomeCodes.map((m) => {
+        return {
+          code: m.code,
+          description: m.description,
+        };
+      });
+
       if (planIncome.length === 0) {
         const emptyData = incomeCodes.map((m) => {
           return {
@@ -145,6 +152,10 @@ export class BranchService {
         newRes.incomePlans = this.flatData(allIncomePlans.flat());
         newRes.income = this.flatData(allIncome.flat());
       }
+
+      newRes.totalIncome = this.calcTotalFunc(newRes.income);
+      newRes.totalIncomePlans = this.calcTotalFunc(newRes.incomePlans);
+
       return newRes ?? {};
     } catch (e) {
       return e.message;
@@ -175,6 +186,15 @@ export class BranchService {
       //#region  return array
       const newRes: any[] = [];
 
+      const [planIncome, incomeCodes] = await Promise.all([
+        this.incomePlanRepository.find({
+          where: {
+            year: year,
+          },
+        }),
+        this.incomeCodeRepository.find(),
+      ]);
+
       items.map((item) => {
         const incomePlans = item.incomePlans.map((incomePlan) => ({
           code: incomePlan.income_code.code,
@@ -188,24 +208,25 @@ export class BranchService {
           amount: Number(income.amount),
         }));
 
+        const codes = incomeCodes.map((m) => {
+          return {
+            code: m.code,
+            description: m.description,
+          };
+        });
+
         const itx = {
           branchName: item.name,
           branchCode: item.code,
-          incomePlans,
-          income,
+          incomePlans: incomePlans.map((m) => m.amount),
+          income: income.map((m) => m.amount),
+          incomeCodes: codes,
+          totalIncome: this.calcTotalFunc(income),
+          totalIncomePlans: this.calcTotalFunc(incomePlans),
         };
 
         newRes.push(itx);
       });
-
-      const [planIncome, incomeCodes] = await Promise.all([
-        this.incomePlanRepository.find({
-          where: {
-            year: year,
-          },
-        }),
-        this.incomeCodeRepository.find(),
-      ]);
 
       if (planIncome.length === 0) {
         const emptyData = incomeCodes.map((m) => {
@@ -263,8 +284,8 @@ export class BranchService {
       if (bcode) {
         newRes.name = item.name;
         newRes.code = item.code;
-        newRes.expensePlans = expensePlans;
-        newRes.expense = expenses;
+        newRes.expensePlans = expensePlans.map((m) => m.amount);
+        newRes.expense = expenses.map((m) => m.amount);
       } else {
         allExpensePlans.push(expensePlans);
         allExpense.push(expenses);
@@ -284,6 +305,13 @@ export class BranchService {
       this.expenseCodeRepository.find(),
     ]);
 
+    newRes.expenseCodes = expensesCode.map((m) => {
+      return {
+        code: m.code,
+        description: m.description,
+      };
+    });
+
     if (planExpense.length === 0) {
       const emptyData = expensesCode.map((m) => {
         return {
@@ -298,6 +326,9 @@ export class BranchService {
       newRes.expensePlans = this.flatData(allExpensePlans.flat());
       newRes.expense = this.flatData(allExpense.flat());
     }
+
+    newRes.totalExpense = this.calcTotalFunc(newRes.expense);
+    newRes.totalExpensePlans = this.calcTotalFunc(newRes.expensePlans);
 
     return newRes ?? {};
   }
@@ -325,6 +356,15 @@ export class BranchService {
 
     const newRes: any[] = [];
 
+    const [planExpense, expensesCode] = await Promise.all([
+      this.expensePlanRepository.find({
+        where: {
+          year: year,
+        },
+      }),
+      this.expenseCodeRepository.find(),
+    ]);
+
     items.map((item) => {
       const expensePlans = item.expensePlans.map((expensePlan) => ({
         code: expensePlan.expense_code.code,
@@ -338,23 +378,24 @@ export class BranchService {
         amount: Number(exp.amount),
       }));
 
+      const codes = expensesCode.map((m) => {
+        return {
+          code: m.code,
+          description: m.description,
+        };
+      });
+
       const itx = {
         branchName: item.name,
         branchCode: item.code,
-        expensePlans,
-        expense,
+        expensePlans: expensePlans.map((m) => m.amount),
+        expense: expense.map((m) => m.amount),
+        expenseCodes: codes,
+        totalExpense: this.calcTotalFunc(expense),
+        totalExpensePlans: this.calcTotalFunc(expensePlans),
       };
       newRes.push(itx);
     });
-
-    const [planExpense, expensesCode] = await Promise.all([
-      this.expensePlanRepository.find({
-        where: {
-          year: year,
-        },
-      }),
-      this.expenseCodeRepository.find(),
-    ]);
 
     if (planExpense.length === 0) {
       const emptyData = expensesCode.map((m) => {
@@ -401,6 +442,13 @@ export class BranchService {
       }
     });
 
-    return myAllPlans;
+    return myAllPlans.map((m) => Number(m.amount.toFixed(2)));
+  }
+
+  private calcTotalFunc(data: any[]): number {
+    const total = data.reduce((acc, item) => {
+      return acc + Number(item);
+    }, 0);
+    return total;
   }
 }

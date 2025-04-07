@@ -1,13 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ExpenseService } from './expense.service';
 import { ExpenseController } from './expense.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Expense } from 'src/entity/expense.entity';
-import { Branch } from 'src/entity/branch.entity';
-import { ExpenseCode } from 'src/entity/expense_code.entity';
+import { SharedModule } from 'src/share/shared.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Expense, Branch, ExpenseCode])],
+  imports: [SharedModule],
   controllers: [ExpenseController],
   providers: [ExpenseService],
 })
