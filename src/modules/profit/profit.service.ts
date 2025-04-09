@@ -22,15 +22,20 @@ export class ProfitService {
       where pf.date= ?`;
 
     const [result] = await this.dbServer.getProfit(query, date);
+    const labels: string[] = [];
+    const values: number[] = [];
+    const plans: number[] = [];
+    // result.forEach((e) => {
+    //   labels.push(e.Branch_name);
+    //   values.push(Number(e.profit_amount));
+    //   plans.push(Number(e.profit_plan));
+    // });
 
-    let labels: string[] = [];
-    let values: number[] = [];
-    let plans: number[] = [];
-    result.forEach((e) => {
+    for (const e of result) {
       labels.push(e.Branch_name);
       values.push(Number(e.profit_amount));
       plans.push(Number(e.profit_plan));
-    });
+    }
 
     return {
       labels,
@@ -47,9 +52,10 @@ export class ProfitService {
     const newArray: any[] = [];
 
     const formattedData = jsonData.map((row: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       Object.keys(row).forEach((key) => {
         if (typeof row?.Date === 'number' && row?.Date > 40000) {
-          // Likely a date, convert it
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           row.Date = XLSX.SSF.format('yyyy-mm-dd', row?.Date);
         }
       });

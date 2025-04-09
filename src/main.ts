@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseInterceptor } from './Interceptors/response.interceptor';
 import { HttpExceptionFilter } from './Interceptors/http-exception.filter';
-import { ValidationPipe } from './common/pipes/validation.pipe';
+//import { ValidationPipe } from './common/pipes/validation.pipe';
 import { LoggingInterceptor } from './Interceptors/logging.interceptor';
 
 async function bootstrap() {
@@ -18,7 +18,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
-  //app.useGlobalPipes(new ValidationPipe());
+  // app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
