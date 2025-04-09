@@ -1,4 +1,3 @@
-import { Param } from '@nestjs/common';
 // src/database/database.service.ts
 import { Injectable } from '@nestjs/common';
 // import { InjectConnection } from '@nestjs/typeorm';
@@ -57,6 +56,10 @@ export class DatabaseService {
   }
 
   async import(sql: string, param: any[]): Promise<any> {
+    return await this.dashboardPool.query(sql, param);
+  }
+
+  async query(sql: string, param?: any[]): Promise<any> {
     return await this.dashboardPool.query(sql, param);
   }
 }
