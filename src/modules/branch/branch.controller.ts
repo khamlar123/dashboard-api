@@ -50,6 +50,38 @@ export class BranchController {
     return await this.branchService.incomeAll(date);
   }
 
+  @Get('profit-income-day')
+  @ApiQuery({ name: 'bcode', required: false })
+  async incomeDay(
+    @Query('date', new DefaultValuePipe(0))
+    date: string,
+    @Query('bcode', new DefaultValuePipe(''))
+    bcode: string,
+  ) {
+    return await this.branchService.getPlanProfitDay(date, bcode);
+  }
+
+  @Get('profit-income-month')
+  @ApiQuery({ name: 'bcode', required: false })
+  async incomeMonth(
+    @Query('date', new DefaultValuePipe(0))
+    date: string,
+    @Query('bcode', new DefaultValuePipe(''))
+    bcode: string,
+  ) {
+    return await this.branchService.getPlanProfitMonthly(date, bcode);
+  }
+
+  @Get('profit-income-year')
+  @ApiQuery({ name: 'bcode', required: false })
+  async incomeYear(
+    @Query('year', new DefaultValuePipe(0))
+    year: number,
+    @Query('bcode', new DefaultValuePipe(''))
+    bcode: string,
+  ) {
+    return await this.branchService.getPlanProfitYear(year, bcode);
+  }
   @Get('expense')
   @ApiQuery({ name: 'bcode', required: false })
   async expense(

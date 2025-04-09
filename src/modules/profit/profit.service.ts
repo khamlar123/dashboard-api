@@ -7,19 +7,36 @@ import * as XLSX from 'xlsx';
 export class ProfitService {
   constructor(private readonly dbServer: DatabaseService) {}
 
+  // use char 4
   async getProfit(date: string): Promise<any> {
+    //TODO: autoget day - 1
+    const year = moment(date).format('YYYY');
     const query = `select b.code as Branch,
        b.name as Branch_name,
        pf.date as Date,
        nvl(pfp.profit_plan,0) as profit_plan,
        nvl(pf.profit_amount,0)  as profit_amount
       from branch b
-      left outer join profit_plan  pfp on b.code=pfp.branchId and pfp.year = DATE_FORMAT(${date},'%Y')
+      left outer join profit_plan  pfp on b.code=pfp.branchId and pfp.year = ${year}
       left outer join profit pf on b.code=pf.branchId
       where pf.date= ?`;
 
     const [result] = await this.dbServer.getProfit(query, date);
-    return result;
+
+    let labels: string[] = [];
+    let values: number[] = [];
+    let plans: number[] = [];
+    result.forEach((e) => {
+      labels.push(e.Branch_name);
+      values.push(Number(e.profit_amount));
+      plans.push(Number(e.profit_plan));
+    });
+
+    return {
+      labels,
+      values,
+      plans,
+    };
   }
 
   async importData(file: Express.Multer.File) {

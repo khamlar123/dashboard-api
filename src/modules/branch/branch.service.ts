@@ -10,6 +10,7 @@ import { IncomePlan } from 'src/entity/income_plan.entity';
 import { IncomeCode } from 'src/entity/income_code.entity';
 import { ExpensePlan } from 'src/entity/expense_plan.entity';
 import { ExpenseCode } from 'src/entity/expense_code.entity';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class BranchService {
@@ -24,6 +25,7 @@ export class BranchService {
     private readonly expensePlanRepository: Repository<ExpensePlan>,
     @InjectRepository(ExpenseCode)
     private readonly expenseCodeRepository: Repository<ExpenseCode>,
+    private readonly db: DatabaseService,
   ) {}
 
   async create(dto: CreateBranchDto): Promise<any> {
@@ -70,6 +72,7 @@ export class BranchService {
     }
   }
 
+  // user char 1
   async income(bcode?: string, date?: string) {
     try {
       const queryDate = moment(date).toDate();
@@ -245,6 +248,144 @@ export class BranchService {
     }
   }
 
+  // user char 3
+  async getPlanProfitDay(data: string, branchId: string) {
+    try {
+      const myDate = moment(data).format('YYYY-MM-DD');
+      const before30Day = moment(myDate).add(-30, 'day').format('YYYY-MM-DD');
+
+      const dateSeriesQuery = `
+      WITH RECURSIVE date_series AS (
+        SELECT ? AS date
+        UNION ALL
+        SELECT DATE_ADD(date, INTERVAL 1 DAY)
+        FROM date_series
+        WHERE DATE_ADD(date, INTERVAL 1 DAY) <= ? 
+      )
+      SELECT 
+        ds.date,
+        COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) as branchId,
+        COALESCE(p.profit_amount, 0) as amount
+      FROM date_series ds
+      LEFT JOIN profit p ON DATE(p.date) = ds.date ${branchId ? 'AND p.branchId = ?' : ''}
+      ORDER BY ds.date
+    `;
+
+      const [results] = await this.db.query(dateSeriesQuery, [
+        before30Day,
+        myDate,
+        branchId,
+      ]);
+
+      const year = moment(myDate).year();
+      const queryFindPlanProfit = `select * from profit_plan where year = ? ${branchId ? 'AND branchId = ?' : ''} `;
+      const [planTotalPla] = await this.db.query(queryFindPlanProfit, [
+        year,
+        branchId,
+      ]);
+
+      return this.changeResults(results, planTotalPla, branchId, 'day');
+    } catch (err) {
+      return err.message;
+    }
+  }
+
+  // user char 3
+  async getPlanProfitMonthly(month: string, branchId: string) {
+    const currentDate = month ? new Date(month) : new Date();
+    const formattedDate = currentDate.toISOString().split('T')[0];
+
+    const monthlyProfitQuery = `
+      WITH RECURSIVE month_series AS (
+        SELECT DATE_FORMAT(DATE_SUB(?, INTERVAL 6 MONTH), '%Y-%m-01') AS month_start
+        UNION ALL
+        SELECT DATE_ADD(month_start, INTERVAL 1 MONTH)
+        FROM month_series
+        WHERE DATE_ADD(month_start, INTERVAL 1 MONTH) <= ?
+      )
+      SELECT 
+        ms.month_start AS date,
+        COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) AS branchId,
+        COALESCE(SUM(p.profit_amount), 0) AS amount
+      FROM month_series ms
+      LEFT JOIN profit p ON DATE_FORMAT(p.date, '%Y-%m-01') = ms.month_start
+      ${branchId ? 'AND p.branchId = ?' : ''}
+      GROUP BY ms.month_start, p.branchId
+      ORDER BY ms.month_start
+    `;
+
+    const [results] = await this.db.query(monthlyProfitQuery, [
+      formattedDate,
+      formattedDate,
+      ...(branchId ? [branchId] : []),
+    ]);
+
+    const mergeData: { date: string; branchId: number; amount: number }[] = [];
+
+    for (const e of results) {
+      const checkItem = mergeData.find((f) => f.date === e.date);
+
+      if (checkItem) {
+        checkItem.amount += Number(e.amount);
+      } else {
+        mergeData.push({
+          date: e.date,
+          branchId: e.branchId,
+          amount: Number(e.amount),
+        });
+      }
+    }
+
+    const year = moment(currentDate).year();
+    const queryFindPlanProfit = `select * from profit_plan where year = ? ${branchId ? 'AND branchId = ?' : ''} `;
+    const [planTotalPla] = await this.db.query(queryFindPlanProfit, [
+      year,
+      branchId,
+    ]);
+
+    return this.changeResults(results, planTotalPla, branchId, 'month');
+  }
+
+  // user char 3
+  async getPlanProfitYear(year: number, branchId: string) {
+    const currentYear = year || new Date().getFullYear();
+    const startYear = currentYear - 3;
+
+    const yearlyProfitQuery = `
+      WITH RECURSIVE year_series AS (
+        SELECT ? AS year
+        UNION ALL
+        SELECT year + 1
+        FROM year_series
+        WHERE year + 1 <= ?
+      )
+      SELECT 
+        ys.year,
+        COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) AS branchId,
+        COALESCE(SUM(p.profit_amount), 0) AS amount
+      FROM year_series ys
+      LEFT JOIN profit p ON YEAR(p.date) = ys.year
+      ${branchId ? 'AND p.branchId = ?' : ''}
+      GROUP BY ys.year, p.branchId
+      ORDER BY ys.year
+    `;
+
+    const [results] = await this.db.query(yearlyProfitQuery, [
+      startYear,
+      currentYear,
+      ...(branchId ? [branchId] : []),
+    ]);
+
+    const queryFindPlanProfit = `select * from profit_plan where year = ? ${branchId ? 'AND branchId = ?' : ''} `;
+    const [planTotalPla] = await this.db.query(queryFindPlanProfit, [
+      year,
+      branchId,
+    ]);
+
+    return this.changeResults(results, planTotalPla, branchId, 'year');
+  }
+
+  // user char 2
   async expense(bcode: string, date: string) {
     const queryDate = moment(date).toDate();
     const year = moment(queryDate).year().toString();
@@ -450,5 +591,62 @@ export class BranchService {
       return acc + Number(item);
     }, 0);
     return total;
+  }
+
+  private changeResults(
+    data: any,
+    planTotalPla: any,
+    branchId: string,
+    option: 'day' | 'month' | 'year',
+  ): { dates: any[]; value: number[]; totalPlanIncome: number } {
+    const mergeData: { date: string; branchId: number; amount: number }[] = [];
+    for (const e of data) {
+      const checkItem = mergeData.find(
+        (f) => f.date === (option === 'year' ? e.year : e.date),
+      );
+
+      if (checkItem) {
+        checkItem.amount += Number(e.amount);
+      } else {
+        mergeData.push({
+          date:
+            option === 'year'
+              ? e.year
+              : option === 'month'
+                ? moment(e.data).format('YYYY MMM')
+                : moment(e.date).format('YYYY MMM DD'),
+          branchId: e.branchId,
+          amount: Number(e.amount),
+        });
+      }
+    }
+
+    const dates: any[] = [];
+    const value: number[] = [];
+    mergeData.forEach((e) => {
+      dates.push(e.date);
+      value.push(Number(e.amount));
+    });
+
+    let totalPlanIncome: number = 0;
+    if (branchId) {
+      totalPlanIncome =
+        planTotalPla.length > 0 ? Number(planTotalPla[0].profit_plan) : 0;
+    } else {
+      totalPlanIncome =
+        planTotalPla.length > 0
+          ? planTotalPla
+              .map((m) => Number(m.profit_plan))
+              .reduce(function (a, b) {
+                return a + b;
+              })
+          : 0;
+    }
+
+    return {
+      dates,
+      value,
+      totalPlanIncome,
+    };
   }
 }

@@ -28,8 +28,8 @@ export class CronjobController {
     private readonly expenseRepository: Repository<Expense>,
   ) {}
 
-  //@Cron('* * * * *') 1min
-  @Cron('* 6 * * *')
+  //@Cron('* * * * *') //1min
+  @Cron('0 6 * * *') // 6AM
   async storeIncomeData(): Promise<void> {
     const dateDeleteOneDay = moment().add(-1, 'day').format('YYYYMMDD');
     const sql = `
@@ -294,7 +294,7 @@ export class CronjobController {
   }
 
   //@Cron('* * * * *') 1min
-  @Cron('* 6 * * *')
+  @Cron('2 6 * * *') // 6AM 2min
   async storeExpenseData(): Promise<void> {
     const dateDeleteOneDay = moment().add(-1, 'day').format('YYYYMMDD');
     const sql = `with par as (select ${dateDeleteOneDay} as vdate from dual),
@@ -632,7 +632,7 @@ export class CronjobController {
   }
 
   // @Cron('* * * * *')
-  @Cron('* 6 * * *')
+  @Cron('5 6 * * *') // 6AM 5min
   async calcProfit() {
     const dateDeleteOneDay = moment().add(-1, 'day').format('YYYY-MM-DD');
     const results = await this.databaseService.calcProfit(
