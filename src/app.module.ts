@@ -19,6 +19,8 @@ import { ExpenseModule } from './modules/expense/expense.module';
 import { CronjobModule } from './modules/cronjob/cronjob.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ProfitModule } from './modules/profit/profit.module';
+import { LoanPlanModule } from './modules/loan_plan/loan_plan.module';
+import { LoanModule } from './modules/loan/loan.module';
 
 @Module({
   imports: [
@@ -50,6 +52,8 @@ import { ProfitModule } from './modules/profit/profit.module';
     ExpenseModule,
     CronjobModule,
     ProfitModule,
+    LoanPlanModule,
+    LoanModule,
   ],
   controllers: [AppController],
   providers: [AppService],

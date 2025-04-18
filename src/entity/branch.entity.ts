@@ -3,6 +3,8 @@ import { ExpensePlan } from './expense_plan.entity';
 import { Expense } from './expense.entity';
 import { IncomePlan } from './income_plan.entity';
 import { Income } from './income.entity';
+import { LoanPlan } from './loan_plan.entity';
+import { Loan } from './loan.entity';
 
 @Entity()
 export class Branch {
@@ -23,4 +25,10 @@ export class Branch {
 
   @OneToMany(() => Income, (income) => income.branch)
   income: Income[];
+
+  @OneToMany(() => LoanPlan, (loanPlan) => loanPlan.branch)
+  loanPlan: LoanPlan[];
+
+  @OneToMany(() => Loan, (loan) => loan.branch)
+  loan: Loan[];
 }

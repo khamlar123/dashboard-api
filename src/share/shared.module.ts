@@ -7,6 +7,8 @@ import { ExpensePlan } from 'src/entity/expense_plan.entity';
 import { Income } from 'src/entity/income.entity';
 import { IncomeCode } from 'src/entity/income_code.entity';
 import { IncomePlan } from 'src/entity/income_plan.entity';
+import { LoanPlan } from '../entity/loan_plan.entity';
+import { Loan } from '../entity/loan.entity';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { IncomePlan } from 'src/entity/income_plan.entity';
       ExpensePlan,
       ExpenseCode,
       Expense,
+      LoanPlan,
+      Loan,
     ]),
   ],
   exports: [

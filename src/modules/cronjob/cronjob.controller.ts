@@ -28,8 +28,8 @@ export class CronjobController {
     private readonly expenseRepository: Repository<Expense>,
   ) {}
 
-  //@Cron('* * * * *') 1min
-  @Cron('* 6 * * *')
+  //@Cron('* * * * *') //1min
+  @Cron('0 6 * * *') // 6AM
   async storeIncomeData(): Promise<void> {
     const dateDeleteOneDay = moment().add(-1, 'day').format('YYYYMMDD');
     const sql = `
@@ -283,7 +283,7 @@ export class CronjobController {
 
     if (addItems) {
       Logger.log(
-        'cron job store Income data saved day -1 successfully' +
+        'cron job store Income data saved day -1 successfully ' +
           moment().add(-1, 'day').format('YYYY-MM-DD HH:mm:ss'),
       );
     } else {
@@ -294,7 +294,7 @@ export class CronjobController {
   }
 
   //@Cron('* * * * *') 1min
-  @Cron('* 6 * * *')
+  @Cron('2 6 * * *') // 6AM 2min
   async storeExpenseData(): Promise<void> {
     const dateDeleteOneDay = moment().add(-1, 'day').format('YYYYMMDD');
     const sql = `with par as (select ${dateDeleteOneDay} as vdate from dual),
@@ -623,7 +623,7 @@ export class CronjobController {
     const addItems = await this.expenseRepository.save(mapData);
     if (addItems) {
       Logger.log(
-        'cron job store expense data saved day - 1 successfully' +
+        'cron job store expense data saved day - 1 successfully ' +
           moment().add(-1, 'day').format('YYYY-MM-DD HH:mm:ss'),
       );
     } else {
@@ -632,8 +632,8 @@ export class CronjobController {
   }
 
   // @Cron('* * * * *')
-  @Cron('* 6 * * *')
-  async calcProfit() {
+  @Cron('5 6 * * *') // 6AM 5min
+  async calcProfit(): Promise<void> {
     const dateDeleteOneDay = moment().add(-1, 'day').format('YYYY-MM-DD');
     const results = await this.databaseService.calcProfit(
       'p_profit',
@@ -642,7 +642,7 @@ export class CronjobController {
 
     if (results) {
       Logger.log(
-        'cron job calculate profit successfully' +
+        'cron job calculate profit successfully ' +
           moment().add(-1, 'day').format('YYYY-MM-DD HH:mm:ss'),
       );
     } else {
