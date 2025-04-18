@@ -42,6 +42,28 @@ export class BranchController {
     return await this.branchService.income(bcode, date);
   }
 
+  @Get('income-percent')
+  @ApiQuery({ name: 'bcode', required: false })
+  async incomePercent(
+    @Query('bcode', new DefaultValuePipe(''))
+    bcode: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.branchService.getIncomePercent(bcode, date);
+  }
+
+  @Get('expense-percent')
+  @ApiQuery({ name: 'bcode', required: false })
+  async expensePercent(
+    @Query('bcode', new DefaultValuePipe(''))
+    bcode: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.branchService.getExpensePercent(bcode, date);
+  }
+
   @Get('income-all')
   async incomeAll(
     @Query('date', new DefaultValuePipe(''))
@@ -50,7 +72,7 @@ export class BranchController {
     return await this.branchService.incomeAll(date);
   }
 
-  @Get('profit-income-day')
+  @Get('profit-day')
   @ApiQuery({ name: 'bcode', required: false })
   async incomeDay(
     @Query('date', new DefaultValuePipe(0))
@@ -61,7 +83,7 @@ export class BranchController {
     return await this.branchService.getPlanProfitDay(date, bcode);
   }
 
-  @Get('profit-income-month')
+  @Get('profit-month')
   @ApiQuery({ name: 'bcode', required: false })
   async incomeMonth(
     @Query('date', new DefaultValuePipe(0))
@@ -72,7 +94,7 @@ export class BranchController {
     return await this.branchService.getPlanProfitMonthly(date, bcode);
   }
 
-  @Get('profit-income-year')
+  @Get('profit-year')
   @ApiQuery({ name: 'bcode', required: false })
   async incomeYear(
     @Query('year', new DefaultValuePipe(0))

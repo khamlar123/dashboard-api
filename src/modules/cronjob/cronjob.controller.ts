@@ -283,7 +283,7 @@ export class CronjobController {
 
     if (addItems) {
       Logger.log(
-        'cron job store Income data saved day -1 successfully' +
+        'cron job store Income data saved day -1 successfully ' +
           moment().add(-1, 'day').format('YYYY-MM-DD HH:mm:ss'),
       );
     } else {
@@ -623,7 +623,7 @@ export class CronjobController {
     const addItems = await this.expenseRepository.save(mapData);
     if (addItems) {
       Logger.log(
-        'cron job store expense data saved day - 1 successfully' +
+        'cron job store expense data saved day - 1 successfully ' +
           moment().add(-1, 'day').format('YYYY-MM-DD HH:mm:ss'),
       );
     } else {
@@ -633,7 +633,7 @@ export class CronjobController {
 
   // @Cron('* * * * *')
   @Cron('5 6 * * *') // 6AM 5min
-  async calcProfit() {
+  async calcProfit(): Promise<void> {
     const dateDeleteOneDay = moment().add(-1, 'day').format('YYYY-MM-DD');
     const results = await this.databaseService.calcProfit(
       'p_profit',
@@ -642,7 +642,7 @@ export class CronjobController {
 
     if (results) {
       Logger.log(
-        'cron job calculate profit successfully' +
+        'cron job calculate profit successfully ' +
           moment().add(-1, 'day').format('YYYY-MM-DD HH:mm:ss'),
       );
     } else {

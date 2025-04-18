@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import { DatabaseService } from 'src/database/database.service';
 import * as XLSX from 'xlsx';
+import { reduceFunc } from '../../share/functions/reduceFunc';
 
 @Injectable()
 export class ProfitService {
@@ -21,15 +22,10 @@ export class ProfitService {
       left outer join profit pf on b.code=pf.branchId
       where pf.date= ?`;
 
-    const [result] = await this.dbServer.getProfit(query, date);
+    const [result] = await this.dbServer.getProfit(query, [date]);
     const labels: string[] = [];
     const values: number[] = [];
     const plans: number[] = [];
-    // result.forEach((e) => {
-    //   labels.push(e.Branch_name);
-    //   values.push(Number(e.profit_amount));
-    //   plans.push(Number(e.profit_plan));
-    // });
 
     for (const e of result) {
       labels.push(e.Branch_name);
@@ -98,5 +94,36 @@ export class ProfitService {
     }
 
     return res;
+  }
+
+  async profit(date: string, branchId: string): Promise<any> {
+    //TODO: autoget day - 1
+    const year = moment(date).format('YYYY');
+    const query = `select b.code as Branch,
+       b.name as Branch_name,
+       pf.date as Date,
+       nvl(pfp.profit_plan,0) as profit_plan,
+       nvl(pf.profit_amount,0)  as profit_amount
+      from branch b
+      left outer join profit_plan  pfp on b.code=pfp.branchId and pfp.year = ${year}
+      left outer join profit pf on b.code=pf.branchId
+      where pf.date= ? ${branchId ? 'AND pf.branchId = ?' : ''}`;
+
+    const [result] = await this.dbServer.getProfit(query, [date, branchId]);
+    const planProfit: number[] = [];
+    const Profit: number[] = [];
+    let branchName: string = '';
+    result.map((m) => {
+      planProfit.push(Number(m.profit_plan));
+      Profit.push(Number(m.profit_amount));
+      branchName = m.Branch_name;
+    });
+
+    const resx = {
+      branchName: branchId ? branchName : 'All branch',
+      planProfitAmount: Number(reduceFunc(planProfit).toFixed(2)),
+      profitAmount: Number(reduceFunc(Profit).toFixed(2)),
+    };
+    return resx;
   }
 }

@@ -51,8 +51,8 @@ export class DatabaseService {
     return results;
   }
 
-  async getProfit(sql: string, date: string): Promise<any> {
-    return await this.dashboardPool.query(sql, [date]);
+  async getProfit(sql: string, param: any[]): Promise<any> {
+    return await this.dashboardPool.query(sql, param);
   }
 
   async import(sql: string, param: any[]): Promise<any> {

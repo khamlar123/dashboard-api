@@ -11,6 +11,7 @@ import { IncomeCode } from 'src/entity/income_code.entity';
 import { ExpensePlan } from 'src/entity/expense_plan.entity';
 import { ExpenseCode } from 'src/entity/expense_code.entity';
 import { DatabaseService } from 'src/database/database.service';
+import { reduceFunc } from '../../share/functions/reduceFunc';
 
 @Injectable()
 export class BranchService {
@@ -156,9 +157,22 @@ export class BranchService {
         newRes.income = this.flatData(allIncome.flat());
       }
 
-      newRes.totalIncome = this.calcTotalFunc(newRes.income);
-      newRes.totalIncomePlans = this.calcTotalFunc(newRes.incomePlans);
+      newRes.totalIncome = reduceFunc(newRes.income);
+      newRes.totalIncomePlans = reduceFunc(newRes.incomePlans);
 
+      const yesterdayIncome = await this.getYesterdayIncome(date, bcode);
+      const currentIncome = Number(reduceFunc(newRes.income).toFixed(2));
+      let calc = 0;
+      if (yesterdayIncome !== 0) {
+        calc = Number(
+          (((currentIncome - yesterdayIncome) / yesterdayIncome) * 100).toFixed(
+            2,
+          ),
+        );
+      } else {
+        calc = currentIncome > 0 ? 100 : 0; // or you can handle it differently if you want
+      }
+      newRes.income_pct_change = calc;
       return newRes ?? {};
     } catch (e) {
       return e.message;
@@ -224,8 +238,8 @@ export class BranchService {
           incomePlans: incomePlans.map((m) => m.amount),
           income: income.map((m) => m.amount),
           incomeCodes: codes,
-          totalIncome: this.calcTotalFunc(income),
-          totalIncomePlans: this.calcTotalFunc(incomePlans),
+          totalIncome: reduceFunc(income.map((m) => m.amount)),
+          totalIncomePlans: reduceFunc(incomePlans.map((m) => m.amount)),
         };
 
         newRes.push(itx);
@@ -306,7 +320,7 @@ export class BranchService {
       SELECT 
         ms.month_start AS date,
         COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) AS branchId,
-        COALESCE(SUM(p.profit_amount), 0) AS amount
+        COALESCE(p.profit_amount, 0) AS amount
       FROM month_series ms
       LEFT JOIN profit p ON DATE_FORMAT(p.date, '%Y-%m-01') = ms.month_start
       ${branchId ? 'AND p.branchId = ?' : ''}
@@ -385,8 +399,194 @@ export class BranchService {
     return this.changeResults(results, planTotalPla, branchId, 'year');
   }
 
+  async getIncomePercent(bcode?: string, date?: string): Promise<any> {
+    try {
+      const queryDate = moment(date).toDate();
+      const year = moment(queryDate).year().toString();
+      const whereCondition = {
+        code: bcode ? Number(bcode) : null,
+        income: {
+          date: queryDate, // Example with date range
+        },
+        // incomePlans: {
+        //   year: year, // Example with date range
+        // },
+      } as FindOptionsWhere<Branch>;
+
+      const items = await this.branchRepository.find({
+        relations: {
+          incomePlans: { income_code: true },
+          income: { income_code: true },
+        },
+        where: whereCondition,
+      });
+
+      const mapitems = items.map((m: any) => {
+        const planIncomes = m.incomePlans.map((mm) => {
+          return {
+            name: mm.income_code.description,
+            amount: mm.amount,
+          };
+        });
+
+        const incomes = m.income.map((mm) => {
+          return {
+            name: mm.income_code.description,
+            amount: mm.amount,
+          };
+        });
+
+        const mapPercent = incomes.map((mm) => {
+          const checkItem = planIncomes.find((f) => f.name === mm.name);
+          return {
+            name: mm.name,
+            income: mm.amount,
+            planIncomes: checkItem.amount,
+          };
+        });
+
+        return {
+          name: m.name,
+          percents: mapPercent,
+          //percnet: ((incomes / planIncoems) * 100).toFixed(2)
+        };
+      });
+
+      const groupedData = {};
+
+      const mapData = mapitems.map((m) => m.percents);
+      mapData.forEach((array) => {
+        array.forEach((item) => {
+          const name = item.name;
+          const income = parseFloat(item.income);
+          const planIncomes = parseFloat(item.planIncomes);
+
+          if (!groupedData[name]) {
+            groupedData[name] = {
+              name: name,
+              income: income,
+              planIncomes: planIncomes,
+            };
+          } else {
+            groupedData[name].income += income;
+            groupedData[name].planIncomes += planIncomes;
+          }
+        });
+      });
+
+      const result = Object.values(groupedData).map((item: any) => ({
+        name: item.name,
+        income: item.income,
+        planIncomes: item.planIncomes,
+        percent:
+          (item.income / item.planIncomes) * 100
+            ? Number(((item.income / item.planIncomes) * 100).toFixed(2))
+            : 0,
+      }));
+      const getBranch = items.find((f) => String(f.code) === bcode);
+
+      return {
+        branch: bcode ? getBranch?.name : 'all branch',
+        percent: result,
+      };
+    } catch (e) {
+      return e.message;
+    }
+  }
+
+  async getExpensePercent(bcode?: string, date?: string): Promise<any> {
+    const queryDate = moment(date).toDate();
+    const year = moment(queryDate).year().toString();
+    const whereCondition = {
+      code: bcode ? Number(bcode) : null,
+      expense: {
+        date: queryDate, // Example with date range
+      },
+      // incomePlans: {
+      //   year: year, // Example with date range
+      // },
+    } as FindOptionsWhere<Branch>;
+
+    const items = await this.branchRepository.find({
+      relations: {
+        expensePlans: { expense_code: true },
+        expense: { expense_code: true },
+      },
+      where: whereCondition,
+    });
+
+    const mapitems = items.map((m: any) => {
+      const planExpense = m.expensePlans.map((mm) => {
+        return {
+          name: mm.expense_code.description,
+          amount: mm.amount,
+        };
+      });
+
+      const expense = m.expense.map((mm) => {
+        return {
+          name: mm.expense_code.description,
+          amount: mm.amount,
+        };
+      });
+
+      const mapPercent = expense.map((mm) => {
+        const checkItem = planExpense.find((f) => f.name === mm.name);
+        return {
+          name: mm.name,
+          expense: mm.amount,
+          planExpense: checkItem.amount,
+        };
+      });
+
+      return {
+        name: m.name,
+        percents: mapPercent,
+      };
+    });
+
+    const groupedData = {};
+
+    const mapData = mapitems.map((m) => m.percents);
+    mapData.forEach((array) => {
+      array.forEach((item) => {
+        const name = item.name;
+        const expense = parseFloat(item.expense);
+        const planExpense = parseFloat(item.planExpense);
+
+        if (!groupedData[name]) {
+          groupedData[name] = {
+            name: name,
+            expense: expense,
+            planExpense: planExpense,
+          };
+        } else {
+          groupedData[name].expense += expense;
+          groupedData[name].planExpense += planExpense;
+        }
+      });
+    });
+
+    const result = Object.values(groupedData).map((item: any) => ({
+      name: item.name,
+      expense: item.expense,
+      planExpense: item.planExpense,
+      percent:
+        (item.expense / item.planExpense) * 100
+          ? Number(((item.expense / item.planExpense) * 100).toFixed(2))
+          : 0,
+    }));
+
+    const getBranch = items.find((f) => String(f.code) === bcode);
+
+    return {
+      branch: bcode ? getBranch?.name : 'all branch',
+      percent: result,
+    };
+  }
+
   // user char 2
-  async expense(bcode: string, date: string) {
+  async expense(bcode?: string, date?: string) {
     const queryDate = moment(date).toDate();
     const year = moment(queryDate).year().toString();
 
@@ -468,8 +668,23 @@ export class BranchService {
       newRes.expense = this.flatData(allExpense.flat());
     }
 
-    newRes.totalExpense = this.calcTotalFunc(newRes.expense);
-    newRes.totalExpensePlans = this.calcTotalFunc(newRes.expensePlans);
+    newRes.totalExpensePlans = reduceFunc(newRes.expensePlans);
+    newRes.totalExpense = reduceFunc(newRes.expense);
+
+    const yesterdayExpense = await this.getYesterdayExpense(date, bcode);
+    const currentExpense = Number(reduceFunc(newRes.expense).toFixed(2));
+    let calc = 0;
+    if (yesterdayExpense !== 0) {
+      calc = Number(
+        (
+          ((currentExpense - yesterdayExpense) / yesterdayExpense) *
+          100
+        ).toFixed(2),
+      );
+    } else {
+      calc = currentExpense > 0 ? 100 : 0; // or you can handle it differently if you want
+    }
+    newRes.expense_pct_change = calc;
 
     return newRes ?? {};
   }
@@ -532,8 +747,8 @@ export class BranchService {
         expensePlans: expensePlans.map((m) => m.amount),
         expense: expense.map((m) => m.amount),
         expenseCodes: codes,
-        totalExpense: this.calcTotalFunc(expense),
-        totalExpensePlans: this.calcTotalFunc(expensePlans),
+        totalExpense: reduceFunc(expense.map((m) => m.amount)),
+        totalExpensePlans: reduceFunc(expensePlans.map((m) => m.amount)),
       };
       newRes.push(itx);
     });
@@ -586,13 +801,6 @@ export class BranchService {
     return myAllPlans.map((m) => Number(m.amount.toFixed(2)));
   }
 
-  private calcTotalFunc(data: any[]): number {
-    const total = data.reduce((acc, item) => {
-      return acc + Number(item);
-    }, 0);
-    return total;
-  }
-
   private changeResults(
     data: any,
     planTotalPla: any,
@@ -613,7 +821,7 @@ export class BranchService {
             option === 'year'
               ? e.year
               : option === 'month'
-                ? moment(e.data).format('YYYY MMM')
+                ? moment(e.date).format('YYYY MMM')
                 : moment(e.date).format('YYYY MMM DD'),
           branchId: e.branchId,
           amount: Number(e.amount),
@@ -648,5 +856,129 @@ export class BranchService {
       value,
       totalPlanIncome,
     };
+  }
+
+  private async getYesterdayIncome(
+    date?: string,
+    bcode?: string,
+  ): Promise<number> {
+    const queryDate = moment(date).add(-1, 'day').toDate();
+    const year = moment(queryDate).year().toString();
+    const whereCondition = {
+      code: bcode ? Number(bcode) : null,
+      income: {
+        date: queryDate, // Example with date range
+      },
+      // incomePlans: {
+      //   year: year, // Example with date range
+      // },
+    } as FindOptionsWhere<Branch>;
+
+    const items = await this.branchRepository.find({
+      relations: {
+        incomePlans: { income_code: true },
+        income: { income_code: true },
+      },
+      where: whereCondition,
+    });
+
+    const newRes: any = {};
+    const allIncomePlans: any[] = [];
+    const allIncome: any[] = [];
+
+    items.map((item) => {
+      const incomePlans = item.incomePlans.map((incomePlan) => ({
+        code: incomePlan.income_code.code,
+        amount: Number(incomePlan.amount),
+      }));
+
+      const income = item.income.map((income) => ({
+        code: income.income_code.code,
+        amount: Number(income.amount),
+      }));
+
+      if (bcode) {
+        newRes.name = item.name;
+        newRes.code = item.code;
+        newRes.incomePlans = incomePlans.map((m) => m.amount);
+        newRes.income = income.map((m) => m.amount);
+      } else {
+        allIncomePlans.push(incomePlans);
+        allIncome.push(income);
+        newRes.name = 'All Branch';
+        newRes.code = '';
+        newRes.incomePlans = [];
+        newRes.income = [];
+      }
+    });
+
+    if (!bcode) {
+      newRes.incomePlans = this.flatData(allIncomePlans.flat());
+      newRes.income = this.flatData(allIncome.flat());
+    }
+
+    return newRes.income ? reduceFunc(newRes.income) : 0;
+  }
+
+  private async getYesterdayExpense(
+    date?: string,
+    bcode?: string,
+  ): Promise<number> {
+    const queryDate = moment(date).toDate();
+    const year = moment(queryDate).year().toString();
+
+    const whereCondition = {
+      code: bcode ? Number(bcode) : null,
+      income: {
+        date: queryDate, // Example with date range
+      },
+      expensePlans: {
+        year,
+      },
+    } as FindOptionsWhere<Branch>;
+
+    const items = await this.branchRepository.find({
+      relations: {
+        expensePlans: { expense_code: true },
+        expense: { expense_code: true },
+      },
+      where: whereCondition,
+    });
+
+    const newRes: any = {};
+    const allExpensePlans: any[] = [];
+    const allExpense: any[] = [];
+    items.map((item) => {
+      const expensePlans = item.expensePlans.map((expense) => ({
+        code: expense.expense_code.code,
+        amount: Number(expense.amount),
+      }));
+
+      const expenses = item.expense.map((exp) => ({
+        code: exp.expense_code.code,
+        amount: Number(exp.amount),
+      }));
+
+      if (bcode) {
+        newRes.name = item.name;
+        newRes.code = item.code;
+        newRes.expensePlans = expensePlans.map((m) => m.amount);
+        newRes.expense = expenses.map((m) => m.amount);
+      } else {
+        allExpensePlans.push(expensePlans);
+        allExpense.push(expenses);
+        newRes.name = 'All Branch';
+        newRes.code = '';
+        newRes.expensePlans = [];
+        newRes.expense = [];
+      }
+    });
+
+    if (!bcode) {
+      newRes.expensePlans = this.flatData(allExpensePlans.flat());
+      newRes.expense = this.flatData(allExpense.flat());
+    }
+
+    return newRes.expense ? reduceFunc(newRes.expense) : 0;
   }
 }
