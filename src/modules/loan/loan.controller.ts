@@ -59,6 +59,15 @@ export class LoanController {
     return await this.loanService.findLoanYearly(bcode, date);
   }
 
+  @Get('all')
+  @ApiQuery({ name: 'date', required: false })
+  async loanAll(
+    @Query('date', new DefaultValuePipe(0))
+    date: string,
+  ) {
+    return await this.loanService.findLoanAll(date);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.loanService.findOne(+id);

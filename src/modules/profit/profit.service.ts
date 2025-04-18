@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import { DatabaseService } from 'src/database/database.service';
 import * as XLSX from 'xlsx';
-import { reduceFunc } from '../../share/functions/reduceFunc';
+import { reduceFunc } from '../../share/functions/reduce-func';
 
 @Injectable()
 export class ProfitService {
