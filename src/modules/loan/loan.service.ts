@@ -246,23 +246,37 @@ export class LoanService {
   }
 
   async findLoanAll(date?: string): Promise<any> {
-    // const whereCondition: any = null;
-    // if (date) {
-    //   whereCondition.date = moment(date).format('YYYY-MM-DD')
-    // }
-    //
-    // const findItems = await  this.loanRepository.find({
-    //   where: whereCondition,
-    //   relations: { branch: true, loan_plan: true},
-    // });
-    //
-    // return  findItems;
-
-    // If date is provided, use it directly
     if (date) {
       const formattedDate: any = moment(date).format('YYYY-MM-DD');
       return this.loanRepository.find({
         where: { date: formattedDate },
+        relations: ['branch', 'loan_plan'],
+        order: { date: 'DESC' },
+      });
+    }
+
+    const lastDate = await this.loanRepository
+      .createQueryBuilder('loan')
+      .select('MAX(loan.date)', 'maxDate')
+      .getRawOne()
+      .then((result) => result?.maxDate);
+
+    if (!lastDate) {
+      return []; // No loans exist in the database
+    }
+
+    return this.loanRepository.find({
+      where: { date: lastDate },
+      relations: ['branch', 'loan_plan'],
+      order: { branch: { code: 'ASC' } }, // Optional: order by branch code
+    });
+  }
+
+  async totalLoan(date?: string, bcode?: string): Promise<any> {
+    if (date) {
+      const formattedDate: any = moment(date).format('YYYY-MM-DD');
+      return this.loanRepository.find({
+        where: { date: formattedDate, branch: { code: Number(bcode) } },
         relations: ['branch', 'loan_plan'],
         order: { date: 'DESC' },
       });
@@ -280,8 +294,8 @@ export class LoanService {
     }
 
     // Return all loans for the last available date
-    return this.loanRepository.find({
-      where: { date: lastDate },
+    return await this.loanRepository.find({
+      where: { date: lastDate, branch: { code: Number(bcode) } },
       relations: ['branch', 'loan_plan'],
       order: { branch: { code: 'ASC' } }, // Optional: order by branch code
     });

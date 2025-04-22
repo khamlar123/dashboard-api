@@ -68,6 +68,17 @@ export class LoanController {
     return await this.loanService.findLoanAll(date);
   }
 
+  @Get('total')
+  @ApiQuery({ name: 'date', required: false })
+  async loanTotal(
+    @Query('date', new DefaultValuePipe(0))
+    date: string,
+    @Query('bcode', new DefaultValuePipe(0))
+    bcode: string,
+  ) {
+    return await this.loanService.totalLoan(date, bcode);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.loanService.findOne(+id);
