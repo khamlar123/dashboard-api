@@ -18,13 +18,18 @@ export class LoanPlanService {
   ) {}
 
   async findAll() {
-    return await this.loanPlanRepository.find();
+    return await this.loanPlanRepository.find({
+      relations: { branch: true },
+    });
   }
 
   async findOne(id: number) {
     return await this.loanPlanRepository.findOne({
       where: {
         id: id,
+      },
+      relations: {
+        branch: true,
       },
     });
   }

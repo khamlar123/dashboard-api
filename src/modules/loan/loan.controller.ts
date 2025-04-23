@@ -16,6 +16,9 @@ import { CreateLoanDto } from '../../dto/create-loan.dto';
 import { UpdateLoanDto } from '../../dto/update-loan.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiQuery } from '@nestjs/swagger';
+import axios from 'axios';
+import * as jwt from 'jsonwebtoken';
+import { LoginDto } from '../../dto/login.dto';
 
 @Controller('loan')
 export class LoanController {
@@ -57,6 +60,26 @@ export class LoanController {
     bcode: string,
   ) {
     return await this.loanService.findLoanYearly(bcode, date);
+  }
+
+  @Get('all')
+  @ApiQuery({ name: 'date', required: false })
+  async loanAll(
+    @Query('date', new DefaultValuePipe(0))
+    date: string,
+  ) {
+    return await this.loanService.findLoanAll(date);
+  }
+
+  @Get('total')
+  @ApiQuery({ name: 'date', required: false })
+  async loanTotal(
+    @Query('date', new DefaultValuePipe(0))
+    date: string,
+    @Query('bcode', new DefaultValuePipe(0))
+    bcode: string,
+  ) {
+    return await this.loanService.totalLoan(date, bcode);
   }
 
   @Get(':id')

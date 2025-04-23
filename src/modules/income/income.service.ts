@@ -19,6 +19,7 @@ export class IncomeService {
     @InjectRepository(IncomeCode)
     private readonly incomeCodeRepository: Repository<IncomeCode>,
   ) {}
+
   async create(dto: CreateIncomeDto): Promise<Income> {
     try {
       const {
@@ -105,17 +106,16 @@ export class IncomeService {
       const branch = getBranch(m.branch_code.padEnd(6, '0'));
       const incomeCode = getIncomeCode(m.id);
       return {
-        branch: { code: branch?.code },
+        branch: branch,
         amount: m.bal,
         scaled_amount: m.balM,
         date: moment(m.ac_date, 'YYYYMMDD').endOf('day').format('YYYY-MM-DD'),
-        income_code: { id: incomeCode?.id },
+        income_code: incomeCode,
         description: '',
       };
     });
 
     const addItems = await this.incomeRepository.save(mapData);
-
     return addItems;
   }
 }

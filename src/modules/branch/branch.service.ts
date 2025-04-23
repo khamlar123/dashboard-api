@@ -11,7 +11,7 @@ import { IncomeCode } from 'src/entity/income_code.entity';
 import { ExpensePlan } from 'src/entity/expense_plan.entity';
 import { ExpenseCode } from 'src/entity/expense_code.entity';
 import { DatabaseService } from 'src/database/database.service';
-import { reduceFunc } from '../../share/functions/reduceFunc';
+import { reduceFunc } from '../../share/functions/reduce-func';
 
 @Injectable()
 export class BranchService {
@@ -269,21 +269,18 @@ export class BranchService {
       const before30Day = moment(myDate).add(-30, 'day').format('YYYY-MM-DD');
 
       const dateSeriesQuery = `
-      WITH RECURSIVE date_series AS (
-        SELECT ? AS date
-        UNION ALL
-        SELECT DATE_ADD(date, INTERVAL 1 DAY)
-        FROM date_series
-        WHERE DATE_ADD(date, INTERVAL 1 DAY) <= ? 
-      )
-      SELECT 
-        ds.date,
-        COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) as branchId,
-        COALESCE(p.profit_amount, 0) as amount
-      FROM date_series ds
-      LEFT JOIN profit p ON DATE(p.date) = ds.date ${branchId ? 'AND p.branchId = ?' : ''}
-      ORDER BY ds.date
-    `;
+          WITH RECURSIVE date_series AS (SELECT ? AS date
+          UNION ALL
+          SELECT DATE_ADD(date, INTERVAL 1 DAY)
+          FROM date_series
+          WHERE DATE_ADD(date, INTERVAL 1 DAY) <= ? )
+          SELECT ds.date,
+                 COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) as branchId,
+                 COALESCE(p.profit_amount, 0)                             as amount
+          FROM date_series ds
+                   LEFT JOIN profit p ON DATE (p.date) = ds.date ${branchId ? 'AND p.branchId = ?' : ''}
+          ORDER BY ds.date
+      `;
 
       const [results] = await this.db.query(dateSeriesQuery, [
         before30Day,
@@ -292,7 +289,9 @@ export class BranchService {
       ]);
 
       const year = moment(myDate).year();
-      const queryFindPlanProfit = `select * from profit_plan where year = ? ${branchId ? 'AND branchId = ?' : ''} `;
+      const queryFindPlanProfit = `select *
+                                   from profit_plan
+                                   where year = ? ${branchId ? 'AND branchId = ?' : ''} `;
       const [planTotalPla] = await this.db.query(queryFindPlanProfit, [
         year,
         branchId,
@@ -310,22 +309,20 @@ export class BranchService {
     const formattedDate = currentDate.toISOString().split('T')[0];
 
     const monthlyProfitQuery = `
-      WITH RECURSIVE month_series AS (
-        SELECT DATE_FORMAT(DATE_SUB(?, INTERVAL 6 MONTH), '%Y-%m-01') AS month_start
-        UNION ALL
-        SELECT DATE_ADD(month_start, INTERVAL 1 MONTH)
-        FROM month_series
-        WHERE DATE_ADD(month_start, INTERVAL 1 MONTH) <= ?
-      )
-      SELECT 
-        ms.month_start AS date,
+        WITH RECURSIVE month_series AS (SELECT DATE_FORMAT(DATE_SUB(?, INTERVAL 6 MONTH), '%Y-%m-01') AS month_start
+                                        UNION ALL
+                                        SELECT DATE_ADD(month_start, INTERVAL 1 MONTH)
+                                        FROM month_series
+                                        WHERE DATE_ADD(month_start, INTERVAL 1 MONTH) <= ?)
+        SELECT ms.month_start AS date,
         COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) AS branchId,
         COALESCE(p.profit_amount, 0) AS amount
-      FROM month_series ms
-      LEFT JOIN profit p ON DATE_FORMAT(p.date, '%Y-%m-01') = ms.month_start
-      ${branchId ? 'AND p.branchId = ?' : ''}
-      GROUP BY ms.month_start, p.branchId
-      ORDER BY ms.month_start
+        FROM month_series ms
+            LEFT JOIN profit p
+        ON DATE_FORMAT(p.date, '%Y-%m-01') = ms.month_start
+            ${branchId ? 'AND p.branchId = ?' : ''}
+        GROUP BY ms.month_start, p.branchId
+        ORDER BY ms.month_start
     `;
 
     const [results] = await this.db.query(monthlyProfitQuery, [
@@ -351,7 +348,9 @@ export class BranchService {
     }
 
     const year = moment(currentDate).year();
-    const queryFindPlanProfit = `select * from profit_plan where year = ? ${branchId ? 'AND branchId = ?' : ''} `;
+    const queryFindPlanProfit = `select *
+                                 from profit_plan
+                                 where year = ? ${branchId ? 'AND branchId = ?' : ''} `;
     const [planTotalPla] = await this.db.query(queryFindPlanProfit, [
       year,
       branchId,
@@ -366,22 +365,20 @@ export class BranchService {
     const startYear = currentYear - 3;
 
     const yearlyProfitQuery = `
-      WITH RECURSIVE year_series AS (
-        SELECT ? AS year
+        WITH RECURSIVE year_series AS (SELECT ? AS year
         UNION ALL
         SELECT year + 1
         FROM year_series
         WHERE year + 1 <= ?
-      )
-      SELECT 
-        ys.year,
-        COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) AS branchId,
-        COALESCE(SUM(p.profit_amount), 0) AS amount
-      FROM year_series ys
-      LEFT JOIN profit p ON YEAR(p.date) = ys.year
-      ${branchId ? 'AND p.branchId = ?' : ''}
-      GROUP BY ys.year, p.branchId
-      ORDER BY ys.year
+            )
+        SELECT ys.year,
+               COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) AS branchId,
+               COALESCE(SUM(p.profit_amount), 0)                        AS amount
+        FROM year_series ys
+                 LEFT JOIN profit p ON YEAR (p.date) = ys.year
+            ${branchId ? 'AND p.branchId = ?' : ''}
+        GROUP BY ys.year, p.branchId
+        ORDER BY ys.year
     `;
 
     const [results] = await this.db.query(yearlyProfitQuery, [
@@ -390,7 +387,9 @@ export class BranchService {
       ...(branchId ? [branchId] : []),
     ]);
 
-    const queryFindPlanProfit = `select * from profit_plan where year = ? ${branchId ? 'AND branchId = ?' : ''} `;
+    const queryFindPlanProfit = `select *
+                                 from profit_plan
+                                 where year = ? ${branchId ? 'AND branchId = ?' : ''} `;
     const [planTotalPla] = await this.db.query(queryFindPlanProfit, [
       year,
       branchId,
