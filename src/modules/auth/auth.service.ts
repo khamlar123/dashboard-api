@@ -1,21 +1,21 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { HttpService } from '@nestjs/axios';
-import { LoginDto } from '../dto/login.dto';
+import { LoginDto } from '../../dto/login.dto';
 import axios from 'axios';
-import { ValidateTokenDto } from '../dto/validate-token.dto';
+import { ValidateTokenDto } from '../../dto/validate-token.dto';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import * as moment from 'moment';
-import { RefreshTokenDto } from '../dto/refresh.dto';
+import { RefreshTokenDto } from '../../dto/refresh.dto';
 import {
   loginFunc,
   logoutFunc,
   refreshTokenFunc,
   validateTokenFunc,
-} from '../keycloak/keycloak.service';
-import { IRefreshToken } from '../common/interfaces/refresh-token.intrerface';
-import { iKeycloakLogin } from '../common/interfaces/keycloak-login.interface';
+} from '../../common/keycloak/keycloak.service';
+import { IRefreshToken } from '../../common/interfaces/refresh-token.intrerface';
+import { iKeycloakLogin } from '../../common/interfaces/keycloak-login.interface';
 
 @Injectable()
 export class AuthService {

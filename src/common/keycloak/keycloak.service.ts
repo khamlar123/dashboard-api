@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { IRefreshToken } from '../common/interfaces/refresh-token.intrerface';
+import { IRefreshToken } from '../interfaces/refresh-token.intrerface';
 import * as jwt from 'jsonwebtoken';
-import { LoginDto } from '../dto/login.dto';
-import { iKeycloakLogin } from '../common/interfaces/keycloak-login.interface';
+import { LoginDto } from '../../dto/login.dto';
+import { iKeycloakLogin } from '../interfaces/keycloak-login.interface';
 
 export const loginFunc = async (dto: LoginDto): Promise<iKeycloakLogin> => {
   const params = new URLSearchParams();

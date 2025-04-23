@@ -1,10 +1,10 @@
 import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from '../dto/login.dto';
-import { ValidateTokenDto } from '../dto/validate-token.dto';
-import { RefreshTokenDto } from '../dto/refresh.dto';
+import { LoginDto } from '../../dto/login.dto';
+import { ValidateTokenDto } from '../../dto/validate-token.dto';
+import { RefreshTokenDto } from '../../dto/refresh.dto';
 import { Response } from 'express';
-import { cookie } from '../share/functions/cookie';
+import { cookie } from '../../share/functions/cookie';
 
 @Controller('auth')
 export class AuthController {

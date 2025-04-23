@@ -12,7 +12,7 @@ import { IRefreshToken } from '../interfaces/refresh-token.intrerface';
 import {
   refreshTokenFunc,
   validateTokenFunc,
-} from '../../keycloak/keycloak.service';
+} from '../keycloak/keycloak.service';
 
 @Injectable()
 export class AuthGuard {

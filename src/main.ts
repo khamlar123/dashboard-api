@@ -1,10 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ResponseInterceptor } from './Interceptors/response.interceptor';
-import { HttpExceptionFilter } from './Interceptors/http-exception.filter';
+import { ResponseInterceptor } from './common/Interceptors/response.interceptor';
+import { HttpExceptionFilter } from './common/Interceptors/http-exception.filter';
 //import { ValidationPipe } from './common/pipes/validation.pipe';
-import { LoggingInterceptor } from './Interceptors/logging.interceptor';
+import { LoggingInterceptor } from './common/Interceptors/logging.interceptor';
 import { Logger } from '@nestjs/common';
 import { AuthSwagger } from './common/middleware/auth.swagger';
 
