@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { DatabaseService } from 'src/database/database.service';
+import { DatabaseService } from 'src/common/database/database.service';
 import { Cron } from '@nestjs/schedule';
 import * as moment from 'moment';
 import { InjectRepository } from '@nestjs/typeorm';

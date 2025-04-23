@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
 import * as moment from 'moment';
 import { Branch } from '../../entity/branch.entity';
 import { LoanPlan } from '../../entity/loan_plan.entity';
-import { DatabaseService } from '../../database/database.service';
+import { DatabaseService } from '../../common/database/database.service';
 
 @Injectable()
 export class LoanService {

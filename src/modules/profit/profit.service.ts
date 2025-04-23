@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as moment from 'moment';
-import { DatabaseService } from 'src/database/database.service';
+import { DatabaseService } from 'src/common/database/database.service';
 import * as XLSX from 'xlsx';
 import { reduceFunc } from '../../share/functions/reduce-func';
 

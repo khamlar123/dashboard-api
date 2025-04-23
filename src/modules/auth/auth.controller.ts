@@ -1,10 +1,10 @@
 import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from '../dto/login.dto';
-import { ValidateTokenDto } from '../dto/validate-token.dto';
-import { RefreshTokenDto } from '../dto/refresh.dto';
+import { LoginDto } from '../../dto/login.dto';
+import { ValidateTokenDto } from '../../dto/validate-token.dto';
+import { RefreshTokenDto } from '../../dto/refresh.dto';
 import { Response } from 'express';
-import { cookie } from '../share/functions/cookie';
+import { cookie } from '../../share/functions/cookie';
 
 @Controller('auth')
 export class AuthController {
@@ -38,12 +38,16 @@ export class AuthController {
       throw new Error('No refresh token found');
     }
 
-    await this.authService.logoutFromKeycloak(refreshToken);
-
+    const logoutItem = await this.authService.logoutFromKeycloak(refreshToken);
+    if (logoutItem) {
+      res.clearCookie('accessToken');
+      res.clearCookie('refreshToken');
+      return res.send({
+        message: 'Logged out successfully',
+        data: {},
+        status: 204,
+      });
+    }
     // Clear cookies
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
-
-    return res.send({ message: 'Logged out successfully' });
   }
 }

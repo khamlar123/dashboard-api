@@ -3,12 +3,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-
-import { TestModule } from './test/test.module';
 import { logger } from './common/middleware/logger.middleware';
 import { AuthMiddleware } from './common/middleware/auth.middleware';
 import { MulterModule } from '@nestjs/platform-express';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { BranchModule } from './modules/branch/branch.module';
 import { IncomePlanModule } from './modules/income_plan/income_plan.module';
 import { IncomeCodeModule } from './modules/income_code/income_code.module';

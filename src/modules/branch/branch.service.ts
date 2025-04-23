@@ -10,7 +10,7 @@ import { IncomePlan } from 'src/entity/income_plan.entity';
 import { IncomeCode } from 'src/entity/income_code.entity';
 import { ExpensePlan } from 'src/entity/expense_plan.entity';
 import { ExpenseCode } from 'src/entity/expense_code.entity';
-import { DatabaseService } from 'src/database/database.service';
+import { DatabaseService } from 'src/common/database/database.service';
 import { reduceFunc } from '../../share/functions/reduce-func';
 
 @Injectable()
