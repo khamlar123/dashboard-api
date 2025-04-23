@@ -8,6 +8,14 @@ import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import * as moment from 'moment';
 import { RefreshTokenDto } from '../dto/refresh.dto';
+import {
+  loginFunc,
+  logoutFunc,
+  refreshTokenFunc,
+  validateTokenFunc,
+} from '../keycloak/keycloak.service';
+import { IRefreshToken } from '../common/interfaces/refresh-token.intrerface';
+import { iKeycloakLogin } from '../common/interfaces/keycloak-login.interface';
 
 @Injectable()
 export class AuthService {
@@ -17,147 +25,50 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto, res: Response) {
-    const params = new URLSearchParams();
-    params.append('username', dto.username);
-    params.append('password', dto.password);
-    params.append('client_id', process.env.KEYCLOAK_CLIENT_ID || '');
-    params.append('client_secret', process.env.KEYCLOAK_SECRET || '');
-    params.append('grant_type', process.env.KEYCLOAK_TYPE || 'password');
-    try {
-      const response = await axios.post(
-        `${process.env.KEYCLOAK_URL}/protocol/openid-connect/token`,
-        params,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        },
-      );
-      const accessToken = response.data.access_token;
-      const refreshToken = response.data.refresh_token;
-      const decoded = jwt.decode(accessToken) as any;
+    const login: iKeycloakLogin = await loginFunc(dto);
 
-      if (!response.data.expires_in)
-        throw new InternalServerErrorException('Access token is invalid');
+    if (!login.expires_in)
+      throw new InternalServerErrorException('Access token is invalid');
 
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        expires: moment(Date.now() + response.data.expires_in * 1000).toDate(),
-      });
+    res.cookie('accessToken', login.access_token, {
+      httpOnly: true,
+      secure: this.configService.get('NODE_ENV') === 'production',
+      expires: moment(Date.now() + login.expires_in * 1000).toDate(),
+    });
 
-      if (!response.data.refresh_expires_in)
-        throw new InternalServerErrorException('Refresh token is invalid');
+    if (!login.refresh_expires)
+      throw new InternalServerErrorException('Refresh token is invalid');
 
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        expires: moment(
-          Date.now() + response.data.refresh_expires_in * 1000,
-        ).toDate(),
-      });
+    res.cookie('refreshToken', login.refresh_token, {
+      httpOnly: true,
+      secure: this.configService.get('NODE_ENV') === 'production',
+      expires: moment(Date.now() + login.refresh_expires * 1000).toDate(),
+    });
 
-      const result = {
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        expires_in: response.data.expires_in,
-        user: {
-          username: decoded.preferred_username,
-          email: decoded.email,
-          roles: decoded.realm_access?.roles || [],
-        },
-      };
-      return result;
-    } catch (error) {
-      throw new Error('Authentication failed');
-    }
+    return login;
   }
 
   async validateToken(dto: ValidateTokenDto): Promise<boolean> {
-    const params = new URLSearchParams();
-    params.append('client_id', process.env.KEYCLOAK_CLIENT_ID || '');
-    params.append('client_secret', process.env.KEYCLOAK_SECRET || '');
-    params.append('token', dto.token);
-
-    const response = await axios.post(
-      `${process.env.KEYCLOAK_URL}/protocol/openid-connect/token/introspect`,
-      params,
-      {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      },
-    );
-    return response.data?.active || false;
+    return validateTokenFunc(dto.token);
   }
 
   async refresh(dto: RefreshTokenDto, res: Response) {
-    const params = new URLSearchParams();
-    params.append('refresh_token', dto.refreshToken);
-    params.append('client_id', process.env.KEYCLOAK_CLIENT_ID || '');
-    params.append('client_secret', process.env.KEYCLOAK_SECRET || '');
-    params.append('grant_type', 'refresh_token');
-    try {
-      const response = await axios.post(
-        `${process.env.KEYCLOAK_URL}/protocol/openid-connect/token`,
-        params,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        },
-      );
+    const refreshCall: IRefreshToken = await refreshTokenFunc(dto.refreshToken);
+    res.cookie('accessToken', refreshCall.accessToken, {
+      httpOnly: true,
+      secure: false,
+      expires: moment(Date.now() + refreshCall.expires * 1000).toDate(),
+    });
 
-      const accessToken = response.data.access_token;
-      const refreshToken = response.data.refresh_token;
-      const decoded = jwt.decode(accessToken) as any;
-
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        expires: moment(Date.now() + response.data.expires_in * 1000).toDate(),
-      });
-
-      if (!response.data.refresh_expires_in)
-        throw new InternalServerErrorException('Refresh token is invalid');
-
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        expires: moment(
-          Date.now() + response.data.refresh_expires_in * 1000,
-        ).toDate(),
-      });
-
-      return {
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        expires_in: response.data.expires_in,
-        user: {
-          username: decoded.preferred_username,
-          email: decoded.email,
-          roles: decoded.realm_access?.roles || [],
-        },
-      };
-    } catch (error) {
-      throw new Error('Authentication failed');
-    }
+    res.cookie('refreshToken', refreshCall.refreshToken, {
+      httpOnly: true,
+      secure: false,
+      expires: moment(Date.now() + refreshCall.expiresRefresh * 1000).toDate(),
+    });
+    return refreshCall;
   }
 
-  async logoutFromKeycloak(refreshToken: string) {
-    const params = new URLSearchParams();
-    params.append('client_id', process.env.KEYCLOAK_CLIENT_ID || '');
-    params.append('client_secret', process.env.KEYCLOAK_SECRET || '');
-    params.append('refresh_token', refreshToken);
-
-    const response = await axios.post(
-      `${process.env.KEYCLOAK_URL}/protocol/openid-connect/logout`,
-      params,
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      },
-    );
-
-    return response.status;
+  async logoutFromKeycloak(refreshToken: string): Promise<boolean> {
+    return await logoutFunc(refreshToken);
   }
 }

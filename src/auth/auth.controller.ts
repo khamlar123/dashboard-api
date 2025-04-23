@@ -38,12 +38,16 @@ export class AuthController {
       throw new Error('No refresh token found');
     }
 
-    await this.authService.logoutFromKeycloak(refreshToken);
-
+    const logoutItem = await this.authService.logoutFromKeycloak(refreshToken);
+    if (logoutItem) {
+      res.clearCookie('accessToken');
+      res.clearCookie('refreshToken');
+      return res.send({
+        message: 'Logged out successfully',
+        data: {},
+        status: 204,
+      });
+    }
     // Clear cookies
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
-
-    return res.send({ message: 'Logged out successfully' });
   }
 }
