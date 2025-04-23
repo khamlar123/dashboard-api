@@ -10,12 +10,14 @@ import {
   UploadedFile,
   Query,
   DefaultValuePipe,
+  UseGuards,
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
 import { CreateBranchDto } from '../../dto/create-branch.dto';
 import { UpdateBranchDto } from '../../dto/update-branch.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiQuery } from '@nestjs/swagger';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 @Controller('branch')
 export class BranchController {
@@ -27,6 +29,7 @@ export class BranchController {
   }
 
   @Get()
+  @UseGuards(AuthGuard)
   async findAll() {
     return await this.branchService.findAll();
   }
@@ -104,6 +107,7 @@ export class BranchController {
   ) {
     return await this.branchService.getPlanProfitYear(year, bcode);
   }
+
   @Get('expense')
   @ApiQuery({ name: 'bcode', required: false })
   async expense(
