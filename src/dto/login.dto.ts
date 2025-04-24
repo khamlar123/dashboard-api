@@ -7,4 +7,3 @@ export class LoginDto {
   @ApiProperty({ default: 'Apb123456' })
   password: string;
 }
-

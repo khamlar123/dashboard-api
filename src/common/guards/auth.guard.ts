@@ -4,9 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import axios from 'axios';
 import * as moment from 'moment';
-import { ConfigService } from '@nestjs/config';
 import { cookie } from '../../share/functions/cookie';
 import { IRefreshToken } from '../interfaces/refresh-token.intrerface';
 import {
@@ -16,7 +14,7 @@ import {
 
 @Injectable()
 export class AuthGuard {
-  constructor(private readonly configService: ConfigService) {}
+  constructor() {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
@@ -24,7 +22,7 @@ export class AuthGuard {
 
     const token: string = cookie(req, 'accessToken');
     const refreshToken: string = cookie(req, 'refreshToken');
-    if (token) {
+    if (token && refreshToken) {
       // check has token?
       return await validateTokenFunc(token);
     } else if (!token && refreshToken) {

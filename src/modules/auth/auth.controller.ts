@@ -1,8 +1,6 @@
-import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from '../../dto/login.dto';
-import { ValidateTokenDto } from '../../dto/validate-token.dto';
-import { RefreshTokenDto } from '../../dto/refresh.dto';
 import { Response } from 'express';
 import { cookie } from '../../share/functions/cookie';
 
@@ -19,16 +17,30 @@ export class AuthController {
   }
 
   @Post('validateToken')
-  async validateToken(@Body() dto: ValidateTokenDto): Promise<boolean> {
-    return await this.authService.validateToken(dto);
+  async validateToken(@Req() req: Request): Promise<boolean> {
+    const token: string = cookie(req, 'accessToken');
+    return await this.authService.validateToken(token);
   }
 
   @Post('refresh')
   async refresh(
-    @Body() dto: RefreshTokenDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return await this.authService.refresh(dto, res);
+    const refreshToken: string = cookie(req, 'refreshToken');
+    return await this.authService.refresh(refreshToken, res);
+  }
+
+  @Get('users')
+  async register(@Req() req: Request) {
+    const token: string = cookie(req, 'accessToken');
+    return await this.authService.users(token);
+  }
+
+  @Post('user-info')
+  async userInfo(@Req() req: Request) {
+    const token: string = cookie(req, 'accessToken');
+    return await this.authService.userInfo(token);
   }
 
   @Post('logout')
