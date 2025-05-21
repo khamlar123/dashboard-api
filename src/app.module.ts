@@ -25,7 +25,6 @@ import { LoanModule } from './modules/loan/loan.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-
     MulterModule.register({
       dest: './files', // Destination folder where uploaded files will be stored
     }),
