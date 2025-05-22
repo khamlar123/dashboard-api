@@ -1,17 +1,14 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import * as jwt from 'jsonwebtoken';
-import { HttpService } from '@nestjs/axios';
 import { LoginDto } from '../../dto/login.dto';
-import axios from 'axios';
-import { ValidateTokenDto } from '../../dto/validate-token.dto';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import * as moment from 'moment';
-import { RefreshTokenDto } from '../../dto/refresh.dto';
 import {
   loginFunc,
   logoutFunc,
   refreshTokenFunc,
+  userInfo,
+  users,
   validateTokenFunc,
 } from '../../common/keycloak/keycloak.service';
 import { IRefreshToken } from '../../common/interfaces/refresh-token.intrerface';
@@ -19,12 +16,9 @@ import { iKeycloakLogin } from '../../common/interfaces/keycloak-login.interface
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly configService: ConfigService) {}
 
-  async login(dto: LoginDto, res: Response) {
+  async login(dto: LoginDto, res: Response): Promise<any> {
     const login: iKeycloakLogin = await loginFunc(dto);
 
     if (!login.expires_in)
@@ -48,12 +42,12 @@ export class AuthService {
     return login;
   }
 
-  async validateToken(dto: ValidateTokenDto): Promise<boolean> {
-    return validateTokenFunc(dto.token);
+  async validateToken(token: string): Promise<boolean> {
+    return validateTokenFunc(token);
   }
 
-  async refresh(dto: RefreshTokenDto, res: Response) {
-    const refreshCall: IRefreshToken = await refreshTokenFunc(dto.refreshToken);
+  async refresh(refreshToken: string, res: Response): Promise<any> {
+    const refreshCall: IRefreshToken = await refreshTokenFunc(refreshToken);
     res.cookie('accessToken', refreshCall.accessToken, {
       httpOnly: true,
       secure: false,
@@ -70,5 +64,13 @@ export class AuthService {
 
   async logoutFromKeycloak(refreshToken: string): Promise<boolean> {
     return await logoutFunc(refreshToken);
+  }
+
+  async users(token: string): Promise<any> {
+    return await users(token);
+  }
+
+  async userInfo(token: string): Promise<any> {
+    return await userInfo(token);
   }
 }

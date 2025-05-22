@@ -18,6 +18,7 @@ export class DatabaseService {
 
   private odsPool: Pool;
   private dashboardPool: Pool;
+
   constructor() {
     this.dashboardPool = createPool({
       host: process.env.DB_HOST,
@@ -45,7 +46,7 @@ export class DatabaseService {
     return rows;
   }
 
-  async calcProfit(procedureName: string, params: string): Promise<any> {
+  async procedure(procedureName: string, params: string): Promise<any> {
     const sql = `CALL dashboard.${procedureName}(?)`;
     const [results] = await this.dashboardPool.query(sql, [params]);
     return results;

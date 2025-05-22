@@ -39,8 +39,7 @@ export class BranchService {
 
   async findAll() {
     try {
-      const item = await this.branchRepository.find();
-      return item;
+      return await this.branchRepository.find();
     } catch (e) {
       return e.message;
     }
@@ -48,10 +47,9 @@ export class BranchService {
 
   async findOne(code: number) {
     try {
-      const item = await this.branchRepository.findOne({
+      return await this.branchRepository.findOne({
         where: { code },
       });
-      return item;
     } catch (e) {
       return e.message;
     }
@@ -74,21 +72,18 @@ export class BranchService {
   }
 
   // user char 1
-  async income(bcode?: string, date?: string) {
+  async income(bCode?: string, date?: string) {
     try {
       const queryDate = moment(date).toDate();
       const year = moment(queryDate).year().toString();
       const whereCondition = {
-        code: bcode ? Number(bcode) : null,
+        code: bCode ? Number(bCode) : null,
         income: {
           date: queryDate, // Example with date range
         },
-        // incomePlans: {
-        //   year: year, // Example with date range
-        // },
       } as FindOptionsWhere<Branch>;
 
-      const items = await this.branchRepository.find({
+      const items: Branch[] = await this.branchRepository.find({
         relations: {
           incomePlans: { income_code: true },
           income: { income_code: true },
@@ -111,7 +106,7 @@ export class BranchService {
           amount: Number(income.amount),
         }));
 
-        if (bcode) {
+        if (bCode) {
           newRes.name = item.name;
           newRes.code = item.code;
           newRes.incomePlans = incomePlans.map((m) => m.amount);
@@ -152,7 +147,7 @@ export class BranchService {
         newRes.incomePlans = emptyData;
       }
 
-      if (!bcode) {
+      if (!bCode) {
         newRes.incomePlans = this.flatData(allIncomePlans.flat());
         newRes.income = this.flatData(allIncome.flat());
       }
@@ -160,7 +155,7 @@ export class BranchService {
       newRes.totalIncome = reduceFunc(newRes.income);
       newRes.totalIncomePlans = reduceFunc(newRes.incomePlans);
 
-      const yesterdayIncome = await this.getYesterdayIncome(date, bcode);
+      const yesterdayIncome = await this.getYesterdayIncome(date, bCode);
       const currentIncome = Number(reduceFunc(newRes.income).toFixed(2));
       let calc = 0;
       if (yesterdayIncome !== 0) {
@@ -187,9 +182,6 @@ export class BranchService {
         income: {
           date: queryDate, // Example with date range
         },
-        // incomePlans: {
-        //   year: year, // Example with date range
-        // },
       } as FindOptionsWhere<Branch>;
 
       const items = await this.branchRepository.find({
@@ -407,9 +399,6 @@ export class BranchService {
         income: {
           date: queryDate, // Example with date range
         },
-        // incomePlans: {
-        //   year: year, // Example with date range
-        // },
       } as FindOptionsWhere<Branch>;
 
       const items = await this.branchRepository.find({
@@ -447,7 +436,6 @@ export class BranchService {
         return {
           name: m.name,
           percents: mapPercent,
-          //percnet: ((incomes / planIncoems) * 100).toFixed(2)
         };
       });
 

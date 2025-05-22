@@ -1,5 +1,5 @@
 export const checkNan = (value: number | string): number => {
-  const result = Number(value);
+  const result: number = Number(value);
   if (isNaN(result)) {
     return 0;
   }
