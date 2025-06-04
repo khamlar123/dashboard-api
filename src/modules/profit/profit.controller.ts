@@ -1,45 +1,61 @@
-import {
-  Controller,
-  DefaultValuePipe,
-  Get,
-  Post,
-  Query,
-  UploadedFile,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, DefaultValuePipe, Get, Query } from '@nestjs/common';
 import { ProfitService } from './profit.service';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('profit')
 export class ProfitController {
   constructor(private readonly profitService: ProfitService) {}
 
-  @Get()
-  async getProfit(
+  @Get('/dailly')
+  async findDaily(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
     @Query('date', new DefaultValuePipe(''))
     date: string,
   ) {
-    return await this.profitService.getProfit(date);
+    return await this.profitService.findProfitDaily(date, branch);
   }
 
-  @Get('total-profit')
-  @ApiQuery({ name: 'bcode', required: false })
-  async totalProfit(
+  @Get('/monthly')
+  async findMonthly(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
     @Query('date', new DefaultValuePipe(''))
     date: string,
-    @Query('bcode', new DefaultValuePipe(''))
-    bcode: string,
   ) {
-    return await this.profitService.profit(date, bcode);
+    return await this.profitService.findProfitMonthly(date, branch);
   }
 
-  @Post('import')
-  @UseInterceptors(FileInterceptor('file')) // Multer will handle file uploads
-  async uploadExcel(@UploadedFile() file: Express.Multer.File) {
-    if (!file) {
-      throw new Error('No file uploaded');
-    }
-    return await this.profitService.importData(file);
+  @Get('/yearly')
+  async findYearly(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.profitService.findProfitYearly(date, branch);
+  }
+
+  @Get('/all-daily')
+  async allDaily(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.profitService.profitAllBranchDaily(date);
+  }
+
+  @Get('/all-monthly')
+  async allMonthly(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.profitService.profitAllBranchMonthly(date);
+  }
+
+  @Get('/all-yearly')
+  async allYearly(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.profitService.profitAllBranchYearly(date);
   }
 }

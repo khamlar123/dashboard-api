@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateExpenseCodeDto } from '../../dto/create-expense_code.dto';
-import { UpdateExpenseCodeDto } from '../../dto/update-expense_code.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExpenseCode } from 'src/entity/expense_code.entity';
 import { Repository } from 'typeorm';
@@ -12,13 +10,6 @@ export class ExpenseCodeService {
     @InjectRepository(ExpenseCode)
     private readonly expenseCodeRepository: Repository<ExpenseCode>,
   ) {}
-  async create(dto: CreateExpenseCodeDto): Promise<any> {
-    try {
-      return await this.expenseCodeRepository.save(dto);
-    } catch (e) {
-      return e.message;
-    }
-  }
 
   async findAll() {
     try {
@@ -29,20 +20,12 @@ export class ExpenseCodeService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     try {
       const item = await this.expenseCodeRepository.findOne({
-        where: { id },
+        where: { code: id },
       });
       return item;
-    } catch (e) {
-      return e.message;
-    }
-  }
-
-  async update(id: number, dto: UpdateExpenseCodeDto) {
-    try {
-      return await this.expenseCodeRepository.update(id, dto);
     } catch (e) {
       return e.message;
     }

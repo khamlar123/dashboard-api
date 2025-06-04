@@ -9,6 +9,9 @@ import { IncomeCode } from 'src/entity/income_code.entity';
 import { IncomePlan } from 'src/entity/income_plan.entity';
 import { LoanPlan } from '../entity/loan_plan.entity';
 import { Loan } from '../entity/loan.entity';
+import { SectorBal } from '../entity/sector_bal.entity';
+import { Sector } from '../entity/sector.entity';
+import { Deposit } from '../entity/deposit.entity';
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { Loan } from '../entity/loan.entity';
       Expense,
       LoanPlan,
       Loan,
+      SectorBal,
+      Sector,
+      Deposit,
     ]),
   ],
   exports: [

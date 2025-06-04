@@ -7,6 +7,7 @@ import * as moment from 'moment';
 import { Branch } from '../../entity/branch.entity';
 import { LoanPlan } from '../../entity/loan_plan.entity';
 import { DatabaseService } from '../../common/database/database.service';
+import { loan } from '../cronjob/sqls/loanV1';
 
 @Injectable()
 export class LoanService {
@@ -18,6 +19,7 @@ export class LoanService {
     @InjectRepository(LoanPlan)
     private readonly loanPlanRepository: Repository<LoanPlan>,
     private readonly db: DatabaseService,
+    private readonly databaseService: DatabaseService,
   ) {}
 
   async findAll() {
@@ -108,26 +110,26 @@ export class LoanService {
       .toDate();
 
     const query = `
-        WITH RECURSIVE date_series AS (SELECT CAST(? AS DATE) AS date
-        UNION ALL
-        SELECT DATE_ADD(date, INTERVAL 1 DAY)
-        FROM date_series
-        WHERE DATE_ADD(date, INTERVAL 1 DAY) <= CAST(? AS DATE)
-            )
-        SELECT ds.date,
-               COALESCE(l.balance, 0)      AS balance,
-               COALESCE(l.npl_balance, 0)  AS npl_balance,
-               ${branchId ? '? AS branch_code' : 'COALESCE(b.code, NULL) AS branch_code'},
-               COALESCE(lp.amount, NULL)   AS loan_plan_amount,
-               COALESCE(lp.npl_plan, NULL) AS loan_plan_npl
-        FROM date_series ds
-                 LEFT JOIN (SELECT l.*
-                            FROM loan l
-                                ${branchId ? 'JOIN branch b ON b.code = l.branch_id AND b.code = ?' : ''}) l
-                           ON l.date = ds.date
-                 LEFT JOIN branch b ON b.code = l.branch_id
-                 LEFT JOIN loan_plan lp ON lp.id = l.loan_plan_id
-        ORDER BY ds.date ASC
+      WITH RECURSIVE date_series AS (SELECT CAST(? AS DATE) AS date
+      UNION ALL
+      SELECT DATE_ADD(date, INTERVAL 1 DAY)
+      FROM date_series
+      WHERE DATE_ADD(date, INTERVAL 1 DAY) <= CAST(? AS DATE)
+        )
+      SELECT ds.date,
+             COALESCE(l.balance, 0)      AS balance,
+             COALESCE(l.npl_balance, 0)  AS npl_balance,
+             ${branchId ? '? AS branch_code' : 'COALESCE(b.code, NULL) AS branch_code'},
+             COALESCE(lp.amount, NULL)   AS loan_plan_amount,
+             COALESCE(lp.npl_plan, NULL) AS loan_plan_npl
+      FROM date_series ds
+             LEFT JOIN (SELECT l.*
+                        FROM loan l
+                          ${branchId ? 'JOIN branch b ON b.code = l.branch_id AND b.code = ?' : ''}) l
+                       ON l.date = ds.date
+             LEFT JOIN branch b ON b.code = l.branch_id
+             LEFT JOIN loan_plan lp ON lp.id = l.loan_plan_id
+      ORDER BY ds.date ASC
     `;
 
     const params = [
@@ -158,31 +160,31 @@ export class LoanService {
       .toDate(); // Last 12 months
 
     const query = `
-        WITH RECURSIVE month_series AS (SELECT CAST(? AS DATE) AS month_start
-                                        UNION ALL
-                                        SELECT DATE_ADD(month_start, INTERVAL 1 MONTH)
-                                        FROM month_series
-                                        WHERE DATE_ADD(month_start, INTERVAL 1 MONTH) <= CAST(? AS DATE))
-        SELECT DATE_FORMAT(ms.month_start, '%Y-%m') AS date,
+      WITH RECURSIVE month_series AS (SELECT CAST(? AS DATE) AS month_start
+                                      UNION ALL
+                                      SELECT DATE_ADD(month_start, INTERVAL 1 MONTH)
+                                      FROM month_series
+                                      WHERE DATE_ADD(month_start, INTERVAL 1 MONTH) <= CAST(? AS DATE))
+      SELECT DATE_FORMAT(ms.month_start, '%Y-%m') AS date,
             COALESCE(SUM(l.balance), 0) AS balance,
             COALESCE(SUM(l.npl_balance), 0) AS npl_balance, ${branchId ? '? AS branch_code' : 'COALESCE(b.code, NULL) AS branch_code'}
-             , COALESCE (SUM (lp.amount)
-             , NULL) AS loan_plan_amount
-             , COALESCE (SUM (lp.npl_plan)
-             , NULL) AS loan_plan_npl
-        FROM month_series ms
-            LEFT JOIN (
-            SELECT
-            DATE_FORMAT(date, '%Y-%m-01') AS month_start, -- Group by month
-            l.*
-            FROM loan l
-            ${branchId ? 'JOIN branch b ON b.code = l.branch_id AND b.code = ?' : ''}
-            ) l
-        ON DATE_FORMAT(ms.month_start, '%Y-%m-01') = l.month_start
-            LEFT JOIN branch b ON b.code = l.branch_id
-            LEFT JOIN loan_plan lp ON lp.id = l.loan_plan_id
-        GROUP BY ms.month_start, ${branchId ? 'branch_code' : 'b.code'}
-        ORDER BY ms.month_start ASC
+           , COALESCE (SUM (lp.amount)
+           , NULL) AS loan_plan_amount
+           , COALESCE (SUM (lp.npl_plan)
+           , NULL) AS loan_plan_npl
+      FROM month_series ms
+        LEFT JOIN (
+        SELECT
+        DATE_FORMAT(date, '%Y-%m-01') AS month_start, -- Group by month
+        l.*
+        FROM loan l
+        ${branchId ? 'JOIN branch b ON b.code = l.branch_id AND b.code = ?' : ''}
+        ) l
+      ON DATE_FORMAT(ms.month_start, '%Y-%m-01') = l.month_start
+        LEFT JOIN branch b ON b.code = l.branch_id
+        LEFT JOIN loan_plan lp ON lp.id = l.loan_plan_id
+      GROUP BY ms.month_start, ${branchId ? 'branch_code' : 'b.code'}
+      ORDER BY ms.month_start ASC
     `;
 
     const params = [
@@ -210,25 +212,25 @@ export class LoanService {
       .toDate(); // Last 6 years
 
     const query = `
-        WITH RECURSIVE year_series AS (SELECT CAST(? AS DATE) AS year_start
-                                       UNION ALL
-                                       SELECT DATE_ADD(year_start, INTERVAL 1 YEAR)
-                                       FROM year_series
-                                       WHERE DATE_ADD(year_start, INTERVAL 1 YEAR) <= CAST(? AS DATE))
+      WITH RECURSIVE year_series AS (SELECT CAST(? AS DATE) AS year_start
+                                     UNION ALL
+                                     SELECT DATE_ADD(year_start, INTERVAL 1 YEAR)
+                                     FROM year_series
+                                     WHERE DATE_ADD(year_start, INTERVAL 1 YEAR) <= CAST(? AS DATE))
+      SELECT
+        YEAR (ys.year_start) AS date, COALESCE (SUM (l.balance), 0) AS balance, COALESCE (SUM (l.npl_balance), 0) AS npl_balance, ${branchId ? '? AS branch_code' : 'COALESCE(b.code, NULL) AS branch_code'}, COALESCE (SUM (lp.amount), NULL) AS loan_plan_amount, COALESCE (SUM (lp.npl_plan), NULL) AS loan_plan_npl
+      FROM year_series ys
+        LEFT JOIN (
         SELECT
-            YEAR (ys.year_start) AS date, COALESCE (SUM (l.balance), 0) AS balance, COALESCE (SUM (l.npl_balance), 0) AS npl_balance, ${branchId ? '? AS branch_code' : 'COALESCE(b.code, NULL) AS branch_code'}, COALESCE (SUM (lp.amount), NULL) AS loan_plan_amount, COALESCE (SUM (lp.npl_plan), NULL) AS loan_plan_npl
-        FROM year_series ys
-            LEFT JOIN (
-            SELECT
-            DATE_FORMAT(date, '%Y-01-01') AS year_start, l.*
-            FROM loan l
-            ${branchId ? 'JOIN branch b ON b.code = l.branch_id AND b.code = ?' : ''}
-            ) l
-        ON YEAR (ys.year_start) = YEAR (l.year_start)
-            LEFT JOIN branch b ON b.code = l.branch_id
-            LEFT JOIN loan_plan lp ON lp.id = l.loan_plan_id
-        GROUP BY YEAR (ys.year_start), ${branchId ? 'branch_code' : 'b.code'}
-        ORDER BY ys.year_start ASC
+        DATE_FORMAT(date, '%Y-01-01') AS year_start, l.*
+        FROM loan l
+        ${branchId ? 'JOIN branch b ON b.code = l.branch_id AND b.code = ?' : ''}
+        ) l
+      ON YEAR (ys.year_start) = YEAR (l.year_start)
+        LEFT JOIN branch b ON b.code = l.branch_id
+        LEFT JOIN loan_plan lp ON lp.id = l.loan_plan_id
+      GROUP BY YEAR (ys.year_start), ${branchId ? 'branch_code' : 'b.code'}
+      ORDER BY ys.year_start ASC
     `;
 
     const params = [
@@ -341,5 +343,48 @@ export class LoanService {
     }
 
     return reduceDataByDate(hasData);
+  }
+
+  //====>
+  async importByDateDate(start: string, end: string) {
+    const startDate = moment(start, 'YYYYMMDD');
+    const endDate = moment(end, 'YYYYMMDD');
+    const dateArray: string[] = [];
+
+    while (startDate.isSameOrBefore(endDate)) {
+      dateArray.push(startDate.format('YYYYMMDD'));
+      startDate.add(1, 'day');
+    }
+
+    const myDate: any[] = [];
+    for (const item of dateArray) {
+      const getQuery = loan();
+      const data = await this.databaseService.queryOds(getQuery, [item]);
+      myDate.push(data);
+    }
+
+    const flatData = myDate.reduce((acc, cur) => acc.concat(cur), []);
+
+    const mapData = flatData.map((m) => {
+      return {
+        date: m.Dates,
+        balance: m.Loan_Balance_Daily ?? 0,
+        npl_balance: m.NPL_Balance_Daily ?? 0,
+        app_amount: m.Drawndown_Daily ?? 0,
+        branch: Number(m.Branch_code),
+        a: m.A ?? 0,
+        b: m.B ?? 0,
+        c: m.C ?? 0,
+        d: m.D ?? 0,
+        e: m.E ?? 0,
+        short: m.Short ?? 0,
+        middle: m.Middle ?? 0,
+        longs: m.Longs ?? 0,
+      };
+    });
+
+    const add: any = await this.loanRepository.save(mapData);
+
+    return add;
   }
 }

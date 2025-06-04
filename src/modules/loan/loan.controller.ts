@@ -12,13 +12,8 @@ import {
   DefaultValuePipe,
 } from '@nestjs/common';
 import { LoanService } from './loan.service';
-import { CreateLoanDto } from '../../dto/create-loan.dto';
-import { UpdateLoanDto } from '../../dto/update-loan.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiQuery } from '@nestjs/swagger';
-import axios from 'axios';
-import * as jwt from 'jsonwebtoken';
-import { LoginDto } from '../../dto/login.dto';
 
 @Controller('loan')
 export class LoanController {
@@ -94,5 +89,15 @@ export class LoanController {
       throw new Error('No file uploaded');
     }
     return this.loanService.importData(file);
+  }
+
+  @Post('import-date')
+  async importBydate(
+    @Query('start', new DefaultValuePipe(0))
+    start: string,
+    @Query('end', new DefaultValuePipe(0))
+    end: string,
+  ) {
+    return await this.loanService.importByDateDate(start, end);
   }
 }

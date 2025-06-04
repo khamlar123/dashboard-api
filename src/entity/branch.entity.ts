@@ -5,6 +5,10 @@ import { IncomePlan } from './income_plan.entity';
 import { Income } from './income.entity';
 import { LoanPlan } from './loan_plan.entity';
 import { Loan } from './loan.entity';
+import { ProfitPlan } from './profit_plan.entity';
+import { SectorPlan } from './sector_plan.entity';
+import { SectorBal } from './sector_bal.entity';
+import { Deposit } from './deposit.entity';
 
 @Entity()
 export class Branch {
@@ -26,9 +30,21 @@ export class Branch {
   @OneToMany(() => Income, (income) => income.branch)
   income: Income[];
 
+  @OneToMany(() => ProfitPlan, (pl) => pl.branch)
+  profitPlan: ProfitPlan[];
+
   @OneToMany(() => LoanPlan, (loanPlan) => loanPlan.branch)
   loanPlan: LoanPlan[];
 
   @OneToMany(() => Loan, (loan) => loan.branch)
   loan: Loan[];
+
+  @OneToMany(() => SectorPlan, (sp) => sp.branch)
+  sectorPlan: SectorPlan[];
+
+  @OneToMany(() => SectorBal, (sp) => sp.branch)
+  sectorBal: SectorBal[];
+
+  @OneToMany(() => Deposit, (d) => d.branch)
+  deposit: Deposit[];
 }

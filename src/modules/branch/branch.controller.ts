@@ -13,8 +13,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
-import { CreateBranchDto } from '../../dto/create-branch.dto';
-import { UpdateBranchDto } from '../../dto/update-branch.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '../../common/guards/auth.guard';
@@ -22,11 +20,6 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 @Controller('branch')
 export class BranchController {
   constructor(private readonly branchService: BranchService) {}
-
-  @Post()
-  async create(@Body() createBranchDto: CreateBranchDto) {
-    return await this.branchService.create(createBranchDto);
-  }
 
   @Get()
   @UseGuards(AuthGuard)
@@ -130,14 +123,6 @@ export class BranchController {
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.branchService.findOne(+id);
-  }
-
-  @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateBranchDto: UpdateBranchDto,
-  ) {
-    return await this.branchService.update(+id, updateBranchDto);
   }
 
   @Delete(':id')

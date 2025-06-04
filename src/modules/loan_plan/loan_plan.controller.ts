@@ -10,8 +10,6 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { LoanPlanService } from './loan_plan.service';
-import { CreateLoanPlanDto } from '../../dto/create-loan_plan.dto';
-import { UpdateLoanPlanDto } from '../../dto/update-loan_plan.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('loan-plan')

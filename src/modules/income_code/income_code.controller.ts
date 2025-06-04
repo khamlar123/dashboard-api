@@ -10,18 +10,11 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { IncomeCodeService } from './income_code.service';
-import { CreateIncomeCodeDto } from '../../dto/create-income_code.dto';
-import { UpdateIncomeCodeDto } from 'src/dto/update-income_code.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('income-code')
 export class IncomeCodeController {
   constructor(private readonly incomeCodeService: IncomeCodeService) {}
-
-  @Post()
-  async create(@Body() dto: CreateIncomeCodeDto) {
-    return await this.incomeCodeService.create(dto);
-  }
 
   @Get()
   async findAll() {
@@ -30,12 +23,7 @@ export class IncomeCodeController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return await this.incomeCodeService.findOne(+id);
-  }
-
-  @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateIncomeCodeDto) {
-    return await this.incomeCodeService.update(+id, dto);
+    return await this.incomeCodeService.findOne(id);
   }
 
   @Delete(':id')

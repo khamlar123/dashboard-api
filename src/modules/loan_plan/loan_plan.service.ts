@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateLoanPlanDto } from '../../dto/create-loan_plan.dto';
-import { UpdateLoanPlanDto } from '../../dto/update-loan_plan.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LoanPlan } from '../../entity/loan_plan.entity';
 import { Repository } from 'typeorm';
