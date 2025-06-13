@@ -12,10 +12,6 @@ import { Expense } from 'src/entity/expense.entity';
 import { formatDate } from 'src/share/functions/format-date';
 import { LoanPlan } from '../../entity/loan_plan.entity';
 import { Loan } from '../../entity/loan.entity';
-import { Logger } from '@nestjs/common';
-import { income } from './sqls/income.sql';
-import { expense } from './sqls/expense.sql';
-import { loan } from './sqls/loan.sql';
 
 @Controller('cronjob')
 export class CronjobController {

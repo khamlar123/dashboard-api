@@ -1,6 +1,5 @@
-export const sectorBal = (data: string) => `
-  with par as (select ${data} as vdate from dual),
-
+export const sectorBal = () => `
+  with par as (select ? as vdate from dual),
        brn as (select distinct substr(branch_code, 1, 4) as branch_code from rpt_branch),
 
        rates as (select eff_dt, ccy, buy from r_bpttqph where exr_typ = 'SMR' and eff_dt = (select vdate from par)),

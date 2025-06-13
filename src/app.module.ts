@@ -22,6 +22,7 @@ import { LoanModule } from './modules/loan/loan.module';
 import { SectorBalModule } from './modules/sector_bal/sector_bal.module';
 import { FinancialModule } from './modules/financial/financial.module';
 import { DepositModule } from './modules/deposit/deposit.module';
+import { ImportModule } from './modules/import/import.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { DepositModule } from './modules/deposit/deposit.module';
     SectorBalModule,
     FinancialModule,
     DepositModule,
+    ImportModule,
   ],
   controllers: [AppController],
   providers: [AppService],

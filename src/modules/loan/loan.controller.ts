@@ -91,13 +91,13 @@ export class LoanController {
     return this.loanService.importData(file);
   }
 
-  @Post('import-date')
-  async importBydate(
-    @Query('start', new DefaultValuePipe(0))
-    start: string,
-    @Query('end', new DefaultValuePipe(0))
-    end: string,
-  ) {
-    return await this.loanService.importByDateDate(start, end);
-  }
+  // @Post('import-date')
+  // async importBydate(
+  //   @Query('start', new DefaultValuePipe(0))
+  //   start: string,
+  //   @Query('end', new DefaultValuePipe(0))
+  //   end: string,
+  // ) {
+  //   return await this.loanService.importByDateDate(start, end);
+  // }
 }

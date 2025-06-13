@@ -10,6 +10,7 @@ import {
   DefaultValuePipe,
 } from '@nestjs/common';
 import { FinancialService } from './financial.service';
+import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('financial')
 export class FinancialController {
@@ -51,7 +52,7 @@ export class FinancialController {
     return await this.financialService.npl(date, branch, option);
   }
 
-  @Get('/loanBol')
+  @Get('/loan-bol')
   async loanBol(
     @Query('branch', new DefaultValuePipe(''))
     branch: string,
@@ -61,5 +62,31 @@ export class FinancialController {
     option: 'd' | 'm' | 'y',
   ) {
     return await this.financialService.loanBol(date, branch, option);
+  }
+
+  @Get('/funds')
+  @ApiQuery({ name: 'branch', required: false })
+  async funds(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.financialService.funding(date, branch, option);
+  }
+
+  @Get('/deposit')
+  @ApiQuery({ name: 'branch', required: false })
+  async deposit(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.financialService.deposit(date, branch, option);
   }
 }

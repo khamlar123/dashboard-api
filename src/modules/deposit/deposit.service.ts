@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Deposit } from '../../entity/deposit.entity';
 import { Repository } from 'typeorm';
 import { DatabaseService } from '../../common/database/database.service';
-import * as moment from 'moment';
 import { reduceFunc } from '../../share/functions/reduce-func';
+import { IUseFunding } from '../../common/interfaces/use-funding';
 
 @Injectable()
 export class DepositService {
@@ -14,131 +14,33 @@ export class DepositService {
     private readonly database: DatabaseService,
   ) {}
 
-  async deposit(date: string, currency: string) {
-    const todayWhereConditions: any = {};
-    const yesterdayWhereConditions: any = {};
-    const sql = `SELECT *
-                 FROM capital
-                 WHERE year = ?`;
-
-    const getYear = moment(date, 'YYYYMMDD').year();
-    const getYesterday = moment(date, 'YYYYMMDD')
-      .add(-1, 'day')
-      .format('YYYYMMDD')
-      .toString();
-    todayWhereConditions.date = date;
-    yesterdayWhereConditions.date = getYesterday;
-
-    if (currency) {
-      todayWhereConditions.ccy = currency;
-      yesterdayWhereConditions.ccy = currency;
-    }
-
-    const [findPlan, today, yesterday] = await Promise.all([
-      this.database.query(sql, [getYear]),
-      this.depositRepository
-        .createQueryBuilder('deposit')
-        .where(todayWhereConditions)
-        .leftJoin('deposit.branch', 'branch')
-        .select([
-          'deposit.date AS date',
-          'deposit.ccy AS ccy',
-          'deposit.cddbal AS cddbal',
-          'deposit.cddballak AS cddballak',
-          'deposit.cdcbal AS cdcbal',
-          'deposit.cdcballak AS cdcballak',
-          'branch.code AS branch',
-          'branch.name AS name',
-        ])
-        .getRawMany(),
-      this.depositRepository
-        .createQueryBuilder('deposit')
-        .where(yesterdayWhereConditions)
-        .leftJoin('deposit.branch', 'branch')
-        .select([
-          'deposit.date AS date',
-          'deposit.ccy AS ccy',
-          'deposit.cddbal AS cddbal',
-          'deposit.cddballak AS cddballak',
-          'deposit.cdcbal AS cdcbal',
-          'deposit.cdcballak AS cdcballak',
-          'branch.code AS branch',
-          'branch.name AS name',
-        ])
-        .getRawMany(),
+  async deposit(date: string, option: 'd' | 'm' | 'y', branch?: string) {
+    const [result] = await this.database.query(`call proc_deposit(?, ?, ?)`, [
+      date,
+      option,
+      branch === '' || branch === undefined ? null : branch,
     ]);
-
-    function sumLak(myDeposit: any): {
-      branch_code: any;
-      name: any;
-      current: number;
-      before: number;
-      plan: number;
-    }[] {
-      const summed: {
-        branch_code: any;
-        name: any;
-        current: number;
-        before: number;
-        plan: number;
-      }[] = Object.values(
-        myDeposit.reduce((acc, item) => {
-          const code = item.branch;
-          if (!acc[code]) {
-            acc[code] = {
-              branch_code: code,
-              name: item.name,
-              current: 0,
-              before: 0,
-              plan:
-                Number(findPlan.find((f) => f.branch_id === code).dep_plan) ??
-                0,
-            };
-          }
-          acc[code].current += Number(item.cdcballak);
-          return acc;
-        }, {}),
-      );
-
-      return summed;
-    }
-
-    const currentData = sumLak(today);
-    const beforeData = sumLak(yesterday);
-
-    const result = currentData.map((m) => {
-      const match = beforeData.find((f) => f.branch_code === m.branch_code);
-      return {
-        branch_code: m.branch_code,
-        name: m.name,
-        plan: m.plan,
-        current: m.current,
-        before: match?.current ?? 0,
-        difference: m.current - (match?.current ?? 0),
-        percent: +((m.current / m.plan) * 100).toFixed(2),
-      };
-    });
 
     const branches: string[] = [];
     const percents: number[] = [];
 
-    result.forEach((e) => {
+    result.forEach((e: IUseFunding) => {
       branches.push(e.name);
-      percents.push(e.percent);
+      percents.push(+e.percent);
     });
 
-    const resX = {
-      tables: result,
+    return {
+      table: result,
       total: {
-        totalPlan: +reduceFunc(result.map((m) => m.plan)).toFixed(2),
-        totalBefore: +reduceFunc(result.map((m) => m.before)).toFixed(2),
-        totalCurrent: +reduceFunc(result.map((m) => m.current)).toFixed(2),
-        totalDifference: +reduceFunc(result.map((m) => m.difference)).toFixed(
-          2,
+        total_dep_plan: +reduceFunc(result.map((m) => +m.dep_plan)),
+        total_cdcballak: +reduceFunc(result.map((m) => +m.cdcballak)),
+        total_before_cdcballak: +reduceFunc(
+          result.map((m) => +m.before_cdcballak),
         ),
-        totalPercent: +(
-          (reduceFunc(result.map((m) => m.current)) /
-            reduceFunc(result.map((m) => m.plan))) *
+        total_diff: +reduceFunc(result.map((m) => +m.diff)),
+        total_percent: +(
+          (reduceFunc(result.map((m) => +m.cdcballak)) /
+            reduceFunc(result.map((m) => +m.dep_plan))) *
           100
         ).toFixed(2),
       },
@@ -147,7 +49,5 @@ export class DepositService {
         percents,
       },
     };
-
-    return resX;
   }
 }

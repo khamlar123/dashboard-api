@@ -16,14 +16,16 @@ import { ApiQuery } from '@nestjs/swagger';
 export class DepositController {
   constructor(private readonly depositService: DepositService) {}
 
-  @Get('')
-  @ApiQuery({ name: 'currency', required: false })
-  async profit(
-    @Query('date', new DefaultValuePipe(''))
-    date: string,
-    @Query('currency', new DefaultValuePipe(''))
-    currency: '',
-  ) {
-    return await this.depositService.deposit(date, currency);
-  }
+  // @Get('')
+  // @ApiQuery({ name: 'branch', required: false })
+  // async test(
+  //   @Query('date', new DefaultValuePipe(''))
+  //   date: string,
+  //   @Query('branch', new DefaultValuePipe(''))
+  //   branch: string,
+  //   @Query('option', new DefaultValuePipe(''))
+  //   option: 'd' | 'm' | 'y',
+  // ) {
+  //   return await this.depositService.deposit(date, option, branch);
+  // }
 }

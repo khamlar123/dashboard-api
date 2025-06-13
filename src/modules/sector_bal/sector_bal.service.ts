@@ -38,8 +38,8 @@ export class SectorBalService {
 
     const mydate: any[] = [];
     for (const item of dateArray) {
-      const getQuery = sectorBal(item);
-      const data = await this.database.queryOds(getQuery);
+      const getQuery = sectorBal();
+      const data = await this.database.queryOds(getQuery, [item]);
       mydate.push(data);
     }
 

@@ -10,10 +10,19 @@ import { INpl } from '../../common/interfaces/npl';
 import { ILoanBolRes } from '../../common/interfaces/loan-bol-res';
 import { ILoanBol } from '../../common/interfaces/loan-bol';
 import { reduceFunc } from '../../share/functions/reduce-func';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Deposit } from '../../entity/deposit.entity';
+import { Repository } from 'typeorm';
+import * as moment from 'moment';
+import { ISumLak } from '../../common/interfaces/sum-lak.interface';
 
 @Injectable()
 export class FinancialService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    @InjectRepository(Deposit)
+    private readonly depositRepository: Repository<Deposit>,
+    private readonly database: DatabaseService,
+  ) {}
 
   async useFunding(
     date: string,
@@ -72,6 +81,49 @@ export class FinancialService {
         percents,
       },
     } as IUseFundingRes;
+  }
+
+  async funding(
+    date: string,
+    branch: string,
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_capital_financial(?, ?, ?)`,
+      [date, branch, option],
+    );
+
+    if (!result) {
+      throw new BadRequestException('Data not found');
+    }
+
+    const branches: string[] = [];
+    const percents: number[] = [];
+
+    result.forEach((e) => {
+      branches.push(e.name);
+      percents.push(+e.percent);
+    });
+
+    return {
+      tables: result,
+      total: {
+        total_plan: reduceFunc(result.map((m) => +m.CAP_PLAN)),
+        total_amount1: reduceFunc(result.map((m) => +m.CAP_AMOUNT1)),
+        total_amount2: reduceFunc(result.map((m) => +m.CAP_AMOUNT2)),
+        total_diff: reduceFunc(result.map((m) => +m.diff)),
+        total_percent: +(
+          (reduceFunc(result.map((m) => +m.CAP_AMOUNT1)) /
+            reduceFunc(result.map((m) => +m.CAP_PLAN))) *
+          100
+        ).toFixed(2),
+      },
+      chart: {
+        branches,
+        percents,
+      },
+    };
   }
 
   async profit(
@@ -233,5 +285,47 @@ export class FinancialService {
         percents,
       },
     } as ILoanBolRes;
+  }
+
+  async deposit(
+    date: string,
+    branch: string,
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_dep_financial(?, ?, ?)`,
+      [date, branch ? branch : 'all', option],
+    );
+
+    if (!result) {
+      throw new BadRequestException('Data not found');
+    }
+    const branches: string[] = [];
+    const percents: number[] = [];
+
+    result.forEach((e: ILoanBol) => {
+      branches.push(e.name);
+      percents.push(+e.percent);
+    });
+
+    return {
+      tables: result,
+      total: {
+        total_plan: reduceFunc(result.map((m) => +m.dep_plan)),
+        total_amount1: reduceFunc(result.map((m) => +m.dep_amount1)),
+        total_amount2: reduceFunc(result.map((m) => +m.dep_amount2)),
+        total_diff: reduceFunc(result.map((m) => +m.diff)),
+        total_percent: +(
+          (reduceFunc(result.map((m) => +m.dep_amount1)) /
+            reduceFunc(result.map((m) => +m.dep_plan))) *
+          100
+        ).toFixed(2),
+      },
+      chart: {
+        branches,
+        percents,
+      },
+    };
   }
 }
