@@ -9,6 +9,8 @@ import { ProfitPlan } from './profit_plan.entity';
 import { SectorPlan } from './sector_plan.entity';
 import { SectorBal } from './sector_bal.entity';
 import { Deposit } from './deposit.entity';
+import { Capital } from './capital.entity';
+import { BolLoan } from './bol_loan.entity';
 
 @Entity()
 export class Branch {
@@ -47,4 +49,10 @@ export class Branch {
 
   @OneToMany(() => Deposit, (d) => d.branch)
   deposit: Deposit[];
+
+  @OneToMany(() => Capital, (c) => c.branch)
+  capital: Capital[];
+
+  @OneToMany(() => BolLoan, (b) => b.branch)
+  bolLoan: Capital[];
 }

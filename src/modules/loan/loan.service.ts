@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Loan } from '../../entity/loan.entity';
-import * as XLSX from 'xlsx';
-import * as moment from 'moment';
 import { Branch } from '../../entity/branch.entity';
 import { LoanPlan } from '../../entity/loan_plan.entity';
 import { DatabaseService } from '../../common/database/database.service';
-import { loan } from '../cronjob/sqls/loanV1';
+import { checkCurrentDate } from '../../share/functions/check-current-date';
+import * as moment from 'moment';
+import { reduceFunc } from '../../share/functions/reduce-func';
 
 @Injectable()
 export class LoanService {
@@ -22,369 +22,825 @@ export class LoanService {
     private readonly databaseService: DatabaseService,
   ) {}
 
-  async findAll() {
-    return await this.loanRepository.find({});
-  }
+  async loanPlan(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
 
-  async findOne(id: number) {
-    return await this.loanRepository.findOne({
-      where: {
-        id: id,
-      },
-    });
-  }
+    let result: any = null;
+    let groupData: any = null;
 
-  async importData(file: Express.Multer.File): Promise<any> {
-    const workbook = XLSX.read(file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0]; // Get the first sheet
-    const worksheet = workbook.Sheets[sheetName];
-    const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
-
-    const formattedData = jsonData.map((row: any) => {
-      Object.keys(row).forEach((key) => {
-        if (
-          typeof Number(row?.Dates) === 'number' &&
-          Number(row?.Dates) > 40000
-        ) {
-          // Likely a date, convert it
-          row.Dates = moment(row.Dates).format('YYYY-MM-DD');
-        }
-      });
-
-      return row;
-    });
-
-    const [findBranch, findLoanPlan] = await Promise.all([
-      this.branchRepository.find(),
-      this.loanPlanRepository.find({
-        relations: { branch: true },
-      }),
-    ]);
-
-    function getBranch(code: string) {
-      return findBranch.find((b: any) => String(b.code) === code);
-    }
-
-    function getLoanPlan(year: string, bcode: string) {
-      const findItem = findLoanPlan.find(
-        (f) => f.branch?.code === Number(bcode) && f.year === year,
+    if (option === 'd') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
       );
-      return findItem;
+      groupData = this.groupByDate(result, 'daily');
     }
 
-    const mapData = formattedData.map((m) => {
-      const getB = getBranch(m.Branch_code.padEnd(6, '0'));
-      const getL = getLoanPlan(
-        moment(m.Dates).year().toString(),
-        m.Branch_code.padEnd(6, '0'),
+    if (option === 'm') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
       );
-      return {
-        date: m.Dates,
-        balance: m.Loan_Balance_Daily,
-        npl_balance: m.NPL_Balance_Daily ?? 0,
-        fund: m.Fund,
-        drawndown: m.Drawndown_Daily,
-        branch: { code: getB?.code },
-        a: m.A,
-        b: m.B,
-        c: m.C,
-        d: m.D,
-        e: m.E,
-        short: m.Short,
-        middle: m.Middle,
-        longs: m.Longs,
-        loan_plan: getL,
-      };
-    });
-    //return mapData;
-    return await this.loanRepository.save(mapData);
-  }
-
-  async findLoanDaily(branchId?: string, targetDate?: string): Promise<any> {
-    const endDate = targetDate
-      ? moment(targetDate).endOf('day').toDate()
-      : moment().endOf('day').toDate();
-    const startDate = moment(endDate)
-      .subtract(30, 'days')
-      .startOf('day')
-      .toDate();
-
-    const query = `
-      WITH RECURSIVE date_series AS (SELECT CAST(? AS DATE) AS date
-      UNION ALL
-      SELECT DATE_ADD(date, INTERVAL 1 DAY)
-      FROM date_series
-      WHERE DATE_ADD(date, INTERVAL 1 DAY) <= CAST(? AS DATE)
-        )
-      SELECT ds.date,
-             COALESCE(l.balance, 0)      AS balance,
-             COALESCE(l.npl_balance, 0)  AS npl_balance,
-             ${branchId ? '? AS branch_code' : 'COALESCE(b.code, NULL) AS branch_code'},
-             COALESCE(lp.amount, NULL)   AS loan_plan_amount,
-             COALESCE(lp.npl_plan, NULL) AS loan_plan_npl
-      FROM date_series ds
-             LEFT JOIN (SELECT l.*
-                        FROM loan l
-                          ${branchId ? 'JOIN branch b ON b.code = l.branch_id AND b.code = ?' : ''}) l
-                       ON l.date = ds.date
-             LEFT JOIN branch b ON b.code = l.branch_id
-             LEFT JOIN loan_plan lp ON lp.id = l.loan_plan_id
-      ORDER BY ds.date ASC
-    `;
-
-    const params = [
-      moment(startDate).format('YYYY-MM-DD'),
-      moment(endDate).format('YYYY-MM-DD'),
-    ];
-
-    if (branchId) {
-      params.push(branchId); // For branch_code in SELECT
-      params.push(branchId); // For branch filter in subquery
+      groupData = this.groupByDate(result, 'monthly');
     }
 
-    const [results] = await this.db.query(query, params);
-    return this.mergeData(results, 'daily');
-  }
-
-  async findLoanDataByMonth(
-    branchId?: string,
-    targetDate?: string,
-  ): Promise<any[]> {
-    const endDate = targetDate
-      ? moment(targetDate).endOf('month').toDate() // End of the target month
-      : moment().endOf('month').toDate(); // End of the current month
-
-    const startDate = moment(endDate)
-      .subtract(11, 'months')
-      .startOf('month')
-      .toDate(); // Last 12 months
-
-    const query = `
-      WITH RECURSIVE month_series AS (SELECT CAST(? AS DATE) AS month_start
-                                      UNION ALL
-                                      SELECT DATE_ADD(month_start, INTERVAL 1 MONTH)
-                                      FROM month_series
-                                      WHERE DATE_ADD(month_start, INTERVAL 1 MONTH) <= CAST(? AS DATE))
-      SELECT DATE_FORMAT(ms.month_start, '%Y-%m') AS date,
-            COALESCE(SUM(l.balance), 0) AS balance,
-            COALESCE(SUM(l.npl_balance), 0) AS npl_balance, ${branchId ? '? AS branch_code' : 'COALESCE(b.code, NULL) AS branch_code'}
-           , COALESCE (SUM (lp.amount)
-           , NULL) AS loan_plan_amount
-           , COALESCE (SUM (lp.npl_plan)
-           , NULL) AS loan_plan_npl
-      FROM month_series ms
-        LEFT JOIN (
-        SELECT
-        DATE_FORMAT(date, '%Y-%m-01') AS month_start, -- Group by month
-        l.*
-        FROM loan l
-        ${branchId ? 'JOIN branch b ON b.code = l.branch_id AND b.code = ?' : ''}
-        ) l
-      ON DATE_FORMAT(ms.month_start, '%Y-%m-01') = l.month_start
-        LEFT JOIN branch b ON b.code = l.branch_id
-        LEFT JOIN loan_plan lp ON lp.id = l.loan_plan_id
-      GROUP BY ms.month_start, ${branchId ? 'branch_code' : 'b.code'}
-      ORDER BY ms.month_start ASC
-    `;
-
-    const params = [
-      moment(startDate).format('YYYY-MM-01'), // Start of the earliest month
-      moment(endDate).format('YYYY-MM-01'), // Start of the latest month
-    ];
-
-    if (branchId) {
-      params.push(branchId); // For branch_code in SELECT
-      params.push(branchId); // For branch filter in subquery
+    if (option === 'y') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'yearly');
     }
 
-    const [results] = await this.db.query(query, params);
-    return this.mergeData(results, 'monthly');
-  }
+    const plan: number[] = [];
+    const balance: number[] = [];
+    const npl: number[] = [];
+    const dateX: string[] = [];
 
-  async findLoanYearly(branchId?: string, targetYear?: string): Promise<any> {
-    const endYear = targetYear
-      ? moment(targetYear, 'YYYY').endOf('year').toDate()
-      : moment().endOf('year').toDate();
-
-    const startYear = moment(endYear)
-      .subtract(5, 'years')
-      .startOf('year')
-      .toDate(); // Last 6 years
-
-    const query = `
-      WITH RECURSIVE year_series AS (SELECT CAST(? AS DATE) AS year_start
-                                     UNION ALL
-                                     SELECT DATE_ADD(year_start, INTERVAL 1 YEAR)
-                                     FROM year_series
-                                     WHERE DATE_ADD(year_start, INTERVAL 1 YEAR) <= CAST(? AS DATE))
-      SELECT
-        YEAR (ys.year_start) AS date, COALESCE (SUM (l.balance), 0) AS balance, COALESCE (SUM (l.npl_balance), 0) AS npl_balance, ${branchId ? '? AS branch_code' : 'COALESCE(b.code, NULL) AS branch_code'}, COALESCE (SUM (lp.amount), NULL) AS loan_plan_amount, COALESCE (SUM (lp.npl_plan), NULL) AS loan_plan_npl
-      FROM year_series ys
-        LEFT JOIN (
-        SELECT
-        DATE_FORMAT(date, '%Y-01-01') AS year_start, l.*
-        FROM loan l
-        ${branchId ? 'JOIN branch b ON b.code = l.branch_id AND b.code = ?' : ''}
-        ) l
-      ON YEAR (ys.year_start) = YEAR (l.year_start)
-        LEFT JOIN branch b ON b.code = l.branch_id
-        LEFT JOIN loan_plan lp ON lp.id = l.loan_plan_id
-      GROUP BY YEAR (ys.year_start), ${branchId ? 'branch_code' : 'b.code'}
-      ORDER BY ys.year_start ASC
-    `;
-
-    const params = [
-      moment(startYear).format('YYYY-MM-DD'), // First day of start year
-      moment(endYear).format('YYYY-MM-DD'), // Last day of end year
-    ];
-
-    if (branchId) {
-      params.push(branchId); // For branch_code in SELECT
-      params.push(branchId); // For branch filter in subquery
-    }
-
-    const [results] = await this.db.query(query, params);
-    return this.mergeData(results, 'yearly');
-  }
-
-  async findLoanAll(date?: string): Promise<any> {
-    if (date) {
-      const formattedDate: any = moment(date).format('YYYY-MM-DD');
-      return this.loanRepository.find({
-        where: { date: formattedDate },
-        relations: ['branch', 'loan_plan'],
-        order: { date: 'DESC' },
-      });
-    }
-
-    const lastDate = await this.loanRepository
-      .createQueryBuilder('loan')
-      .select('MAX(loan.date)', 'maxDate')
-      .getRawOne()
-      .then((result) => result?.maxDate);
-
-    if (!lastDate) {
-      return []; // No loans exist in the database
-    }
-
-    return this.loanRepository.find({
-      where: { date: lastDate },
-      relations: ['branch', 'loan_plan'],
-      order: { branch: { code: 'ASC' } }, // Optional: order by branch code
-    });
-  }
-
-  async totalLoan(date?: string, bcode?: string): Promise<any> {
-    if (date) {
-      const formattedDate: any = moment(date).format('YYYY-MM-DD');
-      return this.loanRepository.find({
-        where: { date: formattedDate, branch: { code: Number(bcode) } },
-        relations: ['branch', 'loan_plan'],
-        order: { date: 'DESC' },
-      });
-    }
-
-    // Find the most recent date across all branches
-    const lastDate = await this.loanRepository
-      .createQueryBuilder('loan')
-      .select('MAX(loan.date)', 'maxDate')
-      .getRawOne()
-      .then((result) => result?.maxDate);
-
-    if (!lastDate) {
-      return []; // No loans exist in the database
-    }
-
-    // Return all loans for the last available date
-    return await this.loanRepository.find({
-      where: { date: lastDate, branch: { code: Number(bcode) } },
-      relations: ['branch', 'loan_plan'],
-      order: { branch: { code: 'ASC' } }, // Optional: order by branch code
-    });
-  }
-
-  private mergeData(array: any[], option: 'daily' | 'monthly' | 'yearly') {
-    const hasData: any[] = [];
-    array.forEach((m) => {
-      const getDate =
-        option !== 'yearly'
-          ? moment(m.date).endOf('day')
-          : moment(m.date, 'yyyy');
-      const itx = {
-        date:
-          option === 'daily'
-            ? getDate.format('DD-MM-YYYY')
-            : option === 'monthly'
-              ? getDate.format('MMM-YYYY')
-              : getDate.format('YYYY'),
-        balance: Number(m?.balance),
-        npl_balance: Number(m?.npl_balance),
-        branch_code: m?.branch_code,
-        loan_plan_amount: Number(m?.loan_plan_amount),
-        loan_plan_npl: Number(m?.loan_plan_npl),
-      };
-      hasData.push(itx);
+    groupData.forEach((e) => {
+      plan.push(e.loan_plan);
+      balance.push(e.balance);
+      npl.push(e.npl_balance);
+      dateX.push(e.date);
     });
 
-    function reduceDataByDate(data) {
-      const result = data.reduce((acc, curr) => {
-        const existingEntry = acc.find((item) => item.date === curr.date);
-        if (existingEntry) {
-          existingEntry.balance += curr.balance;
-          existingEntry.npl_balance += curr.npl_balance;
-          existingEntry.loan_plan_amount += curr.loan_plan_amount;
-          existingEntry.loan_plan_npl += curr.loan_plan_npl;
-        } else {
-          acc.push({ ...curr });
-        }
-        return acc;
-      }, []);
-      return result;
-    }
-
-    return reduceDataByDate(hasData);
+    return {
+      plan: plan,
+      balance: balance,
+      npl: npl,
+      date: dateX,
+    };
   }
 
-  //====>
-  async importByDateDate(start: string, end: string) {
-    const startDate = moment(start, 'YYYYMMDD');
-    const endDate = moment(end, 'YYYYMMDD');
-    const dateArray: string[] = [];
+  async planNpl(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
 
-    while (startDate.isSameOrBefore(endDate)) {
-      dateArray.push(startDate.format('YYYYMMDD'));
-      startDate.add(1, 'day');
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'daily');
     }
 
-    const myDate: any[] = [];
-    for (const item of dateArray) {
-      const getQuery = loan();
-      const data = await this.databaseService.queryOds(getQuery, [item]);
-      myDate.push(data);
+    if (option === 'm') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'monthly');
     }
 
-    const flatData = myDate.reduce((acc, cur) => acc.concat(cur), []);
+    if (option === 'y') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'yearly');
+    }
 
-    const mapData = flatData.map((m) => {
-      return {
-        date: m.Dates,
-        balance: m.Loan_Balance_Daily ?? 0,
-        npl_balance: m.NPL_Balance_Daily ?? 0,
-        app_amount: m.Drawndown_Daily ?? 0,
-        branch: Number(m.Branch_code),
-        a: m.A ?? 0,
-        b: m.B ?? 0,
-        c: m.C ?? 0,
-        d: m.D ?? 0,
-        e: m.E ?? 0,
-        short: m.Short ?? 0,
-        middle: m.Middle ?? 0,
-        longs: m.Longs ?? 0,
-      };
+    const plan: number[] = [];
+    const npl: number[] = [];
+    const dateX: string[] = [];
+
+    groupData.forEach((e) => {
+      plan.push(e.loan_plan);
+      npl.push(e.npl_balance);
+      dateX.push(e.date);
     });
 
-    const add: any = await this.loanRepository.save(mapData);
+    return {
+      plan: plan,
+      npl: npl,
+      date: dateX,
+    };
+  }
 
-    return add;
+  async loanCredits(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'daily');
+    }
+
+    if (option === 'm') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'monthly');
+    }
+
+    if (option === 'y') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'yearly');
+    }
+
+    const app_amount: number[] = [];
+    const dateX: string[] = [];
+
+    groupData.forEach((e) => {
+      app_amount.push(e.app_amount);
+      dateX.push(e.date);
+    });
+
+    return {
+      amount: app_amount,
+      date: dateX,
+    };
+  }
+
+  async allLoan(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByBranch(result, 'daily');
+    }
+
+    if (option === 'm') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByBranch(result, 'monthly');
+    }
+
+    if (option === 'y') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByBranch(result, 'yearly');
+    }
+
+    const names: string[] = [];
+    const npl: number[] = [];
+    const pl: number[] = [];
+
+    groupData.forEach((e) => {
+      names.push(e.name);
+      npl.push(e.npl_balance);
+      pl.push(e.balance - e.npl_balance);
+    });
+
+    return {
+      name: names,
+      npl: npl,
+      pl: pl,
+    };
+  }
+
+  async classA(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'daily');
+    }
+
+    if (option === 'm') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'monthly');
+    }
+
+    if (option === 'y') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'yearly');
+    }
+
+    const dateX: string[] = [];
+    const amount: number[] = [];
+
+    groupData.forEach((e) => {
+      dateX.push(e.date);
+      amount.push(e.classA);
+    });
+
+    return {
+      date: dateX,
+      amount: amount,
+    };
+  }
+
+  async classB(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'daily');
+    }
+
+    if (option === 'm') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'monthly');
+    }
+
+    if (option === 'y') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'yearly');
+    }
+
+    const dateX: string[] = [];
+    const amount: number[] = [];
+
+    groupData.forEach((e) => {
+      dateX.push(e.date);
+      amount.push(e.classB);
+    });
+
+    return {
+      date: dateX,
+      amount: amount,
+    };
+  }
+
+  async classCDE(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'daily');
+    }
+
+    if (option === 'm') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'monthly');
+    }
+
+    if (option === 'y') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'yearly');
+    }
+
+    const dateX: string[] = [];
+    const amountC: number[] = [];
+    const amountD: number[] = [];
+    const amountE: number[] = [];
+
+    groupData.forEach((e) => {
+      dateX.push(e.date);
+      amountC.push(e.classC);
+      amountD.push(e.classD);
+      amountE.push(e.classE);
+    });
+
+    return {
+      date: dateX,
+      amountC: amountC,
+      amountD: amountD,
+      amountE: amountE,
+    };
+  }
+
+  async allClass(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByBranch(result, 'daily');
+    }
+
+    if (option === 'm') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByBranch(result, 'monthly');
+    }
+
+    if (option === 'y') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByBranch(result, 'yearly');
+    }
+
+    const names: string[] = [];
+    const amountB: number[] = [];
+    const amountC: number[] = [];
+    const amountD: number[] = [];
+    const amountE: number[] = [];
+
+    groupData.forEach((e) => {
+      names.push(e.name);
+      amountB.push(e.classB);
+      amountC.push(e.classC);
+      amountD.push(e.classD);
+      amountE.push(e.classE);
+    });
+
+    return {
+      names: names,
+      amountB: amountB,
+      amountC: amountC,
+      amountD: amountD,
+      amountE: amountE,
+    };
+  }
+
+  async period(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'daily');
+    }
+
+    if (option === 'm') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'monthly');
+    }
+
+    if (option === 'y') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'yearly');
+    }
+
+    const dateX: string[] = [];
+    const short: number[] = [];
+    const middle: number[] = [];
+    const longs: number[] = [];
+
+    groupData.forEach((e) => {
+      dateX.push(e.date);
+      short.push(e.short);
+      middle.push(e.middle);
+      longs.push(e.longs);
+    });
+
+    return {
+      date: dateX,
+      short: short,
+      middle: middle,
+      longs: longs,
+    };
+  }
+
+  async sumPeriod(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'daily');
+    }
+
+    if (option === 'm') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'monthly');
+    }
+
+    if (option === 'y') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByDate(result, 'yearly');
+    }
+
+    const short: number[] = [];
+    const middle: number[] = [];
+    const longs: number[] = [];
+
+    groupData.forEach((e) => {
+      short.push(e.short);
+      middle.push(e.middle);
+      longs.push(e.longs);
+    });
+
+    return {
+      short: reduceFunc(short),
+      middle: reduceFunc(middle),
+      longs: reduceFunc(longs),
+    };
+  }
+
+  async allPeriod(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByBranch(result, 'daily');
+    }
+
+    if (option === 'm') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByBranch(result, 'monthly');
+    }
+
+    if (option === 'y') {
+      [result] = await this.databaseService.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupByBranch(result, 'yearly');
+    }
+
+    const name: string[] = [];
+    const shortAmount: number[] = [];
+    const middleAmount: number[] = [];
+    const longAmount: number[] = [];
+    groupData.forEach((e) => {
+      name.push(e.name);
+      shortAmount.push(e.short);
+      middleAmount.push(e.middle);
+      longAmount.push(e.longs);
+    });
+
+    return {
+      name: name,
+      shortAmount: shortAmount,
+      middleAmount: middleAmount,
+      longAmount: longAmount,
+    };
+  }
+
+  async loanSector(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    const [result] = await this.databaseService.query(
+      `call proc_ln_plan_sector_daily(?, ?, ?)`,
+      [date, branch, option],
+    );
+
+    const groupData = this.groupByCode(result);
+
+    const name: string[] = [];
+    const amount: number[] = [];
+    const plan: number[] = [];
+
+    groupData.forEach((e) => {
+      name.push(e.description);
+      amount.push(e.sector_balance);
+      plan.push(e.sector_plan_amount);
+    });
+
+    return {
+      name: name,
+      amount: amount,
+      plan: plan,
+    };
+  }
+
+  async allLoanSector(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    const [result] = await this.databaseService.query(
+      `call proc_ln_plan_sector_daily(?, ?, ?)`,
+      [date, branch, option],
+    );
+    const groupData = this.sectorGroupByBranch(result);
+
+    const branchList: string[] = [];
+    const amount: number[] = [];
+    const plan: number[] = [];
+
+    groupData.forEach((e) => {
+      branchList.push(e.name);
+      amount.push(e.sector_balance);
+      plan.push(e.sector_plan_amount);
+    });
+
+    return {
+      branch: branchList,
+      amount: amount,
+      plan: plan,
+    };
+  }
+
+  private groupByDate(data: any[], option: 'daily' | 'monthly' | 'yearly') {
+    const grouped: Record<
+      string,
+      {
+        date: string;
+        loan_plan: number;
+        balance: number;
+        npl_balance: number;
+        npl_plan: number;
+        app_amount: number;
+        classA: number;
+        classB: number;
+        classC: number;
+        classD: number;
+        classE: number;
+        short: number;
+        middle: number;
+        longs: number;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const date =
+        option === 'daily'
+          ? e.date
+          : option === 'monthly'
+            ? e.monthend
+            : e.monthend;
+      const loan_plan = +e.loan_plan;
+      const balance = +e.balance;
+      const npl = +e.npl_balance;
+      const npl_plan = +e.npl_plan;
+      const app_amount = +e.app_amount;
+      const classA = +e.classA;
+      const classB = +e.classB;
+      const classC = +e.classC;
+      const classD = +e.classD;
+      const classE = +e.classE;
+      const short = +e.short;
+      const middle = +e.middle;
+      const longs = +e.longs;
+      if (!grouped[date]) {
+        grouped[date] = {
+          date:
+            option === 'daily'
+              ? date
+              : option === 'monthly'
+                ? moment(date).format('YYYYMM').toString()
+                : moment(date).format('YYYY'),
+          loan_plan: 0,
+          balance: 0,
+          npl_balance: 0,
+          npl_plan: 0,
+          app_amount: 0,
+          classA: 0,
+          classB: 0,
+          classC: 0,
+          classD: 0,
+          classE: 0,
+          short: 0,
+          middle: 0,
+          longs: 0,
+        };
+      }
+      grouped[date].loan_plan += loan_plan;
+      grouped[date].balance += balance;
+      grouped[date].npl_balance += npl;
+      grouped[date].npl_plan += npl_plan;
+      grouped[date].app_amount += app_amount;
+      grouped[date].classA += classA;
+      grouped[date].classB += classB;
+      grouped[date].classC += classC;
+      grouped[date].classD += classD;
+      grouped[date].classE += classE;
+      grouped[date].short += short;
+      grouped[date].middle += middle;
+      grouped[date].longs += longs;
+    });
+    return Object.values(grouped);
+  }
+
+  private groupByBranch(data: any[], option: 'daily' | 'monthly' | 'yearly') {
+    const grouped: Record<
+      string,
+      {
+        date: string;
+        loan_plan: number;
+        balance: number;
+        npl_balance: number;
+        npl_plan: number;
+        app_amount: number;
+        branch: number;
+        name: string;
+        classA: number;
+        classB: number;
+        classC: number;
+        classD: number;
+        classE: number;
+        short: number;
+        middle: number;
+        longs: number;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const code = e.code;
+      const date =
+        option === 'daily'
+          ? e.date
+          : option === 'monthly'
+            ? e.monthend
+            : e.monthend;
+      const loan_plan = +e.loan_plan;
+      const balance = +e.balance;
+      const npl = +e.npl_balance;
+      const npl_plan = +e.npl_plan;
+      const app_amount = +e.app_amount;
+      const classA = +e.classA;
+      const classB = +e.classB;
+      const classC = +e.classC;
+      const classD = +e.classD;
+      const classE = +e.classE;
+      const short = +e.short;
+      const middle = +e.middle;
+      const longs = +e.longs;
+
+      if (!grouped[code]) {
+        grouped[code] = {
+          branch: code,
+          name: e.name,
+          date:
+            option === 'daily'
+              ? date
+              : option === 'monthly'
+                ? moment(date).format('YYYYMM').toString()
+                : moment(date).format('YYYY'),
+          loan_plan: 0,
+          balance: 0,
+          npl_balance: 0,
+          npl_plan: 0,
+          app_amount: 0,
+          classA: 0,
+          classB: 0,
+          classC: 0,
+          classD: 0,
+          classE: 0,
+          short: 0,
+          middle: 0,
+          longs: 0,
+        };
+      }
+      grouped[code].loan_plan += loan_plan;
+      grouped[code].balance += balance;
+      grouped[code].npl_balance += npl;
+      grouped[code].npl_plan += npl_plan;
+      grouped[code].app_amount += app_amount;
+      grouped[code].classA += classA;
+      grouped[code].classB += classB;
+      grouped[code].classC += classC;
+      grouped[code].classD += classD;
+      grouped[code].classE += classE;
+      grouped[code].short += short;
+      grouped[code].middle += middle;
+      grouped[code].longs += longs;
+    });
+
+    return Object.values(grouped);
+  }
+
+  private groupByCode(data: any[]) {
+    const grouped: Record<
+      string,
+      {
+        code: number;
+        name: string;
+        date: string;
+        sector_plan_amount: number;
+        sector_balance: number;
+        sector_code: string;
+        description: string;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const sector_code = e.sector_code;
+      const sector_plan_amount = +e.sector_plan_amount;
+      const sector_balance = +e.sector_balance;
+      if (!grouped[sector_code]) {
+        grouped[sector_code] = {
+          code: e.code,
+          name: e.name,
+          date: e.date,
+          sector_plan_amount: 0,
+          sector_balance: 0,
+          sector_code: sector_code,
+          description: e.description,
+        };
+      }
+
+      grouped[sector_code].sector_plan_amount += sector_plan_amount;
+      grouped[sector_code].sector_balance += sector_balance;
+    });
+
+    return Object.values(grouped);
+  }
+
+  private sectorGroupByBranch(data: any[]) {
+    const grouped: Record<
+      string,
+      {
+        code: number;
+        name: string;
+        date: string;
+        sector_plan_amount: number;
+        sector_balance: number;
+        sector_code: string;
+        description: string;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const branch = e.code;
+      const sector_code = e.sector_code;
+      const sector_plan_amount = +e.sector_plan_amount;
+      const sector_balance = +e.sector_balance;
+      if (!grouped[branch]) {
+        grouped[branch] = {
+          code: branch,
+          name: e.name,
+          date: e.date,
+          sector_plan_amount: 0,
+          sector_balance: 0,
+          sector_code: sector_code,
+          description: e.description,
+        };
+      }
+
+      grouped[branch].sector_plan_amount += sector_plan_amount;
+      grouped[branch].sector_balance += sector_balance;
+    });
+
+    return Object.values(grouped);
   }
 }
