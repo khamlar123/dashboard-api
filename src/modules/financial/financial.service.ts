@@ -14,7 +14,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Deposit } from '../../entity/deposit.entity';
 import { Repository } from 'typeorm';
 import * as moment from 'moment';
-import { ISumLak } from '../../common/interfaces/sum-lak.interface';
 
 @Injectable()
 export class FinancialService {
@@ -327,5 +326,174 @@ export class FinancialService {
         percents,
       },
     };
+  }
+
+  async compareIncome(
+    date: string,
+    branch: string,
+    option: 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'm') {
+      [result] = await this.database.query(
+        `call proc_acc_income_comp_monthly(?, ?)`,
+        [date, branch],
+      );
+
+      groupData = this.groupDataByDate(result, 'income');
+    }
+
+    if (option === 'y') {
+      [result] = await this.database.query(
+        `call proc_acc_income_comp_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupDataByDate(result, 'income');
+    }
+
+    const dates: string[] = [];
+    const amount: number[] = [];
+    const plan: number[] = [];
+
+    groupData.forEach((e) => {
+      dates.push(e.monthend);
+      amount.push(e.amount);
+      plan.push(e.plan_amount);
+    });
+
+    return {
+      dates: dates,
+      amount: amount,
+      plan: plan,
+    };
+  }
+
+  async compareExpense(
+    date: string,
+    branch: string,
+    option: 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'm') {
+      [result] = await this.database.query(
+        `call proc_acc_expense_comp_monthly(?, ?)`,
+        [date, branch],
+      );
+
+      groupData = this.groupDataByDate(result, 'expense');
+    }
+
+    if (option === 'y') {
+      [result] = await this.database.query(
+        `call proc_acc_expense_comp_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupDataByDate(result, 'expense');
+    }
+
+    const dates: string[] = [];
+    const amount: number[] = [];
+    const plan: number[] = [];
+
+    groupData.forEach((e) => {
+      dates.push(e.monthend);
+      amount.push(e.amount);
+      plan.push(e.plan_amount);
+    });
+
+    return {
+      dates: dates,
+      amount: amount,
+      plan: plan,
+    };
+  }
+
+  async compareProfit(
+    date: string,
+    branch: string,
+    option: 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'm') {
+      [result] = await this.database.query(
+        `call proc_acc_profit_comp_monthly(?, ?)`,
+        [date, branch],
+      );
+
+      groupData = this.groupDataByDate(result, 'profit');
+    }
+
+    if (option === 'y') {
+      [result] = await this.database.query(
+        `call proc_acc_profit_comp_monthly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupDataByDate(result, 'profit');
+    }
+
+    const dates: string[] = [];
+    const amount: number[] = [];
+    const plan: number[] = [];
+
+    groupData.forEach((e) => {
+      dates.push(e.monthend);
+      amount.push(e.amount);
+      plan.push(e.plan_amount);
+    });
+
+    return {
+      dates: dates,
+      amount: amount,
+      plan: plan,
+    };
+  }
+
+  private groupDataByDate(
+    data: any[],
+    option: 'income' | 'expense' | 'profit',
+  ) {
+    const grouped: Record<
+      string,
+      {
+        monthend: string;
+        plan_amount: number;
+        amount: number;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const monthend = e.monthend;
+      const plan_amount = +e.plan_amt;
+      const amount =
+        option === 'income'
+          ? +e.income_amt
+          : option === 'expense'
+            ? +e.income_amt
+            : +e.profit;
+
+      if (!grouped[monthend]) {
+        grouped[monthend] = {
+          monthend: moment(monthend).format('YYYYMM').toString(),
+          plan_amount: 0,
+          amount: 0,
+        };
+      }
+
+      grouped[monthend].plan_amount += plan_amount;
+      grouped[monthend].amount += amount;
+    });
+    return Object.values(grouped);
   }
 }
