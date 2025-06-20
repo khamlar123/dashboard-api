@@ -125,4 +125,52 @@ export class FinancialController {
   ) {
     return await this.financialService.compareProfit(date, branch, option);
   }
+
+  @Get('/income-compare-income')
+  async incomeCompareIncome(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'm' | 'y',
+  ) {
+    return await this.financialService.incomeCompareIncome(
+      date,
+      branch,
+      option,
+    );
+  }
+
+  @Get('/expense-compare-expense')
+  async expenseCompareExpense(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'm' | 'y',
+  ) {
+    return await this.financialService.expenseCompareExpense(
+      date,
+      branch,
+      option,
+    );
+  }
+
+  @Get('/profit-compare-profit')
+  async profitCompareProfit(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'm' | 'y',
+  ) {
+    return await this.financialService.profitCompareProfit(
+      date,
+      branch,
+      option,
+    );
+  }
 }

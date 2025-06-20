@@ -151,7 +151,7 @@ export class ProfitService {
     ];
 
     const yearAmount: { year: number; amount: number }[] = [];
-    console.log('yearAmount', yearAmount);
+
     for (const val of mapDate) {
       yearAmount.push(await this.sumPlanAmount(val as number));
     }

@@ -46,8 +46,12 @@ export class FinancialService {
       percents.push(+e.percent);
     });
 
+    const uniqueByCode = Array.from(
+      new Map(result.map((item) => [item.code, item])).values(),
+    );
+
     return {
-      tables: result.map((m) => {
+      tables: uniqueByCode.map((m: any) => {
         return {
           code: m.code,
           name: m.name,
@@ -60,18 +64,20 @@ export class FinancialService {
       }),
       total: {
         total_use_plan: +reduceFunc(
-          result.map((m) => +m.use_funding_plan),
+          uniqueByCode.map((m: any) => +m.use_funding_plan),
         ).toFixed(2),
         total_loan_bal1: +reduceFunc(
-          result.map((m) => +m.loan_balance1),
+          uniqueByCode.map((m: any) => +m.loan_balance1),
         ).toFixed(2),
         total_loan_bal2: +reduceFunc(
-          result.map((m) => +m.loan_balance2),
+          uniqueByCode.map((m: any) => +m.loan_balance2),
         ).toFixed(2),
-        total_diff: +reduceFunc(result.map((m) => +m.diff)).toFixed(2),
+        total_diff: +reduceFunc(uniqueByCode.map((m: any) => +m.diff)).toFixed(
+          2,
+        ),
         total_percent: +(
-          (reduceFunc(result.map((m) => +m.loan_balance1)) /
-            reduceFunc(result.map((m) => +m.use_funding_plan))) *
+          (reduceFunc(uniqueByCode.map((m: any) => +m.loan_balance1)) /
+            reduceFunc(uniqueByCode.map((m: any) => +m.use_funding_plan))) *
           100
         ).toFixed(2),
       },
@@ -344,15 +350,15 @@ export class FinancialService {
         [date, branch],
       );
 
-      groupData = this.groupDataByDate(result, 'income');
+      groupData = this.groupDataByDate(result, 'income', option);
     }
 
     if (option === 'y') {
       [result] = await this.database.query(
-        `call proc_acc_income_comp_monthly(?, ?)`,
+        `call proc_acc_income_comp_yearly(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupDataByDate(result, 'income');
+      groupData = this.groupDataByDate(result, 'income', option);
     }
 
     const dates: string[] = [];
@@ -388,15 +394,15 @@ export class FinancialService {
         [date, branch],
       );
 
-      groupData = this.groupDataByDate(result, 'expense');
+      groupData = this.groupDataByDate(result, 'expense', option);
     }
 
     if (option === 'y') {
       [result] = await this.database.query(
-        `call proc_acc_expense_comp_monthly(?, ?)`,
+        `call proc_acc_expense_comp_yearly(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupDataByDate(result, 'expense');
+      groupData = this.groupDataByDate(result, 'expense', option);
     }
 
     const dates: string[] = [];
@@ -432,15 +438,15 @@ export class FinancialService {
         [date, branch],
       );
 
-      groupData = this.groupDataByDate(result, 'profit');
+      groupData = this.groupDataByDate(result, 'profit', option);
     }
 
     if (option === 'y') {
       [result] = await this.database.query(
-        `call proc_acc_profit_comp_monthly(?, ?)`,
+        `call proc_acc_profit_comp_yearly(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupDataByDate(result, 'profit');
+      groupData = this.groupDataByDate(result, 'profit', option);
     }
 
     const dates: string[] = [];
@@ -460,9 +466,223 @@ export class FinancialService {
     };
   }
 
+  async incomeCompareIncome(
+    date: string,
+    branch: string,
+    option: 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'm') {
+      [result] = await this.database.query(
+        `call proc_acc_income_comp_monthly(?, ?)`,
+        [date, branch],
+      );
+
+      groupData = this.groupDataByDate(result, 'income', option);
+    }
+
+    if (option === 'y') {
+      [result] = await this.database.query(
+        `call proc_acc_income_comp_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupDataByDate(result, 'income', option);
+    }
+
+    const currentMonth = groupData[groupData.length - 1];
+
+    //month_to_month
+    const findPlan =
+      (currentMonth.plan_amount / 12) * Number(moment(date).format('MM'));
+    const calcProfitMonthToMonth: number = Number(
+      ((currentMonth.amount / findPlan) * 100).toFixed(2),
+    );
+
+    //month_to_last_month
+    const beforeMonth = groupData[groupData.length - 2];
+    const calcMonthToLastMonth = Number(
+      ((currentMonth.amount / beforeMonth.amount) * 100).toFixed(2),
+    );
+
+    //
+    const [findBefore] = await this.database.query(
+      `call proc_acc_comp_monthly(?, ?)`,
+      [date, branch],
+    );
+    const beforeYearThisMouth = this.groupByTypeAndBrand(findBefore, 'income');
+    const calcMonthToLastYearThisMonth = Number(
+      ((currentMonth.amount / beforeYearThisMouth) * 100).toFixed(2),
+    );
+
+    return {
+      month_to_month: {
+        amount: currentMonth.amount,
+        beforeAmount: findPlan,
+        precent: calcProfitMonthToMonth,
+      },
+      month_to_last_month: {
+        amount: currentMonth.amount,
+        beforeAmount: beforeYearThisMouth,
+        precent: calcMonthToLastMonth,
+      },
+      month_to_last_year_month: {
+        amount: currentMonth.amount,
+        beforeAmount: beforeYearThisMouth,
+        precent: calcMonthToLastYearThisMonth,
+      },
+    };
+  }
+
+  async expenseCompareExpense(
+    date: string,
+    branch: string,
+    option: 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'm') {
+      [result] = await this.database.query(
+        `call proc_acc_expense_comp_monthly(?, ?)`,
+        [date, branch],
+      );
+
+      groupData = this.groupDataByDate(result, 'expense', option);
+    }
+
+    if (option === 'y') {
+      [result] = await this.database.query(
+        `call proc_acc_expense_comp_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupDataByDate(result, 'expense', option);
+    }
+
+    const currentMonth = groupData[groupData.length - 1];
+
+    //month_to_month
+    const findPlan =
+      (currentMonth.plan_amount / 12) * Number(moment(date).format('MM'));
+    const calcProfitMonthToMonth: number = Number(
+      ((currentMonth.amount / findPlan) * 100).toFixed(2),
+    );
+
+    //month_to_last_month
+    const beforeMonth = groupData[groupData.length - 2];
+    const calcMonthToLastMonth = Number(
+      ((currentMonth.amount / beforeMonth.amount) * 100).toFixed(2),
+    );
+
+    //
+    const [findBefore] = await this.database.query(
+      `call proc_acc_comp_monthly(?, ?)`,
+      [date, branch],
+    );
+    const beforeYearThisMouth = this.groupByTypeAndBrand(findBefore, 'expense');
+    const calcMonthToLastYearThisMonth = Number(
+      ((currentMonth.amount / beforeYearThisMouth) * 100).toFixed(2),
+    );
+
+    return {
+      month_to_month: {
+        amount: currentMonth.amount,
+        beforeAmount: findPlan,
+        precent: calcProfitMonthToMonth,
+      },
+      month_to_last_month: {
+        amount: currentMonth.amount,
+        beforeAmount: beforeMonth.amount,
+        precent: calcMonthToLastMonth,
+      },
+      month_to_last_year_month: {
+        amount: currentMonth.amount,
+        beforeAmount: beforeYearThisMouth,
+        precent: calcMonthToLastYearThisMonth,
+      },
+    };
+  }
+
+  async profitCompareProfit(
+    date: string,
+    branch: string,
+    option: 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'm') {
+      [result] = await this.database.query(
+        `call proc_acc_profit_comp_monthly(?, ?)`,
+        [date, branch],
+      );
+
+      groupData = this.groupDataByDate(result, 'profit', option);
+    }
+
+    if (option === 'y') {
+      [result] = await this.database.query(
+        `call proc_acc_profit_comp_yearly(?, ?)`,
+        [date, branch],
+      );
+      groupData = this.groupDataByDate(result, 'profit', option);
+    }
+
+    const currentMonth = groupData[groupData.length - 1];
+
+    //month_to_month
+    const findPlan =
+      (currentMonth.plan_amount / 12) * Number(moment(date).format('MM'));
+    const calcProfitMonthToMonth: number = Number(
+      ((currentMonth.amount / findPlan) * 100).toFixed(2),
+    );
+
+    //month_to_last_month
+    const beforeMonth = groupData[groupData.length - 2];
+    const calcMonthToLastMonth = Number(
+      ((currentMonth.amount / beforeMonth.amount) * 100).toFixed(2),
+    );
+
+    //
+    const [findBefore] = await this.database.query(
+      `call proc_acc_comp_monthly(?, ?)`,
+      [date, branch],
+    );
+    const beforeYearThisMouth = this.groupByTypeAndBrand(findBefore, 'profit');
+    const calcMonthToLastYearThisMonth = Number(
+      ((currentMonth.amount / beforeYearThisMouth) * 100).toFixed(2),
+    );
+
+    return {
+      month_to_month: {
+        amount: currentMonth.amount,
+        beforeAmount: findPlan,
+        precent: calcProfitMonthToMonth,
+      },
+      month_to_last_month: {
+        amount: currentMonth.amount,
+        beforeAmount: beforeMonth.amount,
+        precent: calcMonthToLastMonth,
+      },
+      month_to_last_year_month: {
+        amount: currentMonth.amount,
+        beforeAmount: beforeYearThisMouth,
+        precent: calcMonthToLastYearThisMonth,
+      },
+    };
+  }
+
   private groupDataByDate(
     data: any[],
-    option: 'income' | 'expense' | 'profit',
+    type: 'income' | 'expense' | 'profit',
+    option: 'm' | 'y',
   ) {
     const grouped: Record<
       string,
@@ -474,18 +694,21 @@ export class FinancialService {
     > = {};
 
     data.forEach((e) => {
-      const monthend = e.monthend;
+      const monthend =
+        option === 'm'
+          ? moment(e.monthend).format('YYYYMM')
+          : moment(type === 'expense' ? e.yearend : e.monthend).format('YYYY');
       const plan_amount = +e.plan_amt;
       const amount =
-        option === 'income'
+        type === 'income'
           ? +e.income_amt
-          : option === 'expense'
+          : type === 'expense'
             ? +e.income_amt
             : +e.profit;
 
       if (!grouped[monthend]) {
         grouped[monthend] = {
-          monthend: moment(monthend).format('YYYYMM').toString(),
+          monthend: monthend,
           plan_amount: 0,
           amount: 0,
         };
@@ -495,5 +718,14 @@ export class FinancialService {
       grouped[monthend].amount += amount;
     });
     return Object.values(grouped);
+  }
+
+  private groupByTypeAndBrand(
+    data: any[],
+    type: 'income' | 'expense' | 'profit',
+  ) {
+    return reduceFunc(
+      data.filter((f) => f.types === type).map((m) => +m.last_year_inamt),
+    );
   }
 }

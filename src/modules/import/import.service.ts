@@ -18,6 +18,7 @@ import { ExpenseCode } from '../../entity/expense_code.entity';
 import { Expense } from '../../entity/expense.entity';
 import { deposit } from '../cronjob/sqls/deposit.sql';
 import { Deposit } from '../../entity/deposit.entity';
+import { admin } from '../cronjob/sqls/admin.sql';
 
 @Injectable()
 export class ImportService {
@@ -303,6 +304,60 @@ export class ImportService {
       });
 
     const add = await this.depositRepository.save(flatMap);
+
+    return add;
+  }
+
+  async adminImport(start: string, end: string) {
+    const startDate = moment(start, 'YYYYMMDD');
+    const endDate = moment(end, 'YYYYMMDD');
+    const dateArray: string[] = [];
+
+    while (startDate.isSameOrBefore(endDate)) {
+      dateArray.push(startDate.format('YYYYMMDD'));
+      startDate.add(1, 'day');
+    }
+
+    const myDate: any[] = [];
+    for (const item of dateArray) {
+      const getQuery = admin();
+      const data = await this.databaseService.queryOds(getQuery, [item]);
+      myDate.push(data);
+    }
+
+    const flatMap = myDate
+      .flatMap((m) => m)
+      .map((m) => {
+        return {
+          date: m.AC_DATE,
+          branch_id: m.br,
+          itm: m.ITM_NO,
+          ccy: m.ccy,
+          cddbal: m.cddbal,
+          cddlak: m.cddlak,
+          cdcbal: m.CDCBAL,
+          cdclak: m.cdclak,
+        };
+      });
+
+    const placeholders = flatMap
+      .map(() => '(?, ?, ?, ?, ?, ?, ?, ?)')
+      .join(', ');
+
+    const query = `INSERT INTO admin_bal (date, branch_id, itm, ccy, cddbal, cddlak, cdcbal, cdclak)
+                   VALUES ${placeholders}`;
+    const values = flatMap.flatMap((item) => [
+      item.date,
+      item.branch_id,
+      item.itm,
+      item.ccy,
+      item.cddbal,
+      item.cddlak,
+      item.cdcbal,
+      item.cdclak,
+    ]);
+
+    const add = await this.databaseService.query(query, values);
 
     return add;
   }

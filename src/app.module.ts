@@ -23,6 +23,8 @@ import { SectorBalModule } from './modules/sector_bal/sector_bal.module';
 import { FinancialModule } from './modules/financial/financial.module';
 import { DepositModule } from './modules/deposit/deposit.module';
 import { ImportModule } from './modules/import/import.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { MarketModule } from './modules/market/market.module';
 
 @Module({
   imports: [
@@ -59,6 +61,8 @@ import { ImportModule } from './modules/import/import.module';
     FinancialModule,
     DepositModule,
     ImportModule,
+    AdminModule,
+    MarketModule,
   ],
   controllers: [AppController],
   providers: [AppService],
