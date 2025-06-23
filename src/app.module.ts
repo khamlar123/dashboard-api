@@ -25,6 +25,7 @@ import { DepositModule } from './modules/deposit/deposit.module';
 import { ImportModule } from './modules/import/import.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { MarketModule } from './modules/market/market.module';
+import { FundManagementModule } from './modules/fund_management/fund_management.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { MarketModule } from './modules/market/market.module';
     ImportModule,
     AdminModule,
     MarketModule,
+    FundManagementModule,
   ],
   controllers: [AppController],
   providers: [AppService],
