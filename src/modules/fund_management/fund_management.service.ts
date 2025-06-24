@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../common/database/database.service';
 import { checkCurrentDate } from '../../share/functions/check-current-date';
-import { request } from 'express';
 
 @Injectable()
 export class FundManagementService {

@@ -240,6 +240,8 @@ export class ProfitService {
       [date, 'all'],
     );
 
+    console.log('result', result);
+
     const mapData: { profit: number[]; planProfit: number[]; name: string[] } =
       {
         profit: [],
@@ -247,11 +249,14 @@ export class ProfitService {
         name: [],
       };
 
-    result.slice(-18).forEach((e) => {
-      mapData.profit.push(e.profit);
-      mapData.planProfit.push(e.plan_amt);
-      mapData.name.push(e.name);
-    });
+    result
+      .reverse()
+      .slice(-18)
+      .forEach((e) => {
+        mapData.profit.push(e.profit);
+        mapData.planProfit.push(e.plan_amt);
+        mapData.name.push(e.name);
+      });
 
     return mapData;
   }

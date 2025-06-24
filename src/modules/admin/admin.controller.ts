@@ -12,7 +12,7 @@ import {
 import { ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 
-@Controller('financial')
+@Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
