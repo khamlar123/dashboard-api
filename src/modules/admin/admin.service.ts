@@ -126,6 +126,7 @@ export class AdminService {
     return {
       name: name,
       amount: amount,
+      sumAmount: reduceFunc(amount),
     };
   }
 
@@ -177,6 +178,7 @@ export class AdminService {
     return {
       name: name,
       amount: amount,
+      sumAmount: reduceFunc(amount),
     };
   }
 

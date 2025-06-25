@@ -19,6 +19,7 @@ import { Expense } from '../../entity/expense.entity';
 import { deposit } from '../cronjob/sqls/deposit.sql';
 import { Deposit } from '../../entity/deposit.entity';
 import { admin } from '../cronjob/sqls/admin.sql';
+import { liquidity } from '../cronjob/sqls/liquidity.sql';
 
 @Injectable()
 export class ImportService {
@@ -83,9 +84,7 @@ export class ImportService {
       };
     });
 
-    const add: any = await this.loanRepository.save(mapData);
-
-    return add;
+    return await this.loanRepository.save(mapData);
   }
 
   async sectorBalImport(start: string, end: string) {
@@ -123,9 +122,7 @@ export class ImportService {
       };
     });
 
-    const add = await this.sectorBalRepository.save(mapData);
-
-    return add;
+    return await this.sectorBalRepository.save(mapData);
   }
 
   async loanBolImport(start: string, end: string) {
@@ -166,9 +163,8 @@ export class ImportService {
 
     const query = `INSERT INTO bol_loan (branch_id, bol_type, date, amount)
                    VALUES ${placeholders}`;
-    const add = await this.databaseService.query(query, values);
 
-    return add;
+    return await this.databaseService.query(query, values);
   }
 
   async incomeImport(start: string, end: string) {
@@ -216,8 +212,7 @@ export class ImportService {
         };
       });
 
-    const addItems = await this.incomeRepository.save(flatMap);
-    return addItems;
+    return await this.incomeRepository.save(flatMap);
   }
 
   async expenseImport(start: string, end: string) {
@@ -266,8 +261,7 @@ export class ImportService {
         };
       });
 
-    const addItems = await this.expenseRepository.save(flatMap);
-    return addItems;
+    return await this.expenseRepository.save(flatMap);
   }
 
   async depositImport(start: string, end: string) {
@@ -303,9 +297,7 @@ export class ImportService {
         };
       });
 
-    const add = await this.depositRepository.save(flatMap);
-
-    return add;
+    return await this.depositRepository.save(flatMap);
   }
 
   async adminImport(start: string, end: string) {
@@ -357,8 +349,60 @@ export class ImportService {
       item.cdclak,
     ]);
 
-    const add = await this.databaseService.query(query, values);
+    return await this.databaseService.query(query, values);
+  }
 
-    return add;
+  async liquidity(start: string, end: string) {
+    const startDate = moment(start, 'YYYYMMDD');
+    const endDate = moment(end, 'YYYYMMDD');
+    const dateArray: string[] = [];
+
+    while (startDate.isSameOrBefore(endDate)) {
+      dateArray.push(startDate.format('YYYYMMDD'));
+      startDate.add(1, 'day');
+    }
+
+    const myDate: any[] = [];
+    for (const item of dateArray) {
+      const getQuery = liquidity();
+      const data = await this.databaseService.queryOds(getQuery, [item]);
+      myDate.push(data);
+    }
+
+    const flatMap = myDate
+      .flatMap((m) => m)
+      .map((m) => {
+        return {
+          date: m.ac_date,
+          branch_id: m.br,
+          type: m.type,
+          typeid: m.typeID,
+          ccy: m.ccy,
+          cddbal: m.cddbal,
+          cddlak: m.cddlak,
+          cdcbal: m.cdcbal,
+          cdclak: 0,
+        };
+      });
+
+    const placeholders = flatMap
+      .map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .join(', ');
+
+    const query = `INSERT INTO liquidity (date, branch_id, type, typeid, ccy, cddbal, cddlak, cdcbal, cdclak)
+                   VALUES ${placeholders}`;
+    const values = flatMap.flatMap((item) => [
+      item.date,
+      item.branch_id,
+      item.type,
+      item.typeid,
+      item.ccy,
+      item.cddbal,
+      item.cddlak,
+      item.cdcbal,
+      item.cdclak,
+    ]);
+
+    return await this.databaseService.query(query, values);
   }
 }

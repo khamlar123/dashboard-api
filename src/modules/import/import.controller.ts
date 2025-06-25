@@ -82,4 +82,14 @@ export class ImportController {
   ) {
     return await this.importService.adminImport(start, end);
   }
+
+  @Post('liquidity')
+  async importLiquidity(
+    @Query('start', new DefaultValuePipe(0))
+    start: string,
+    @Query('end', new DefaultValuePipe(0))
+    end: string,
+  ) {
+    return await this.importService.liquidity(start, end);
+  }
 }

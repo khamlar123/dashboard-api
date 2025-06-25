@@ -185,6 +185,32 @@ export class FundManagementService {
     };
   }
 
+  async liquidity(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_treasury_Liquidity(?, ?, ?)`,
+      [date, branch, option],
+    );
+
+    if (!result) {
+      throw new BadRequestException('Data not found');
+    }
+    const groupData = this.groupByLiquidity(result);
+
+    const type: string[] = [];
+    const amount: number[] = [];
+
+    groupData.forEach((e) => {
+      type.push(e.type);
+      amount.push(e.cddballak);
+    });
+
+    return {
+      type: type,
+      amount: amount,
+    };
+  }
+
   private groupByType(data: any[], option: 'deposit' | 'customer') {
     const grouped: Record<
       string,
@@ -219,6 +245,42 @@ export class FundManagementService {
       }
       grouped[type].cdcbal += cdcbal;
       grouped[type].cdcballak += cdcballak;
+    });
+    return Object.values(grouped);
+  }
+
+  private groupByLiquidity(data: any[]) {
+    const grouped: Record<
+      string,
+      {
+        date: string;
+        code: number;
+        name: string;
+        cddbal: number;
+        cddballak: number;
+        type: string;
+        ccy: string;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const type = e.type;
+      const cddbal = +e.cddbal;
+      const cddballak = +e.cddballak;
+
+      if (!grouped[type]) {
+        grouped[type] = {
+          date: e.data,
+          code: e.code,
+          name: e.name,
+          cddbal: 0,
+          cddballak: 0,
+          type: type,
+          ccy: e.ccy,
+        };
+      }
+      grouped[type].cddbal += cddbal;
+      grouped[type].cddballak += cddballak;
     });
     return Object.values(grouped);
   }

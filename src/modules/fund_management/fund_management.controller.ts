@@ -92,4 +92,17 @@ export class FundManagementController {
   ) {
     return await this.fundManagementService.bolLoan(date, branch, option);
   }
+
+  @Get('/liquidity')
+  @ApiQuery({ name: 'branch', required: false })
+  async liquidity(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.fundManagementService.liquidity(date, branch, option);
+  }
 }
