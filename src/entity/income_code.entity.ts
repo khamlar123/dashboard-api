@@ -1,14 +1,16 @@
-import { Column, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  OneToMany,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Entity } from 'typeorm/decorator/entity/Entity';
 import { IncomePlan } from './income_plan.entity';
 import { Income } from './income.entity';
 
 @Entity()
 export class IncomeCode {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
+  @PrimaryColumn()
   code: string;
 
   @Column()

@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { CreateIncomeDto } from '../../dto/create-income.dto';
-import { UpdateIncomeDto } from '../../dto/update-income.dto';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Income } from 'src/entity/income.entity';
 import { DeleteResult, Repository, UpdateResult } from 'typeorm';
@@ -8,6 +10,11 @@ import * as XLSX from 'xlsx';
 import { Branch } from 'src/entity/branch.entity';
 import { IncomeCode } from 'src/entity/income_code.entity';
 import * as moment from 'moment';
+import { DatabaseService } from '../../common/database/database.service';
+import { IIncome } from '../../common/interfaces/icome.interface';
+import { IncomeRes } from '../../common/interfaces/income-res.interface';
+import { checkCurrentDate } from '../../share/functions/check-current-date';
+import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class IncomeService {
@@ -18,104 +25,92 @@ export class IncomeService {
     private readonly branchRepository: Repository<Branch>,
     @InjectRepository(IncomeCode)
     private readonly incomeCodeRepository: Repository<IncomeCode>,
+    private readonly database: DatabaseService,
   ) {}
 
-  async create(dto: CreateIncomeDto): Promise<Income> {
-    try {
-      const {
-        branch_id,
-        income_code_id,
-        amount,
-        scaled_amount,
-        description,
-        date,
-      } = dto;
+  async findIncomeDailly(
+    date: string,
+    branch: string,
+    option: 'd' | 'm' | 'y',
+  ): Promise<IncomeRes> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_income_dailly(?, ?, ?)`,
+      [date, branch, option],
+    );
 
-      const req = {
-        branch: { code: branch_id },
-        amount,
-        scaled_amount,
-        date,
-        income_code: { id: income_code_id },
-        description,
-      };
-
-      return await this.incomeRepository.save(req);
-    } catch (e) {
-      return e.message;
+    if (!result) {
+      throw new BadRequestException('Data not found');
     }
-  }
+    const resultData: IncomeRes = {
+      amount: [],
+      planAmount: [],
+      incomeCOde: [],
+      description: [],
+      totalPlan: 0,
+      totalIncome: 0,
+    };
 
-  async findAll() {
-    try {
-      await this.incomeRepository.find();
-    } catch (e) {
-      return e.message;
-    }
-  }
-
-  async findOne(id: number): Promise<Income | null> {
-    try {
-      const item = await this.incomeRepository.findOne({
-        where: { id },
+    if (branch !== 'all') {
+      result.forEach((e: IIncome) => {
+        resultData.amount.push(parseFloat(e.amount));
+        resultData.planAmount.push(parseFloat(e.plan_amt));
+        resultData.incomeCOde.push(e.income_code);
+        resultData.description.push(e.description);
       });
-      return item;
-    } catch (e) {
-      return e.message;
+    } else {
+      const dataArray = this.sumByIncomeCode(result);
+      dataArray.forEach((e) => {
+        resultData.amount.push(e.total_amount);
+        resultData.planAmount.push(e.total_plan_amt);
+        resultData.incomeCOde.push(e.income_code);
+        resultData.description.push(e.total_esc);
+      });
     }
+
+    resultData.totalPlan = resultData.planAmount.reduce(
+      (acc, item) => acc + parseFloat(item),
+      0,
+    );
+
+    resultData.totalIncome = resultData.amount.reduce(
+      (acc, item) => acc + parseFloat(item),
+      0,
+    );
+
+    return resultData;
   }
 
-  async update(id: number, dto: UpdateIncomeDto): Promise<UpdateResult> {
-    try {
-      const update = await this.incomeRepository.update(id, dto);
-      return update;
-    } catch (e) {
-      return e.message;
-    }
-  }
+  private sumByIncomeCode(data: any[]) {
+    const grouped: Record<
+      string,
+      {
+        income_code: string;
+        total_plan_amt: number;
+        total_amount: number;
+        total_esc: string;
+      }
+    > = {};
 
-  async remove(id: number): Promise<DeleteResult> {
-    try {
-      const remove = await this.incomeRepository.delete(id);
-      return remove;
-    } catch (e) {
-      return e.message;
-    }
-  }
+    data.forEach((item) => {
+      const code = item.income_code;
+      const plan = parseFloat(item.plan_amt);
+      const amount = parseFloat(item.amount);
+      const desc: string = item.description;
 
-  async importData(file: Express.Multer.File): Promise<any[]> {
-    const workbook = XLSX.read(file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0]; // Get the first sheet
-    const worksheet = workbook.Sheets[sheetName];
-    const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
+      if (!grouped[code]) {
+        grouped[code] = {
+          income_code: code,
+          total_plan_amt: 0,
+          total_amount: 0,
+          total_esc: desc,
+        };
+      }
 
-    const [branches, incomeCodes] = await Promise.all([
-      this.branchRepository.find({}),
-      this.incomeCodeRepository.find({}),
-    ]);
-
-    function getBranch(code: string) {
-      return branches.find((b: any) => String(b.code) === code);
-    }
-
-    function getIncomeCode(code: string) {
-      return incomeCodes.find((i: any) => String(i.code) === String(code));
-    }
-
-    const mapData = jsonData.map((m: any) => {
-      const branch = getBranch(m.branch_code.padEnd(6, '0'));
-      const incomeCode = getIncomeCode(m.id);
-      return {
-        branch: branch,
-        amount: m.bal,
-        scaled_amount: m.balM,
-        date: moment(m.ac_date, 'YYYYMMDD').endOf('day').format('YYYY-MM-DD'),
-        income_code: incomeCode,
-        description: '',
-      };
+      grouped[code].total_plan_amt += plan;
+      grouped[code].total_amount += amount;
     });
 
-    const addItems = await this.incomeRepository.save(mapData);
-    return addItems;
+    return Object.values(grouped);
   }
 }

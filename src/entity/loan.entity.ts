@@ -18,12 +18,12 @@ export class Loan {
   @JoinColumn({ name: 'branch_id' })
   branch: Branch;
 
-  @ManyToOne(() => LoanPlan, (lp) => lp.loan_plan)
-  @JoinColumn({ name: 'loan_plan_id' })
-  loan_plan: LoanPlan;
+  // @ManyToOne(() => LoanPlan, (lp) => lp.loan_plan)
+  // @JoinColumn({ name: 'loan_plan_id' })
+  // loan_plan: LoanPlan;
 
-  @Column({ type: 'date' }) // ✅ Ensure correct type
-  date: Date;
+  @Column() // ✅ Ensure correct type
+  date: string;
 
   @Column({ type: 'decimal', precision: 30, scale: 2 }) // Adjusted decimal size
   balance: number;
@@ -31,11 +31,14 @@ export class Loan {
   @Column({ type: 'decimal', precision: 30, scale: 2 })
   npl_balance: number;
 
-  @Column()
-  fund: number;
-
   @Column({ type: 'decimal', precision: 30, scale: 2 })
-  drawndown: number;
+  app_amount: number;
+
+  // @Column()
+  // fund: number;
+
+  // @Column({ type: 'decimal', precision: 30, scale: 2 })
+  // drawndown: number;
 
   @Column({ type: 'decimal', precision: 30, scale: 2 })
   a: number;

@@ -14,7 +14,7 @@ export class ExpensePlan {
   id: number;
 
   @ManyToOne(() => ExpenseCode, (expense_code) => expense_code.expensePlans)
-  @JoinColumn({ name: 'expense_code_id' })
+  @JoinColumn({ name: 'expense_code' })
   expense_code: ExpenseCode;
 
   @ManyToOne(() => Branch, (branch) => branch.expensePlans)

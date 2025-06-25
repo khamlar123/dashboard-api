@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateExpensePlanDto } from '../../dto/create-expense_plan.dto';
-import { UpdateExpensePlanDto } from '../../dto/update-expense_plan.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExpensePlan } from 'src/entity/expense_plan.entity';
 import { Repository } from 'typeorm';
@@ -19,13 +17,6 @@ export class ExpensePlanService {
     @InjectRepository(ExpenseCode)
     private readonly expenseCodeRepository: Repository<ExpenseCode>,
   ) {}
-  async create(dto: CreateExpensePlanDto): Promise<any> {
-    try {
-      return await this.expensePlanRepository.save(dto);
-    } catch (e) {
-      return e.message;
-    }
-  }
 
   async findAll() {
     try {
@@ -42,14 +33,6 @@ export class ExpensePlanService {
         where: { id },
       });
       return item;
-    } catch (e) {
-      return e.message;
-    }
-  }
-
-  async update(id: number, dto: UpdateExpensePlanDto) {
-    try {
-      return await this.expensePlanRepository.update(id, dto);
     } catch (e) {
       return e.message;
     }
@@ -116,7 +99,7 @@ export class ExpensePlanService {
       const branch = getBranch(m.Branch);
       const expenseCode = getExpenseCode(m.EXP_CODE);
       return {
-        expense_code: { id: expenseCode?.id },
+        expense_code: { code: expenseCode?.code },
         branch: { code: branch?.code },
         year: moment(m.Date).year().toString(),
         amount: m['EXP-PLAN'],

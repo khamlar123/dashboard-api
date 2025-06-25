@@ -12,87 +12,166 @@ import {
   DefaultValuePipe,
 } from '@nestjs/common';
 import { LoanService } from './loan.service';
-import { CreateLoanDto } from '../../dto/create-loan.dto';
-import { UpdateLoanDto } from '../../dto/update-loan.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiQuery } from '@nestjs/swagger';
-import axios from 'axios';
-import * as jwt from 'jsonwebtoken';
-import { LoginDto } from '../../dto/login.dto';
 
 @Controller('loan')
 export class LoanController {
   constructor(private readonly loanService: LoanService) {}
 
-  @Get()
-  findAll() {
-    return this.loanService.findAll();
-  }
-
-  @Get('daily')
-  @ApiQuery({ name: 'bcode', required: false })
-  async loanDay(
-    @Query('date', new DefaultValuePipe(0))
+  @Get('/loan-plan')
+  async loanPlan(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
     date: string,
-    @Query('bcode', new DefaultValuePipe(''))
-    bcode: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
   ) {
-    return await this.loanService.findLoanDaily(bcode, date);
+    return await this.loanService.loanPlan(date, branch, option);
   }
 
-  @Get('monthly')
-  @ApiQuery({ name: 'bcode', required: false })
-  async loanMonth(
-    @Query('date', new DefaultValuePipe(0))
+  @Get('/npl-plan')
+  async planNplDaily(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
     date: string,
-    @Query('bcode', new DefaultValuePipe(''))
-    bcode: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
   ) {
-    return await this.loanService.findLoanDataByMonth(bcode, date);
+    return await this.loanService.planNpl(date, branch, option);
   }
 
-  @Get('yearly')
-  @ApiQuery({ name: 'bcode', required: false })
-  async loanYear(
-    @Query('date', new DefaultValuePipe(0))
+  @Get('/credits')
+  async Credits(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
     date: string,
-    @Query('bcode', new DefaultValuePipe(''))
-    bcode: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
   ) {
-    return await this.loanService.findLoanYearly(bcode, date);
+    return await this.loanService.loanCredits(date, branch, option);
   }
 
-  @Get('all')
-  @ApiQuery({ name: 'date', required: false })
-  async loanAll(
-    @Query('date', new DefaultValuePipe(0))
+  @Get('/all-loan')
+  async AllLoan(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
     date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
   ) {
-    return await this.loanService.findLoanAll(date);
+    return await this.loanService.allLoan(date, branch, option);
   }
 
-  @Get('total')
-  @ApiQuery({ name: 'date', required: false })
-  async loanTotal(
-    @Query('date', new DefaultValuePipe(0))
+  @Get('/class-a')
+  async SectionA(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
     date: string,
-    @Query('bcode', new DefaultValuePipe(0))
-    bcode: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
   ) {
-    return await this.loanService.totalLoan(date, bcode);
+    return await this.loanService.classA(date, branch, option);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.loanService.findOne(+id);
+  @Get('/class-b')
+  async SectionB(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.loanService.classB(date, branch, option);
   }
 
-  @Post('import')
-  @UseInterceptors(FileInterceptor('file')) // Multer will handle file uploads
-  async uploadExcel(@UploadedFile() file: Express.Multer.File) {
-    if (!file) {
-      throw new Error('No file uploaded');
-    }
-    return this.loanService.importData(file);
+  @Get('/class-cde')
+  async SectionCDE(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.loanService.classCDE(date, branch, option);
+  }
+
+  @Get('/class-all')
+  async classAll(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.loanService.allClass(date, branch, option);
+  }
+
+  @Get('/period')
+  async Period(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.loanService.period(date, branch, option);
+  }
+
+  @Get('/sum-period')
+  async sumPeriod(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.loanService.sumPeriod(date, branch, option);
+  }
+
+  @Get('/all-period')
+  async allPeriod(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.loanService.allPeriod(date, branch, option);
+  }
+
+  @Get('/loan-sector')
+  async loanSector(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.loanService.loanSector(date, branch, option);
+  }
+
+  @Get('/all-sector')
+  async allLoanSector(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.loanService.allLoanSector(date, branch, option);
   }
 }

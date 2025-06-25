@@ -35,6 +35,7 @@ export class DatabaseService {
       user: process.env.ODS_USER,
       password: process.env.ODS_PASSWORD,
       database: process.env.ODS_NAME,
+      port: Number(process.env.ODS_PORT) || 3306,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
@@ -60,7 +61,13 @@ export class DatabaseService {
     return await this.dashboardPool.query(sql, param);
   }
 
-  async query(sql: string, param?: any[]): Promise<any> {
-    return await this.dashboardPool.query(sql, param);
+  async query(sql: string, param?: any[]): Promise<any[]> {
+    try {
+      const [rows] = await this.dashboardPool.query(sql, param);
+      return Array.isArray(rows) ? rows : [];
+    } catch (error) {
+      console.error('Database query error:', error);
+      return error; // Re-throw for proper error handling upstream
+    }
   }
 }

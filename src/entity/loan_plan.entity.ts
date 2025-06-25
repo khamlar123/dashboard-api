@@ -28,6 +28,6 @@ export class LoanPlan {
   @Column({ type: 'decimal', precision: 30, scale: 2 })
   npl_plan: number;
 
-  @OneToMany(() => Loan, (loan) => loan.loan_plan)
-  loan_plan: Loan[];
+  // @OneToMany(() => Loan, (loan) => loan.loan_plan)
+  // loan_plan: Loan[];
 }

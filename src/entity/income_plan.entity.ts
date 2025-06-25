@@ -14,7 +14,7 @@ export class IncomePlan {
   id: number;
 
   @ManyToOne(() => IncomeCode, (income_code) => income_code.incomePlans)
-  @JoinColumn({ name: 'income_code_id' })
+  @JoinColumn({ name: 'income_code' })
   income_code: IncomeCode;
 
   @ManyToOne(() => Branch, (branch) => branch.incomePlans)

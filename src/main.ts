@@ -7,6 +7,7 @@ import { HttpExceptionFilter } from './common/Interceptors/http-exception.filter
 import { LoggingInterceptor } from './common/Interceptors/logging.interceptor';
 import { Logger } from '@nestjs/common';
 import { AuthSwagger } from './common/middleware/auth.swagger';
+import { apiReference } from '@scalar/nestjs-api-reference';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,10 +23,16 @@ async function bootstrap() {
   app.use('/docs', new AuthSwagger().use);
   SwaggerModule.setup('docs', app, document);
   // app.useGlobalPipes(new ValidationPipe());
+  app.use(
+    '/scalar',
+    apiReference({
+      content: document,
+    }),
+  );
+
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
-
   app.enableCors();
   await app.listen(process.env.PORT ?? 3000, () => {
     Logger.log(`Listening at http://localhost:${process.env.PORT}`);

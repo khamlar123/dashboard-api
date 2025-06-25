@@ -19,6 +19,13 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ProfitModule } from './modules/profit/profit.module';
 import { LoanPlanModule } from './modules/loan_plan/loan_plan.module';
 import { LoanModule } from './modules/loan/loan.module';
+import { SectorBalModule } from './modules/sector_bal/sector_bal.module';
+import { FinancialModule } from './modules/financial/financial.module';
+import { DepositModule } from './modules/deposit/deposit.module';
+import { ImportModule } from './modules/import/import.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { MarketModule } from './modules/market/market.module';
+import { FundManagementModule } from './modules/fund_management/fund_management.module';
 
 @Module({
   imports: [
@@ -51,6 +58,13 @@ import { LoanModule } from './modules/loan/loan.module';
     ProfitModule,
     LoanPlanModule,
     LoanModule,
+    SectorBalModule,
+    FinancialModule,
+    DepositModule,
+    ImportModule,
+    AdminModule,
+    MarketModule,
+    FundManagementModule,
   ],
   controllers: [AppController],
   providers: [AppService],

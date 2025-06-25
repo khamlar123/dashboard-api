@@ -1,13 +1,16 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { ExpensePlan } from './expense_plan.entity';
 import { Expense } from './expense.entity';
 
 @Entity()
 export class ExpenseCode {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
+  @PrimaryColumn()
   code: string;
 
   @Column()

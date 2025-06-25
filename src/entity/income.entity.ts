@@ -18,7 +18,7 @@ export class Income {
   branch: Branch;
 
   @ManyToOne(() => IncomeCode, (income_code) => income_code.income)
-  @JoinColumn({ name: 'income_code_id' })
+  @JoinColumn({ name: 'income_code' })
   income_code: IncomeCode;
 
   @Column({ type: 'decimal', precision: 30, scale: 2 }) // Adjusted decimal size
@@ -30,6 +30,6 @@ export class Income {
   @Column({ nullable: true })
   description: string;
 
-  @Column({ type: 'date' }) // ✅ Ensure correct type
-  date: Date;
+  @Column() // ✅ Ensure correct type
+  date: string;
 }

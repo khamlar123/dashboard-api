@@ -1,129 +1,314 @@
 import { Injectable } from '@nestjs/common';
-import * as moment from 'moment';
 import { DatabaseService } from 'src/common/database/database.service';
-import * as XLSX from 'xlsx';
-import { reduceFunc } from '../../share/functions/reduce-func';
+import { IProfitDailyRes } from '../../common/interfaces/profit-daily-res.interface';
+import { IProfitMonthlyRes } from '../../common/interfaces/profit-monthly-res.interface';
+import { IProfitYearlyRes } from '../../common/interfaces/profit-yearly-res.interface';
+import { IProfitDaily } from '../../common/interfaces/profit-daily.interface';
+import { IProfitMonthly } from '../../common/interfaces/profit-monthly.interface';
+import { IProfitYearly } from '../../common/interfaces/profit-yearly.interface';
+import * as moment from 'moment';
+import { checkCurrentDate } from '../../share/functions/check-current-date';
 
 @Injectable()
 export class ProfitService {
-  constructor(private readonly dbServer: DatabaseService) {}
+  constructor(private readonly database: DatabaseService) {}
 
-  // use char 4
-  async getProfit(date: string): Promise<any> {
-    //TODO: autoget day - 1
-    const year = moment(date).format('YYYY');
-    const query = `select b.code as Branch,
-       b.name as Branch_name,
-       pf.date as Date,
-       nvl(pfp.profit_plan,0) as profit_plan,
-       nvl(pf.profit_amount,0)  as profit_amount
-      from branch b
-      left outer join profit_plan  pfp on b.code=pfp.branchId and pfp.year = ${year}
-      left outer join profit pf on b.code=pf.branchId
-      where pf.date= ?`;
+  async findProfitDaily(
+    date: string,
+    branch: string,
+  ): Promise<IProfitDailyRes> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_profit_dailly(?, ?)`,
+      [date, branch],
+    );
 
-    const [result] = await this.dbServer.getProfit(query, [date]);
-    const labels: string[] = [];
-    const values: number[] = [];
-    const plans: number[] = [];
+    const mapData: IProfitDailyRes = {
+      profit: [],
+      planProfit: [],
+      dates: [],
+      totalPlan: 0,
+      totalProfit: 0,
+    };
 
-    for (const e of result) {
-      labels.push(e.Branch_name);
-      values.push(Number(e.profit_amount));
-      plans.push(Number(e.profit_plan));
+    const mapDate = [
+      ...new Set(result.map((m) => moment(m.date, 'YYYYMMDD').year())),
+    ];
+
+    const yearAmount: { year: number; amount: number }[] = [];
+
+    for (const val of mapDate) {
+      yearAmount.push(await this.sumPlanAmount(val as number));
     }
 
-    return {
-      labels,
-      values,
-      plans,
-    };
+    if (branch !== 'all') {
+      result.forEach((e: IProfitDaily) => {
+        const year: number = moment(e.date, 'YYYYMMDD').year();
+        const planAmount: number =
+          yearAmount.find(
+            (f: { year: number; amount: number }) => f.year === year,
+          )?.amount ?? 0;
+        mapData.planProfit.push(Number(planAmount));
+        mapData.profit.push(parseFloat(e.profit));
+        mapData.dates.push(e.date);
+      });
+    } else {
+      const myArray = this.sumByDate(result, 'daily');
+      myArray.forEach((e) => {
+        const year: number = moment(e.date, 'YYYYMMDD').year();
+        const planAmount: number =
+          yearAmount.find((f) => f.year === year)?.amount ?? 0;
+        mapData.planProfit.push(Number(planAmount));
+        mapData.profit.push(e.total_profit);
+        mapData.dates.push(e.date);
+      });
+    }
+
+    mapData.totalPlan = mapData.planProfit[mapData.planProfit.length - 1];
+    mapData.totalProfit = mapData.profit[mapData.profit.length - 1];
+    return mapData;
   }
 
-  async importData(file: Express.Multer.File) {
-    const workbook = XLSX.read(file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0]; // Get the first sheet
-    const worksheet = workbook.Sheets[sheetName];
-    const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
-    const newArray: any[] = [];
+  async findProfitMonthly(
+    date: string,
+    branch: string,
+  ): Promise<IProfitMonthlyRes> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_profit_monthly(?, ?)`,
+      [date, branch],
+    );
 
-    const formattedData = jsonData.map((row: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      Object.keys(row).forEach((key) => {
-        if (typeof row?.Date === 'number' && row?.Date > 40000) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          row.Date = XLSX.SSF.format('yyyy-mm-dd', row?.Date);
-        }
+    const mapData: IProfitMonthlyRes = {
+      profit: [],
+      planProfit: [],
+      monthly: [],
+      totalPlan: 0,
+      totalProfit: 0,
+    };
+
+    const mapDate = [
+      ...new Set(result.map((m) => moment(m.monthend, 'YYYYMMDD').year())),
+    ];
+
+    const yearAmount: { year: number; amount: number }[] = [];
+
+    for (const val of mapDate) {
+      yearAmount.push(await this.sumPlanAmount(val as number));
+    }
+
+    if (branch !== 'all') {
+      result.forEach((e: IProfitMonthly) => {
+        const year: number = moment(e.monthend, 'YYYYMMDD').year();
+        const planAmount: number =
+          yearAmount.find(
+            (f: { year: number; amount: number }) => f.year === year,
+          )?.amount ?? 0;
+        mapData.planProfit.push(Number(planAmount));
+        mapData.profit.push(parseFloat(e.profit));
+        mapData.monthly.push(e.monthend);
       });
-      return row;
-    });
+    } else {
+      const myArray = this.sumByDate(result, 'monthly');
+      myArray.forEach((e) => {
+        const year: number = moment(e.date, 'YYYYMMDD').year();
+        const planAmount: number =
+          yearAmount.find(
+            (f: { year: number; amount: number }) => f.year === year,
+          )?.amount ?? 0;
+        mapData.planProfit.push(Number(planAmount));
+        mapData.profit.push(e.total_profit);
+        mapData.monthly.push(e.date);
+      });
+    }
 
-    formattedData.forEach((f) => {
-      const itx = {
-        branchId: f.Branch,
-        year: f.Date,
-        profit_plan: f.Plan_branch,
-        description: '',
+    mapData.totalPlan = mapData.planProfit[mapData.planProfit.length - 1];
+    mapData.totalProfit = mapData.profit[mapData.profit.length - 1];
+
+    return mapData;
+  }
+
+  async findProfitYearly(
+    date: string,
+    branch: string,
+  ): Promise<IProfitYearlyRes> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_profit_yearly(?, ?)`,
+      [date, branch],
+    );
+
+    const mapData: IProfitYearlyRes = {
+      profit: [],
+      planProfit: [],
+      yearly: [],
+      totalPlan: 0,
+      totalProfit: 0,
+    };
+
+    const mapDate = [
+      ...new Set(result.map((m) => moment(m.l_yearend, 'YYYYMMDD').year())),
+    ];
+
+    const yearAmount: { year: number; amount: number }[] = [];
+
+    for (const val of mapDate) {
+      yearAmount.push(await this.sumPlanAmount(val as number));
+    }
+
+    if (branch !== 'all') {
+      result.forEach((e: IProfitYearly) => {
+        const year: number = moment(e.l_yearend, 'YYYYMMDD').year();
+        const planAmount: number =
+          yearAmount.find(
+            (f: { year: number; amount: number }) => f.year === year,
+          )?.amount ?? 0;
+        mapData.planProfit.push(Number(planAmount));
+        mapData.profit.push(parseFloat(e.profit));
+        mapData.yearly.push(e.l_yearend);
+      });
+    } else {
+      const myArray = this.sumByDate(result, 'yearly');
+      myArray.forEach((e) => {
+        const year: number = moment(e.date, 'YYYYMMDD').year();
+        const planAmount: number =
+          yearAmount.find(
+            (f: { year: number; amount: number }) => f.year === year,
+          )?.amount ?? 0;
+        mapData.planProfit.push(Number(planAmount));
+        mapData.profit.push(e.total_profit);
+        mapData.yearly.push(e.date);
+      });
+    }
+
+    mapData.totalProfit = mapData.profit[mapData.profit.length - 1];
+    mapData.totalPlan = mapData.planProfit[mapData.planProfit.length - 1];
+
+    return mapData;
+  }
+
+  async profitAllBranchDaily(date: string): Promise<any> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_profit_dailly(?, ?)`,
+      [date, 'all'],
+    );
+
+    const mapData: { profit: number[]; planProfit: number[]; name: string[] } =
+      {
+        profit: [],
+        planProfit: [],
+        name: [],
       };
 
-      if (newArray.length === 0) {
-        newArray.push(itx);
-      }
-      const checkItem = newArray.find((f) => f.branchId === itx.branchId);
-      if (!checkItem) {
-        newArray.push(itx);
-      }
+    result.slice(-18).forEach((e) => {
+      mapData.profit.push(e.profit);
+      mapData.planProfit.push(e.plan_amt);
+      mapData.name.push(e.name);
     });
 
-    const res: any[] = [];
-
-    for (let index = 0; index < newArray.length; index++) {
-      const element = newArray[index];
-      const year = moment(element.year, 'yyyy-mm-dd').format('yyyy');
-      const createItem = await this.dbServer.import(
-        `INSERT INTO profit_plan (branchId, year, profit_plan, description) VALUES (?, ?, ?, ?)`,
-        [
-          element['branchId'],
-          year,
-          element['profit_plan'],
-          element['description'],
-        ],
-      );
-
-      res.push(createItem);
-    }
-
-    return res;
+    return mapData;
   }
 
-  async profit(date: string, branchId: string): Promise<any> {
-    //TODO: autoget day - 1
-    const year = moment(date).format('YYYY');
-    const query = `select b.code as Branch,
-       b.name as Branch_name,
-       pf.date as Date,
-       nvl(pfp.profit_plan,0) as profit_plan,
-       nvl(pf.profit_amount,0)  as profit_amount
-      from branch b
-      left outer join profit_plan  pfp on b.code=pfp.branchId and pfp.year = ${year}
-      left outer join profit pf on b.code=pf.branchId
-      where pf.date= ? ${branchId ? 'AND pf.branchId = ?' : ''}`;
+  async profitAllBranchMonthly(date: string): Promise<any> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_profit_monthly(?, ?)`,
+      [date, 'all'],
+    );
 
-    const [result] = await this.dbServer.getProfit(query, [date, branchId]);
-    const planProfit: number[] = [];
-    const Profit: number[] = [];
-    let branchName: string = '';
-    result.map((m) => {
-      planProfit.push(Number(m.profit_plan));
-      Profit.push(Number(m.profit_amount));
-      branchName = m.Branch_name;
+    const mapData: { profit: number[]; planProfit: number[]; name: string[] } =
+      {
+        profit: [],
+        planProfit: [],
+        name: [],
+      };
+
+    result.slice(-18).forEach((e) => {
+      mapData.profit.push(e.profit);
+      mapData.planProfit.push(e.plan_amt);
+      mapData.name.push(e.name);
     });
 
-    const resx = {
-      branchName: branchId ? branchName : 'All branch',
-      planProfitAmount: Number(reduceFunc(planProfit).toFixed(2)),
-      profitAmount: Number(reduceFunc(Profit).toFixed(2)),
+    return mapData;
+  }
+
+  async profitAllBranchYearly(date: string): Promise<any> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_profit_yearly(?, ?)`,
+      [date, 'all'],
+    );
+
+    console.log('result', result);
+
+    const mapData: { profit: number[]; planProfit: number[]; name: string[] } =
+      {
+        profit: [],
+        planProfit: [],
+        name: [],
+      };
+
+    result
+      .reverse()
+      .slice(-18)
+      .forEach((e) => {
+        mapData.profit.push(e.profit);
+        mapData.planProfit.push(e.plan_amt);
+        mapData.name.push(e.name);
+      });
+
+    return mapData;
+  }
+
+  private sumByDate(data: any[], option: 'daily' | 'monthly' | 'yearly') {
+    const grouped: Record<
+      string,
+      {
+        date: string;
+        total_plan_amt: number;
+        total_profit: number;
+      }
+    > = {};
+
+    data.forEach((item) => {
+      const date =
+        option === 'daily'
+          ? item.date
+          : option === 'monthly'
+            ? item.monthend
+            : item.l_yearend;
+      const plan = parseFloat(item.plan_amt);
+      const profit = parseFloat(item.profit);
+
+      if (!grouped[date]) {
+        grouped[date] = {
+          date: date,
+          total_plan_amt: 0,
+          total_profit: 0,
+        };
+      }
+
+      grouped[date].total_plan_amt += plan;
+      grouped[date].total_profit += profit;
+    });
+
+    return Object.values(grouped);
+  }
+
+  private async sumPlanAmount(
+    year: number,
+  ): Promise<{ year: number; amount: number }> {
+    const [sumePlan] = await this.database.query(
+      `SELECT SUM(amount) as amount
+       FROM profit_plan
+       WHERE \`year\` = ?;`,
+      [year],
+    );
+
+    return {
+      year: year,
+      amount: sumePlan.amount ?? 0,
     };
-    return resx;
   }
 }

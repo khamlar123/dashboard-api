@@ -1,9 +1,10 @@
 export interface IIncome {
-  id: number;
-  branch: any;
-  income_code: any;
-  amount: number;
-  scaled_amount: number;
-  description?: string;
-  date: Date;
+  code: number;
+  name: string;
+  date: string;
+  plan_amt: string;
+  amount: string;
+  scaled_amount: string;
+  income_code: string;
+  description: string;
 }

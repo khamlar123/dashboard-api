@@ -1,9 +1,7 @@
 ﻿import { Injectable } from '@nestjs/common';
-import { CreateBranchDto } from '../../dto/create-branch.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Branch } from 'src/entity/branch.entity';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { UpdateBranchDto } from 'src/dto/update-branch.dto';
 import * as XLSX from 'xlsx';
 import * as moment from 'moment';
 import { IncomePlan } from 'src/entity/income_plan.entity';
@@ -29,14 +27,6 @@ export class BranchService {
     private readonly db: DatabaseService,
   ) {}
 
-  async create(dto: CreateBranchDto): Promise<any> {
-    try {
-      return await this.branchRepository.save(dto);
-    } catch (e) {
-      return e.message;
-    }
-  }
-
   async findAll() {
     try {
       return await this.branchRepository.find();
@@ -50,14 +40,6 @@ export class BranchService {
       return await this.branchRepository.findOne({
         where: { code },
       });
-    } catch (e) {
-      return e.message;
-    }
-  }
-
-  async update(id: number, dto: UpdateBranchDto) {
-    try {
-      return await this.branchRepository.update(id, dto);
     } catch (e) {
       return e.message;
     }
@@ -79,7 +61,7 @@ export class BranchService {
       const whereCondition = {
         code: bCode ? Number(bCode) : null,
         income: {
-          date: queryDate, // Example with date range
+          date: date, // Example with date range
         },
       } as FindOptionsWhere<Branch>;
 
@@ -180,7 +162,7 @@ export class BranchService {
       const year = moment(queryDate).year().toString();
       const whereCondition = {
         income: {
-          date: queryDate, // Example with date range
+          date: date, // Example with date range
         },
       } as FindOptionsWhere<Branch>;
 
@@ -261,17 +243,17 @@ export class BranchService {
       const before30Day = moment(myDate).add(-30, 'day').format('YYYY-MM-DD');
 
       const dateSeriesQuery = `
-          WITH RECURSIVE date_series AS (SELECT ? AS date
-          UNION ALL
-          SELECT DATE_ADD(date, INTERVAL 1 DAY)
-          FROM date_series
-          WHERE DATE_ADD(date, INTERVAL 1 DAY) <= ? )
-          SELECT ds.date,
-                 COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) as branchId,
-                 COALESCE(p.profit_amount, 0)                             as amount
-          FROM date_series ds
-                   LEFT JOIN profit p ON DATE (p.date) = ds.date ${branchId ? 'AND p.branchId = ?' : ''}
-          ORDER BY ds.date
+        WITH RECURSIVE date_series AS (SELECT ? AS date
+        UNION ALL
+        SELECT DATE_ADD(date, INTERVAL 1 DAY)
+        FROM date_series
+        WHERE DATE_ADD(date, INTERVAL 1 DAY) <= ? )
+        SELECT ds.date,
+               COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) as branchId,
+               COALESCE(p.profit_amount, 0)                             as amount
+        FROM date_series ds
+               LEFT JOIN profit p ON DATE (p.date) = ds.date ${branchId ? 'AND p.branchId = ?' : ''}
+        ORDER BY ds.date
       `;
 
       const [results] = await this.db.query(dateSeriesQuery, [
@@ -301,20 +283,20 @@ export class BranchService {
     const formattedDate = currentDate.toISOString().split('T')[0];
 
     const monthlyProfitQuery = `
-        WITH RECURSIVE month_series AS (SELECT DATE_FORMAT(DATE_SUB(?, INTERVAL 6 MONTH), '%Y-%m-01') AS month_start
-                                        UNION ALL
-                                        SELECT DATE_ADD(month_start, INTERVAL 1 MONTH)
-                                        FROM month_series
-                                        WHERE DATE_ADD(month_start, INTERVAL 1 MONTH) <= ?)
-        SELECT ms.month_start AS date,
+      WITH RECURSIVE month_series AS (SELECT DATE_FORMAT(DATE_SUB(?, INTERVAL 6 MONTH), '%Y-%m-01') AS month_start
+                                      UNION ALL
+                                      SELECT DATE_ADD(month_start, INTERVAL 1 MONTH)
+                                      FROM month_series
+                                      WHERE DATE_ADD(month_start, INTERVAL 1 MONTH) <= ?)
+      SELECT ms.month_start AS date,
         COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) AS branchId,
         COALESCE(p.profit_amount, 0) AS amount
-        FROM month_series ms
-            LEFT JOIN profit p
-        ON DATE_FORMAT(p.date, '%Y-%m-01') = ms.month_start
-            ${branchId ? 'AND p.branchId = ?' : ''}
-        GROUP BY ms.month_start, p.branchId
-        ORDER BY ms.month_start
+      FROM month_series ms
+        LEFT JOIN profit p
+      ON DATE_FORMAT(p.date, '%Y-%m-01') = ms.month_start
+        ${branchId ? 'AND p.branchId = ?' : ''}
+      GROUP BY ms.month_start, p.branchId
+      ORDER BY ms.month_start
     `;
 
     const [results] = await this.db.query(monthlyProfitQuery, [
@@ -357,20 +339,20 @@ export class BranchService {
     const startYear = currentYear - 3;
 
     const yearlyProfitQuery = `
-        WITH RECURSIVE year_series AS (SELECT ? AS year
-        UNION ALL
-        SELECT year + 1
-        FROM year_series
-        WHERE year + 1 <= ?
-            )
-        SELECT ys.year,
-               COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) AS branchId,
-               COALESCE(SUM(p.profit_amount), 0)                        AS amount
-        FROM year_series ys
-                 LEFT JOIN profit p ON YEAR (p.date) = ys.year
-            ${branchId ? 'AND p.branchId = ?' : ''}
-        GROUP BY ys.year, p.branchId
-        ORDER BY ys.year
+      WITH RECURSIVE year_series AS (SELECT ? AS year
+      UNION ALL
+      SELECT year + 1
+      FROM year_series
+      WHERE year + 1 <= ?
+        )
+      SELECT ys.year,
+             COALESCE(p.branchId, (SELECT MIN(branchId) FROM profit)) AS branchId,
+             COALESCE(SUM(p.profit_amount), 0)                        AS amount
+      FROM year_series ys
+             LEFT JOIN profit p ON YEAR (p.date) = ys.year
+        ${branchId ? 'AND p.branchId = ?' : ''}
+      GROUP BY ys.year, p.branchId
+      ORDER BY ys.year
     `;
 
     const [results] = await this.db.query(yearlyProfitQuery, [
@@ -397,7 +379,7 @@ export class BranchService {
       const whereCondition = {
         code: bcode ? Number(bcode) : null,
         income: {
-          date: queryDate, // Example with date range
+          date: date, // Example with date range
         },
       } as FindOptionsWhere<Branch>;
 
@@ -487,7 +469,7 @@ export class BranchService {
     const whereCondition = {
       code: bcode ? Number(bcode) : null,
       expense: {
-        date: queryDate, // Example with date range
+        date: date, // Example with date range
       },
       // incomePlans: {
       //   year: year, // Example with date range
@@ -519,10 +501,11 @@ export class BranchService {
 
       const mapPercent = expense.map((mm) => {
         const checkItem = planExpense.find((f) => f.name === mm.name);
+
         return {
           name: mm.name,
           expense: mm.amount,
-          planExpense: checkItem.amount,
+          planExpense: checkItem?.amount ?? 0,
         };
       });
 
@@ -540,7 +523,6 @@ export class BranchService {
         const name = item.name;
         const expense = parseFloat(item.expense);
         const planExpense = parseFloat(item.planExpense);
-
         if (!groupedData[name]) {
           groupedData[name] = {
             name: name,
@@ -560,7 +542,12 @@ export class BranchService {
       planExpense: item.planExpense,
       percent:
         (item.expense / item.planExpense) * 100
-          ? Number(((item.expense / item.planExpense) * 100).toFixed(2))
+          ? Number(
+              (
+                (item.expense / item.planExpense > 0 ? item.planExpense : 1) *
+                100
+              ).toFixed(2),
+            )
           : 0,
     }));
 
@@ -580,7 +567,7 @@ export class BranchService {
     const whereCondition = {
       code: bcode ? Number(bcode) : null,
       income: {
-        date: queryDate, // Example with date range
+        date: date, // Example with date range
       },
       expensePlans: {
         year,
@@ -682,7 +669,7 @@ export class BranchService {
 
     const whereCondition = {
       income: {
-        date: queryDate, // Example with date range
+        date: date, // Example with date range
       },
       expensePlans: {
         year,
@@ -854,7 +841,7 @@ export class BranchService {
     const whereCondition = {
       code: bcode ? Number(bcode) : null,
       income: {
-        date: queryDate, // Example with date range
+        date: date, // Example with date range
       },
       // incomePlans: {
       //   year: year, // Example with date range
@@ -917,7 +904,7 @@ export class BranchService {
     const whereCondition = {
       code: bcode ? Number(bcode) : null,
       income: {
-        date: queryDate, // Example with date range
+        date: date, // Example with date range
       },
       expensePlans: {
         year,
