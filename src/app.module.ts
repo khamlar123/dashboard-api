@@ -31,6 +31,7 @@ import { FundManagementModule } from './modules/fund_management/fund_management.
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env', // optional if default
     }),
     MulterModule.register({
       dest: './files', // Destination folder where uploaded files will be stored

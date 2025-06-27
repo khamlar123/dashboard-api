@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../common/database/database.service';
 import { checkCurrentDate } from '../../share/functions/check-current-date';
+import { reduceFunc } from '../../share/functions/reduce-func';
 
 @Injectable()
 export class FundManagementService {
@@ -95,6 +96,8 @@ export class FundManagementService {
       names: names,
       deposit: deposit,
       use_funding: use_funding,
+      totalDeposit: reduceFunc(deposit),
+      totalUseFund: reduceFunc(use_funding),
     };
   }
 
@@ -211,6 +214,65 @@ export class FundManagementService {
     };
   }
 
+  async banner(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    const [[profit], [cash], [deposit], [depositAPB]] = await Promise.all([
+      this.database.query(`call proc_profit_financial(?, ?, ?)`, [
+        date,
+        branch,
+        option,
+      ]),
+
+      this.database.query(`call proc_treasury_Liquidity(?, ?, ?)`, [
+        date,
+        branch,
+        option,
+      ]),
+
+      this.database.query(`call proc_dep_financial(?, ?, ?)`, [
+        date,
+        branch,
+        option,
+      ]),
+
+      this.database.query(`call proc_treasury_banner567(?, ?, ?)`, [
+        date,
+        branch,
+        option,
+      ]),
+    ]);
+
+    if (!profit) {
+      throw new BadRequestException('Data not found');
+    }
+
+    const groupByCash = this.groupByCash(cash);
+    const findCash = groupByCash.find((f) => f.type === 'ເງິນສົດ');
+    const findDeposit = reduceFunc(deposit.map((m) => +m.dep_amount1));
+    const calcCash = findDeposit / (findCash?.cddballak ?? 0);
+
+    const groupByApb = this.groupByCash(depositAPB);
+    const findBanner5 = groupByApb.find((f) => f.type === 'ເງິນຝາກຢູ່ ທຫລ');
+    const findBanner6 = groupByApb.find(
+      (f) => f.type === 'ເງິນຝາກທະນາຄານອື່ນ ໃນປະເທດ',
+    );
+    const findBanner7 = groupByApb.find(
+      (f) => f.type === 'ເງິນຝາກທະນາຄານອື່ນ ຕ່າງປະເທດ',
+    );
+    const calcDeposit = findDeposit / (findBanner5?.cddballak ?? 0);
+
+    return {
+      banner1: reduceFunc(profit.map((m) => +m.profit1)),
+      banner2: 0,
+      banner3: Number(calcCash.toFixed(2)),
+      banner4: Number(calcDeposit.toFixed(2)),
+      banner5: findBanner5?.cddballak,
+      banner6: findBanner6?.cddballak,
+      banner7: findBanner7?.cddballak,
+    };
+  }
+
   private groupByType(data: any[], option: 'deposit' | 'customer') {
     const grouped: Record<
       string,
@@ -313,6 +375,42 @@ export class FundManagementService {
       }
 
       grouped[bol_desc].amount += amount;
+    });
+    return Object.values(grouped);
+  }
+
+  private groupByCash(data: any[]) {
+    const grouped: Record<
+      string,
+      {
+        date: string;
+        code: number;
+        name: string;
+        cddbal: number;
+        cddballak: number;
+        type: string;
+        ccy: string;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const type = e.type;
+      const cddballak = +e.cddballak;
+      const cddbal = +e.cddbal;
+
+      if (!grouped[type]) {
+        grouped[type] = {
+          date: e.data,
+          code: e.code,
+          name: e.name,
+          cddbal: 0,
+          cddballak: 0,
+          type: e.type,
+          ccy: e.ccy,
+        };
+      }
+      grouped[type].cddbal += cddbal;
+      grouped[type].cddballak += cddballak;
     });
     return Object.values(grouped);
   }
