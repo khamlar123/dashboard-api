@@ -26,11 +26,13 @@ import { ImportModule } from './modules/import/import.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { MarketModule } from './modules/market/market.module';
 import { FundManagementModule } from './modules/fund_management/fund_management.module';
+import { HrModule } from './modules/hr/hr.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env', // optional if default
     }),
     MulterModule.register({
       dest: './files', // Destination folder where uploaded files will be stored
@@ -65,6 +67,7 @@ import { FundManagementModule } from './modules/fund_management/fund_management.
     AdminModule,
     MarketModule,
     FundManagementModule,
+    HrModule,
   ],
   controllers: [AppController],
   providers: [AppService],

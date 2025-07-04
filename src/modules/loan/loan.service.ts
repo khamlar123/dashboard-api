@@ -107,7 +107,7 @@ export class LoanService {
     const dateX: string[] = [];
 
     groupData.forEach((e) => {
-      plan.push(e.loan_plan);
+      plan.push(e.npl_plan);
       npl.push(e.npl_balance);
       dateX.push(e.date);
     });

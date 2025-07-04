@@ -8,6 +8,7 @@ import { IProfitMonthly } from '../../common/interfaces/profit-monthly.interface
 import { IProfitYearly } from '../../common/interfaces/profit-yearly.interface';
 import * as moment from 'moment';
 import { checkCurrentDate } from '../../share/functions/check-current-date';
+import { reduceFunc } from '../../share/functions/reduce-func';
 
 @Injectable()
 export class ProfitService {
@@ -72,17 +73,17 @@ export class ProfitService {
   async findProfitMonthly(
     date: string,
     branch: string,
-  ): Promise<IProfitMonthlyRes> {
+  ): Promise<IProfitDailyRes> {
     checkCurrentDate(date);
     const [result] = await this.database.query(
       `call proc_profit_monthly(?, ?)`,
       [date, branch],
     );
 
-    const mapData: IProfitMonthlyRes = {
+    const mapData: IProfitDailyRes = {
       profit: [],
       planProfit: [],
-      monthly: [],
+      dates: [],
       totalPlan: 0,
       totalProfit: 0,
     };
@@ -106,7 +107,7 @@ export class ProfitService {
           )?.amount ?? 0;
         mapData.planProfit.push(Number(planAmount));
         mapData.profit.push(parseFloat(e.profit));
-        mapData.monthly.push(e.monthend);
+        mapData.dates.push(e.monthend);
       });
     } else {
       const myArray = this.sumByDate(result, 'monthly');
@@ -118,7 +119,7 @@ export class ProfitService {
           )?.amount ?? 0;
         mapData.planProfit.push(Number(planAmount));
         mapData.profit.push(e.total_profit);
-        mapData.monthly.push(e.date);
+        mapData.dates.push(e.date);
       });
     }
 
@@ -131,17 +132,17 @@ export class ProfitService {
   async findProfitYearly(
     date: string,
     branch: string,
-  ): Promise<IProfitYearlyRes> {
+  ): Promise<IProfitDailyRes> {
     checkCurrentDate(date);
     const [result] = await this.database.query(
       `call proc_profit_yearly(?, ?)`,
       [date, branch],
     );
 
-    const mapData: IProfitYearlyRes = {
+    const mapData: IProfitDailyRes = {
       profit: [],
       planProfit: [],
-      yearly: [],
+      dates: [],
       totalPlan: 0,
       totalProfit: 0,
     };
@@ -165,7 +166,7 @@ export class ProfitService {
           )?.amount ?? 0;
         mapData.planProfit.push(Number(planAmount));
         mapData.profit.push(parseFloat(e.profit));
-        mapData.yearly.push(e.l_yearend);
+        mapData.dates.push(e.l_yearend);
       });
     } else {
       const myArray = this.sumByDate(result, 'yearly');
@@ -177,7 +178,7 @@ export class ProfitService {
           )?.amount ?? 0;
         mapData.planProfit.push(Number(planAmount));
         mapData.profit.push(e.total_profit);
-        mapData.yearly.push(e.date);
+        mapData.dates.push(e.date);
       });
     }
 
@@ -239,8 +240,6 @@ export class ProfitService {
       `call proc_profit_yearly(?, ?)`,
       [date, 'all'],
     );
-
-    console.log('result', result);
 
     const mapData: { profit: number[]; planProfit: number[]; name: string[] } =
       {

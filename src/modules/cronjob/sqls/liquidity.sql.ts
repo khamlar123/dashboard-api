@@ -8,17 +8,19 @@ export const liquidity = () => `
                              case
                                when substr(itm_no, 1, 7) in ('1101100', '1101200', '1101600') then 'ເງິນສົດ'
                                when substr(itm_no, 1, 7) in ('1121110') then 'ເງິນຝາກກະແສລາຍວັນ ທຫລ'
-                               when substr(itm_no, 1, 7) in ('1131110', '1131210') then 'ເງິນຝາກກະແສລາຍວັນ ທະນາຄານອື່ນ'
+                               when substr(itm_no, 1, 7) in ('1131110') then 'ເງິນຝາກກະແສລາຍວັນ ທະນາຄານອື່ນ'
                                when substr(itm_no, 1, 7) in ('1131151') then 'ເງິນຝາກປະຈຳ  ທະນາຄານອື່ນ'
                                when substr(itm_no, 1, 7) in ('1302111') then 'ພັນທະບັດ ທຫລ 7 ວັນ'
+                               when substr(itm_no, 1, 7) in ('1131210') then 'ເງິນຝາກທະນາຄານອື່ນ ຕ່າງປະເທດ'
                                else 'OTHER'
                                end                                                                             as type,
                              case
                                when substr(itm_no, 1, 7) in ('1101100', '1101200', '1101600') then 'CASH'
                                when substr(itm_no, 1, 7) in ('1121110') then 'BOL_CURT'
-                               when substr(itm_no, 1, 7) in ('1131110', '1131210') then 'BANK_CURT'
+                               when substr(itm_no, 1, 7) in ('1131110') then 'BANK_CURT'
                                when substr(itm_no, 1, 7) in ('1131151') then 'BANK_TD'
                                when substr(itm_no, 1, 7) in ('1302111') then 'BOL_BLOND'
+                               when substr(itm_no, 1, 7) in ('1131210') then 'BANK_FORE'
                                else 'OTHER'
                                end                                                                             as typeID,
                              ccy,
@@ -66,5 +68,5 @@ export const liquidity = () => `
          nvl(sum(cdcbal), 0) as cdcbal,
          nvl(sum(cdclak), 0) as cdclak
   from Liquiditys_all
-  group by ac_date, br, type, typeID, ccy
+  group by ac_date, br, type, typeID, ccy;
 `;
