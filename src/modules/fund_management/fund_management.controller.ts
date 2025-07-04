@@ -118,4 +118,17 @@ export class FundManagementController {
   ) {
     return await this.fundManagementService.banner(date, branch, option);
   }
+
+  @Get('/all-liquidity')
+  @ApiQuery({ name: 'branch', required: false })
+  async all(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.fundManagementService.allLiquidity(date, branch, option);
+  }
 }

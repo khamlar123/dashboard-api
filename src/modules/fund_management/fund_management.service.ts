@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../common/database/database.service';
 import { checkCurrentDate } from '../../share/functions/check-current-date';
 import { reduceFunc } from '../../share/functions/reduce-func';
+import * as moment from 'moment';
 
 @Injectable()
 export class FundManagementService {
@@ -273,6 +274,56 @@ export class FundManagementService {
     };
   }
 
+  async allLiquidity(
+    date: string,
+    branch: string,
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.database.query(
+        `call proc_treasury_Liquidity_M_daily(?, ?)`,
+        [date, branch],
+      );
+
+      groupData = this.groupByDate(result, 'daily');
+    }
+
+    if (option === 'm') {
+      [result] = await this.database.query(
+        `call proc_treasury_Liquidity_M_monthly(?, ?)`,
+        [date, branch],
+      );
+
+      groupData = this.groupByDate(result, 'monthly');
+    }
+
+    if (option === 'y') {
+      [result] = await this.database.query(
+        `call proc_treasury_Liquidity_M_yearly(?, ?)`,
+        [date, branch],
+      );
+
+      groupData = this.groupByDate(result, 'yearly');
+    }
+
+    const dates: string[] = [];
+    const amount: number[] = [];
+
+    groupData.forEach((e) => {
+      dates.push(e.date);
+      amount.push(e.cddballak);
+    });
+
+    return {
+      dates: dates,
+      amount: amount,
+    };
+  }
+
   private groupByType(data: any[], option: 'deposit' | 'customer') {
     const grouped: Record<
       string,
@@ -411,6 +462,47 @@ export class FundManagementService {
       }
       grouped[type].cddbal += cddbal;
       grouped[type].cddballak += cddballak;
+    });
+    return Object.values(grouped);
+  }
+
+  private groupByDate(data: any[], option: 'daily' | 'monthly' | 'yearly') {
+    const grouped: Record<
+      string,
+      {
+        date: string;
+        code: number;
+        name: string;
+        cddbal: number;
+        cddballak: number;
+        type: string;
+        ccy: string;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const date =
+        option === 'daily'
+          ? e.date
+          : option === 'monthly'
+            ? e.monthend
+            : e.i_yearend;
+      const cddbal = +e.cddbal;
+      const cddballak = +e.cddballak;
+
+      if (!grouped[date]) {
+        grouped[date] = {
+          date: date,
+          code: e.code,
+          name: e.name,
+          cddbal: 0,
+          cddballak: 0,
+          type: e.type,
+          ccy: e.ccy,
+        };
+      }
+      grouped[date].cddbal += cddbal;
+      grouped[date].cddballak += cddballak;
     });
     return Object.values(grouped);
   }

@@ -33,7 +33,7 @@ export class ImportController {
     return await this.importService.sectorBalImport(start, end);
   }
 
-  @Post('loan-bol')
+  @Post('bol-loan')
   async importLoanBol(
     @Query('start', new DefaultValuePipe(0))
     start: string,

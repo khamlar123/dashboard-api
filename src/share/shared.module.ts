@@ -12,6 +12,9 @@ import { Loan } from '../entity/loan.entity';
 import { SectorBal } from '../entity/sector_bal.entity';
 import { Sector } from '../entity/sector.entity';
 import { Deposit } from '../entity/deposit.entity';
+import { Employee } from '../entity/employee.entity';
+import { EmployeeNew } from '../entity/employee_new.entity';
+import { EmployeeLeft } from '../entity/employee_left.entity';
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { Deposit } from '../entity/deposit.entity';
       SectorBal,
       Sector,
       Deposit,
+      Employee,
+      EmployeeNew,
+      EmployeeLeft,
     ]),
   ],
   exports: [
