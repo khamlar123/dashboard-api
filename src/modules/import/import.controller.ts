@@ -92,4 +92,24 @@ export class ImportController {
   ) {
     return await this.importService.liquidity(start, end);
   }
+
+  @Post('liquidity-exchange')
+  async importLiquidityExchange(
+    @Query('start', new DefaultValuePipe(0))
+    start: string,
+    @Query('end', new DefaultValuePipe(0))
+    end: string,
+  ) {
+    return await this.importService.liquidityExchange(start, end);
+  }
+
+  @Post('liquidity-nop')
+  async importLiquidityNop(
+    @Query('start', new DefaultValuePipe(0))
+    start: string,
+    @Query('end', new DefaultValuePipe(0))
+    end: string,
+  ) {
+    return await this.importService.liquidityNop(start, end);
+  }
 }

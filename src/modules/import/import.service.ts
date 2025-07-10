@@ -20,6 +20,8 @@ import { deposit } from '../cronjob/sqls/deposit.sql';
 import { Deposit } from '../../entity/deposit.entity';
 import { admin } from '../cronjob/sqls/admin.sql';
 import { liquidity } from '../cronjob/sqls/liquidity.sql';
+import { liquidityExchange } from '../cronjob/sqls/liquidity_exchange.sql';
+import { liquidityNop } from '../cronjob/sqls/liquidity_nop.sql';
 
 @Injectable()
 export class ImportService {
@@ -403,6 +405,96 @@ export class ImportService {
       item.cdclak,
     ]);
 
+    return await this.databaseService.query(query, values);
+  }
+
+  async liquidityExchange(start: string, end: string) {
+    const startDate = moment(start, 'YYYYMMDD');
+    const endDate = moment(end, 'YYYYMMDD');
+    const dateArray: string[] = [];
+
+    while (startDate.isSameOrBefore(endDate)) {
+      dateArray.push(startDate.format('YYYYMMDD'));
+      startDate.add(1, 'day');
+    }
+
+    const myDate: any[] = [];
+    for (const item of dateArray) {
+      const getQuery = liquidityExchange();
+      const data = await this.databaseService.queryOds(getQuery, [item]);
+      myDate.push(data);
+    }
+
+    console.log('myDate', myDate);
+
+    const flatMap = myDate
+      .flatMap((m) => m)
+      .map((m) => {
+        return {
+          date: m.date,
+          branch_id: m.br,
+          type: m.category_name,
+          ccy: m.ccy,
+          bal: m.bal,
+        };
+      });
+
+    const placeholders = flatMap.map(() => '(?, ?, ?, ?, ?)').join(', ');
+
+    const query = `INSERT INTO liquidity_exchange (date, branch_id, type, ccy, bal)
+                   VALUES ${placeholders}`;
+    const values = flatMap.flatMap((item) => [
+      item.date,
+      item.branch_id,
+      item.type,
+      item.ccy,
+      item.bal,
+    ]);
+    return await this.databaseService.query(query, values);
+  }
+
+  async liquidityNop(start: string, end: string) {
+    const startDate = moment(start, 'YYYYMMDD');
+    const endDate = moment(end, 'YYYYMMDD');
+    const dateArray: string[] = [];
+
+    while (startDate.isSameOrBefore(endDate)) {
+      dateArray.push(startDate.format('YYYYMMDD'));
+      startDate.add(1, 'day');
+    }
+
+    const myDate: any[] = [];
+    for (const item of dateArray) {
+      const getQuery = liquidityNop();
+      const data = await this.databaseService.queryOds(getQuery, [item]);
+      myDate.push(data);
+    }
+
+    const flatMap = myDate
+      .flatMap((m) => m)
+      .map((m) => {
+        return {
+          date: m.date,
+          branch_id: m.br,
+          type: m.type,
+          ccy: m.ccy,
+          bal: m.bal,
+          ballak: m.ballak,
+        };
+      });
+    
+    const placeholders = flatMap.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
+
+    const query = `INSERT INTO liquidity_nop (date, branch_id, type, ccy, bal, ballak)
+                   VALUES ${placeholders}`;
+    const values = flatMap.flatMap((item) => [
+      item.date,
+      item.branch_id,
+      item.type,
+      item.ccy,
+      item.bal,
+      item.ballak,
+    ]);
     return await this.databaseService.query(query, values);
   }
 }

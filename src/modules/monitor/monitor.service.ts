@@ -1,0 +1,291 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { DatabaseService } from '../../common/database/database.service';
+import { checkCurrentDate } from '../../share/functions/check-current-date';
+import * as moment from 'moment';
+import { reduceFunc } from '../../share/functions/reduce-func';
+import { mongo } from 'globals';
+
+@Injectable()
+export class MonitorService {
+  constructor(private readonly database: DatabaseService) {}
+
+  async profit(date: string, day: string): Promise<any> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_monitor_profit(?, ?)`,
+      [date, day],
+    );
+
+    if (!result) {
+      throw new NotFoundException('Profit not found');
+    }
+
+    const dates: string[] = [];
+    const profits: number[] = [];
+
+    result.forEach((e) => {
+      dates.push(e.date);
+      profits.push(e.profit);
+    });
+
+    const findCurrentDate = result.find((f) => f.date === date);
+    const findLastDate = result.find(
+      (f) => f.date === moment(date).add(-1, 'd').format('yyyyMMDD').toString(),
+    );
+
+    const diff = findCurrentDate.profit - findLastDate.profit;
+    const percent = +((diff / findLastDate.profit) * 100).toFixed(2);
+    return {
+      date: dates,
+      profits: profits,
+      percent: percent,
+    };
+  }
+
+  async creditBalance(date: string, day: string): Promise<any> {
+    checkCurrentDate(date);
+
+    const [[loan], [fund]] = await Promise.all([
+      this.database.query(`call proc_monitor_loan(?, ?)`, [date, day]),
+      this.database.query(`call proc_monitor_loan_use_fund(?, ?)`, [date, day]),
+    ]);
+
+    if (!loan) {
+      throw new NotFoundException('Loan not found');
+    }
+
+    if (!fund) {
+      throw new NotFoundException('Use fund not found');
+    }
+
+    const dates: string[] = [];
+    const balances: number[] = [];
+    const npl: number[] = [];
+    const nplRatio: number[] = [];
+
+    loan.forEach((e) => {
+      dates.push(e.date);
+      balances.push(+e.balance);
+      npl.push(+e.npl_balance);
+      nplRatio.push(+(e.balance / +e.npl_balance).toFixed(2));
+    });
+
+    const findCurrentDate = loan.find((f) => f.date === date);
+    const findLastDate = loan.find(
+      (f) => f.date === moment(date).add(-1, 'd').format('yyyyMMDD').toString(),
+    );
+
+    const diffBalance = findCurrentDate.balance - findLastDate.balance;
+    const diffNpl = findCurrentDate.npl_balance - findLastDate.npl_balance;
+
+    const calcBalance: number = +(
+      (diffBalance / findLastDate.balance) *
+      100
+    ).toFixed(2);
+    const calcNpl: number = +(
+      (diffNpl / findLastDate.npl_balance) *
+      100
+    ).toFixed(2);
+
+    const totalLoan: number = reduceFunc(loan.map((m) => +m.balance));
+    const totalFund: number = reduceFunc(fund.map((m) => +m.CAP_AMOUNT1));
+    const calcCapital: number = +(totalLoan / totalFund).toFixed(2);
+
+    return {
+      dates: dates,
+      balances: balances,
+      npl: npl,
+      nplRatio: nplRatio,
+      percentBalance: calcBalance,
+      percentNpl: calcNpl,
+      capital: calcCapital,
+    };
+  }
+
+  async deposit(date: string, day: string): Promise<any> {
+    checkCurrentDate(date);
+    const [[deposit], [findCash]] = await Promise.all([
+      this.database.query(`call proc_monitor_dep(?, ?)`, [date, day]),
+      this.database.query(`call proc_monitor_cash(?, ?)`, [date, day]),
+    ]);
+
+    if (!deposit) {
+      throw new NotFoundException('Deposit not found');
+    }
+
+    if (!findCash) {
+      throw new NotFoundException('Cash not found');
+    }
+
+    const dates: string[] = [];
+    const deposits: number[] = [];
+    const cashs: number[] = [];
+
+    const findDepositCurrentDate = deposit.find((f) => f.date === date);
+    const findDepositLastDate = deposit.find(
+      (f) => f.date === moment(date).add(-1, 'd').format('yyyyMMDD').toString(),
+    );
+
+    const depositDiff =
+      findDepositCurrentDate.cdcballak - findDepositLastDate.cdcballak;
+    const depositPercent = +(
+      (depositDiff / findDepositLastDate.cdcballak) *
+      100
+    ).toFixed(2);
+
+    this.groupByDate(deposit, 'deposit').forEach((e) => {
+      dates.push(e.date);
+      deposits.push(e.cdcballak);
+    });
+
+    const findCashCurrentDate = findCash.find((f) => f.date === date);
+    const findCashLastDate = findCash.find(
+      (f) => f.date === moment(date).add(-1, 'd').format('yyyyMMDD').toString(),
+    );
+
+    const cashDiff = findCashCurrentDate.cddballak - findCashLastDate.cddballak;
+    const cashPercent = +(
+      (cashDiff / findCashLastDate.cddballak) *
+      100
+    ).toFixed(2);
+
+    this.groupByDate(findCash, 'credit').forEach((e) => {
+      cashs.push(+e.cdcballak);
+    });
+
+    const ratio = +(
+      reduceFunc(cashs.map((m) => m)) / reduceFunc(deposits.map((m) => m))
+    ).toFixed(2);
+
+    return {
+      dates: dates,
+      deposits: deposits,
+      depositPercent: depositPercent,
+      cash: cashs,
+      cashPercent: cashPercent,
+      ratio: ratio,
+    };
+  }
+
+  async exchange(date: string, day: string): Promise<any> {
+    checkCurrentDate(date);
+
+    const lastDate = moment(date).add(-1, 'd').format('yyyyMMDD').toString();
+    const [[today], [lastDay], [nop], [all]] = await Promise.all([
+      this.database.query(`call proc_monitor_exchange(?, ?)`, [date, day]),
+      this.database.query(`call proc_monitor_exchange(?, ?)`, [lastDate, day]),
+      this.database.query(`call proc_monitor_nop(?, ?)`, [date, day]),
+      this.database.query(`call proc_monitor_nop_all(?, ?)`, [date, day]),
+    ]);
+
+    if (!today) {
+      throw new NotFoundException('Exchange not found');
+    }
+
+    if (!lastDay) {
+      throw new NotFoundException('Exchange not found');
+    }
+
+    const dates: string[] = [];
+    const exchange: number[] = [];
+
+    today.forEach((e) => {
+      dates.push(e.date);
+      exchange.push(+e.exchange_bal);
+    });
+
+    const totalToday = reduceFunc(today.map((m) => +m.exchange_bal));
+    const totalLast = reduceFunc(lastDay.map((m) => +m.exchange_bal));
+
+    const diff = totalToday - totalLast;
+    let percent = 0;
+    if (totalLast && totalLast !== 0) {
+      percent = Number(((diff / totalLast) * 100).toFixed(2));
+    }
+    if (isNaN(percent)) {
+      percent = 0;
+    }
+
+    const nopLabel = [...new Set(nop.map((m) => m.date))];
+    const nopCny: number[] = [];
+    const nopEur: number[] = [];
+    const nopLak: number[] = [];
+    const nopThb: number[] = [];
+    const nopUsd: number[] = [];
+    const nopVnd: number[] = [];
+
+    nopLabel.forEach((m) => {
+      const itx = nop.filter((f) => f.date === m);
+      if (itx) {
+        const findCNY = itx.find((f) => f.ccy === 'CNY');
+        nopCny.push(findCNY?.nop ?? 0);
+        const findEUR = itx.find((f) => f.ccy === 'EUR');
+        nopEur.push(findEUR?.nop ?? 0);
+        const findLAK = itx.find((f) => f.ccy === 'LAK');
+        nopLak.push(findLAK?.nop ?? 0);
+        const findTHB = itx.find((f) => f.ccy === 'THB');
+        nopThb.push(findTHB?.nop ?? 0);
+        const findUSD = itx.find((f) => f.ccy === 'USD');
+        nopUsd.push(findUSD?.nop ?? 0);
+        const findVND = itx.find((f) => f.ccy === 'VND');
+        nopVnd.push(findVND?.nop ?? 0);
+      } else {
+        nopCny.push(0);
+        nopEur.push(0);
+        nopLak.push(0);
+        nopThb.push(0);
+        nopUsd.push(0);
+        nopVnd.push(0);
+      }
+    });
+
+    const nopAll: number[] = [];
+    all.forEach((m) => {
+      nopAll.push(+m.nopall);
+    });
+
+    return {
+      dates: dates,
+      exchange: exchange,
+      percent: percent,
+      nopLabel: nopLabel,
+      nopCny: nopCny,
+      nopEur: nopEur,
+      nopLak: nopLak,
+      nopThb: nopThb,
+      nopUsd: nopUsd,
+      nopVnd: nopVnd,
+      nopAll: nopAll,
+    };
+  }
+
+  private groupByDate(data: any[], option: 'deposit' | 'credit') {
+    const grouped: Record<
+      string,
+      {
+        date: string;
+        ccy: string;
+        cdcbal: number;
+        cdcballak: number;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const date = e.date;
+      const cdcbal = +e.cdcbal;
+      const cdcballak = option === 'deposit' ? +e.cdcballak : +e.cddballak;
+
+      if (!grouped[date]) {
+        grouped[date] = {
+          date: date,
+          ccy: 'all',
+          cdcbal: 0,
+          cdcballak: 0,
+        };
+      }
+      grouped[date].cdcbal += cdcbal;
+      grouped[date].cdcballak += cdcballak;
+    });
+    return Object.values(grouped);
+  }
+}

@@ -3,7 +3,6 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseInterceptor } from './common/Interceptors/response.interceptor';
 import { HttpExceptionFilter } from './common/Interceptors/http-exception.filter';
-//import { ValidationPipe } from './common/pipes/validation.pipe';
 import { LoggingInterceptor } from './common/Interceptors/logging.interceptor';
 import { Logger } from '@nestjs/common';
 import { AuthSwagger } from './common/middleware/auth.swagger';
@@ -35,12 +34,16 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.enableCors();
 
-  const port = process.env.PORT as string;
-  const host = process.env.HOST as any;
+  // const port = process.env.PORT as string;
+  // const host = process.env.HOST as any;
+  //
+  // await app.listen(parseInt(port), host);
+  // const url = await app.getUrl(); // works now
+  // Logger.log(`🚀 App running at ${url}`);
 
-  await app.listen(parseInt(port), host);
-  const url = await app.getUrl(); // works now
-  Logger.log(`🚀 App running at ${url}`);
+  await app.listen(process.env.PORT ?? 5004, () => {
+    Logger.log(`Listening at http://localhost:${process.env.PORT}`);
+  });
 }
 
 bootstrap();
