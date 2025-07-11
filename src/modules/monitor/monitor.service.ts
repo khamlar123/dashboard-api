@@ -327,6 +327,12 @@ export class MonitorService {
       }
     });
 
+    const today = all[all.length - 1];
+    const lastestData = all[all.length - 2];
+
+    const diff = Number((today - lastestData).toFixed(2));
+    const percent = Number(((diff / lastestData) * 100).toFixed(2));
+
     return {
       dates: dates,
       cny: cny,
@@ -336,6 +342,8 @@ export class MonitorService {
       usd: usd,
       vnd: vnd,
       all: all,
+      diff: diff,
+      percent: percent,
     };
   }
 
