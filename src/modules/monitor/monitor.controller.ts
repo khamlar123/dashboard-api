@@ -54,4 +54,14 @@ export class MonitorController {
   ) {
     return await this.monitorService.exchange(date, day);
   }
+
+  @Get('/liquidity')
+  async liquidity(
+    @Query('day', new DefaultValuePipe(''))
+    day: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.monitorService.liquidity(date, day);
+  }
 }

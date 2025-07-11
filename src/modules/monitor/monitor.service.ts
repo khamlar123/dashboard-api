@@ -3,7 +3,6 @@ import { DatabaseService } from '../../common/database/database.service';
 import { checkCurrentDate } from '../../share/functions/check-current-date';
 import * as moment from 'moment';
 import { reduceFunc } from '../../share/functions/reduce-func';
-import { mongo } from 'globals';
 
 @Injectable()
 export class MonitorService {
@@ -259,6 +258,66 @@ export class MonitorService {
     };
   }
 
+  async liquidity(date: string, day: string): Promise<any> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_monitor_Liquidity(?, ?)`,
+      [date, day],
+    );
+
+    if (!result) {
+      throw new NotFoundException('Profit not found');
+    }
+
+    const dates = [...new Set(result.map((m) => m.date))];
+    const cny: number[] = [];
+    const eur: number[] = [];
+    const lak: number[] = [];
+    const thb: number[] = [];
+    const usd: number[] = [];
+    const vnd: number[] = [];
+    let all: number[] = [];
+
+    const groupData = this.groupByDateLiq(result);
+    all = groupData.map((m) => m.Liquiditylak);
+
+    dates.forEach((m) => {
+      const itx = result.filter((f) => f.date === m);
+      if (itx) {
+        const findCNY = itx.find((f) => f.ccy === 'CNY');
+        cny.push(Number(findCNY?.Liquiditybal) ?? 0);
+        const findEUR = itx.find((f) => f.ccy === 'EUR');
+        eur.push(Number(findEUR?.Liquiditybal) ?? 0);
+        const findLAK = itx.find((f) => f.ccy === 'LAK');
+        lak.push(Number(findLAK?.Liquiditybal) ?? 0);
+        const findTHB = itx.find((f) => f.ccy === 'THB');
+        thb.push(Number(findTHB?.Liquiditybal) ?? 0);
+        const findUSD = itx.find((f) => f.ccy === 'USD');
+        usd.push(Number(findUSD?.Liquiditybal) ?? 0);
+        const findVND = itx.find((f) => f.ccy === 'VND');
+        vnd.push(Number(findVND?.Liquiditybal) ?? 0);
+      } else {
+        cny.push(0);
+        eur.push(0);
+        lak.push(0);
+        thb.push(0);
+        usd.push(0);
+        vnd.push(0);
+      }
+    });
+
+    return {
+      dates: dates,
+      cny: cny,
+      eur: eur,
+      lak: lak,
+      thb: thb,
+      usd: usd,
+      vnd: vnd,
+      all: all,
+    };
+  }
+
   private groupByDate(data: any[], option: 'deposit' | 'credit') {
     const grouped: Record<
       string,
@@ -285,6 +344,29 @@ export class MonitorService {
       }
       grouped[date].cdcbal += cdcbal;
       grouped[date].cdcballak += cdcballak;
+    });
+    return Object.values(grouped);
+  }
+
+  private groupByDateLiq(data: any[]) {
+    const grouped: Record<
+      string,
+      {
+        date: string;
+        Liquiditylak: number;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const date = e.date;
+      const Liquiditylak = +e.Liquiditylak;
+      if (!grouped[date]) {
+        grouped[date] = {
+          date: date,
+          Liquiditylak: 0,
+        };
+      }
+      grouped[date].Liquiditylak += Liquiditylak;
     });
     return Object.values(grouped);
   }
