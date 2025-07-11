@@ -131,4 +131,17 @@ export class FundManagementController {
   ) {
     return await this.fundManagementService.allLiquidity(date, branch, option);
   }
+
+  @Get('/nop')
+  @ApiQuery({ name: 'branch', required: false })
+  async nop(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.fundManagementService.nop(date, branch, option);
+  }
 }

@@ -3,6 +3,7 @@ import { DatabaseService } from '../../common/database/database.service';
 import { checkCurrentDate } from '../../share/functions/check-current-date';
 import { reduceFunc } from '../../share/functions/reduce-func';
 import * as moment from 'moment';
+import { sortFunc } from '../../share/functions/sort-func';
 
 @Injectable()
 export class FundManagementService {
@@ -324,6 +325,48 @@ export class FundManagementService {
     };
   }
 
+  async nop(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    const [exchange] = await this.database.query(
+      `call proc_treasury_exchange_daily(?,?,?)`,
+      [date, branch, option],
+    );
+
+    const [result] = await this.database.query(
+      `call proc_treasury_nop_daily(?, ?, ?)`,
+      [date, branch, option],
+    );
+
+    if (!result) {
+      throw new BadRequestException('Data not found');
+    }
+
+    if (!exchange) {
+      throw new BadRequestException('Data not found');
+    }
+
+    const groupEx = this.groupByCcy(exchange);
+
+    const label: string[] = [];
+    const percent: number[] = [];
+    const amount: number[] = [];
+
+    sortFunc(result, 'ccy', 'min').forEach((e) => {
+      label.push(e.ccy);
+      percent.push(e.nop);
+    });
+    sortFunc(groupEx, 'ccy', 'min').forEach((e) => {
+      amount.push(e.bal);
+    });
+
+    return {
+      label: label,
+      percent: percent,
+      amount: amount,
+    };
+  }
+
   private groupByType(data: any[], option: 'deposit' | 'customer') {
     const grouped: Record<
       string,
@@ -503,6 +546,36 @@ export class FundManagementService {
       }
       grouped[date].cddbal += cddbal;
       grouped[date].cddballak += cddballak;
+    });
+    return Object.values(grouped);
+  }
+
+  private groupByCcy(data: any[]) {
+    const grouped: Record<
+      string,
+      {
+        code: number;
+        name: string;
+        date: string;
+        ccy: string;
+        bal: number;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const ccy = e.ccy;
+      const bal = +e.bal;
+      const code = e.code;
+      if (!grouped[ccy]) {
+        grouped[ccy] = {
+          code: code,
+          name: e.name,
+          date: e.date,
+          ccy: ccy,
+          bal: 0,
+        };
+      }
+      grouped[ccy].bal += bal;
     });
     return Object.values(grouped);
   }
