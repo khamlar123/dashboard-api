@@ -67,7 +67,7 @@ export class MonitorService {
       dates.push(e.date);
       balances.push(+e.balance);
       npl.push(+e.npl_balance);
-      nplRatio.push(+(e.balance / +e.npl_balance).toFixed(2));
+      nplRatio.push(Number((+e.npl_balance / e.balance).toFixed(2)));
     });
 
     const findCurrentDate = loan.find((f) => f.date === date);
@@ -87,9 +87,15 @@ export class MonitorService {
       100
     ).toFixed(2);
 
-    const totalLoan: number = reduceFunc(loan.map((m) => +m.balance));
-    const totalFund: number = reduceFunc(fund.map((m) => +m.CAP_AMOUNT1));
-    const calcCapital: number = +(totalLoan / totalFund).toFixed(2);
+    // const totalLoan: number = reduceFunc(loan.map((m) => +m.balance));
+    // const totalFund: number = reduceFunc(fund.map((m) => +m.CAP_AMOUNT1));
+    const calcCapital: number[] = [];
+    loan.forEach((e) => {
+      const itx = fund.find((ee) => ee.date === e.date);
+      if (itx) {
+        calcCapital.push(Number((e.balance / itx.CAP_AMOUNT1).toFixed(2)));
+      }
+    });
 
     return {
       dates: dates,
@@ -97,9 +103,9 @@ export class MonitorService {
       percentBalance: calcBalance,
       diffBalance: diffBalance,
       npl: npl,
-      nplRatio: nplRatio,
       percentNpl: calcNpl,
       diffNpl: diffNpl,
+      nplRatio: nplRatio,
       capital: calcCapital,
     };
   }
