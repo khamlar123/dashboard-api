@@ -38,6 +38,7 @@ export class MonitorService {
       date: dates,
       profits: profits,
       percent: percent,
+      diff: diff,
     };
   }
 
@@ -93,10 +94,12 @@ export class MonitorService {
     return {
       dates: dates,
       balances: balances,
+      percentBalance: calcBalance,
+      diffBalance: diffBalance,
       npl: npl,
       nplRatio: nplRatio,
-      percentBalance: calcBalance,
       percentNpl: calcNpl,
+      diffNpl: diffNpl,
       capital: calcCapital,
     };
   }
@@ -160,8 +163,10 @@ export class MonitorService {
       dates: dates,
       deposits: deposits,
       depositPercent: depositPercent,
+      depositDiff: depositDiff,
       cash: cashs,
       cashPercent: cashPercent,
+      cashDiff: cashDiff,
       ratio: ratio,
     };
   }
@@ -246,6 +251,7 @@ export class MonitorService {
     return {
       dates: dates,
       exchange: exchange,
+      diff: diff,
       percent: percent,
       nopLabel: nopLabel,
       nopCny: nopCny,
