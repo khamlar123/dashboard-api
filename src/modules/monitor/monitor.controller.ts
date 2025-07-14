@@ -22,7 +22,8 @@ export class MonitorController {
     @Query('date', new DefaultValuePipe(''))
     date: string,
   ) {
-    return await this.monitorService.profit(date, day);
+    const fixDay = String(Number(day) - 1);
+    return await this.monitorService.profit(date, fixDay);
   }
 
   @Get('/credit-balance')
@@ -32,7 +33,8 @@ export class MonitorController {
     @Query('date', new DefaultValuePipe(''))
     date: string,
   ) {
-    return await this.monitorService.creditBalance(date, day);
+    const fixDay = String(Number(day) - 1);
+    return await this.monitorService.creditBalance(date, fixDay);
   }
 
   @Get('/deposit')
@@ -42,7 +44,8 @@ export class MonitorController {
     @Query('date', new DefaultValuePipe(''))
     date: string,
   ) {
-    return await this.monitorService.deposit(date, day);
+    const fixDay = String(Number(day) - 1);
+    return await this.monitorService.deposit(date, fixDay);
   }
 
   @Get('/exchange')
@@ -52,7 +55,8 @@ export class MonitorController {
     @Query('date', new DefaultValuePipe(''))
     date: string,
   ) {
-    return await this.monitorService.exchange(date, day);
+    const fixDay = String(Number(day) - 1);
+    return await this.monitorService.exchange(date, fixDay);
   }
 
   @Get('/liquidity')
@@ -62,6 +66,7 @@ export class MonitorController {
     @Query('date', new DefaultValuePipe(''))
     date: string,
   ) {
-    return await this.monitorService.liquidity(date, day);
+    const fixDay = String(Number(day) - 1);
+    return await this.monitorService.liquidity(date, fixDay);
   }
 }

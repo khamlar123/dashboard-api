@@ -166,7 +166,6 @@ export class MonitorService {
     const ratio: number[] = [];
 
     cashs.forEach((e, i) => {
-      console.log(deposits[i]);
       ratio.push(Number(((e / deposits[i]) * 100).toFixed(2)));
     });
 
@@ -205,12 +204,38 @@ export class MonitorService {
       throw new NotFoundException('Exchange not found');
     }
 
-    const dates: string[] = [];
-    const exchange: number[] = [];
+    const dates = [...new Set(today.map((m) => m.date))];
+    const exCny: number[] = [];
+    const exEur: number[] = [];
+    const exLak: number[] = [];
+    const exThb: number[] = [];
+    const exUsd: number[] = [];
+    const exVnd: number[] = [];
 
-    today.forEach((e) => {
-      dates.push(e.date);
-      exchange.push(+e.exchange_bal);
+    dates.forEach((m) => {
+      // exchange.push(+e.exchange_bal);
+      const itx = today.filter((f) => f.date === m);
+      if (itx) {
+        const findCNY = itx.find((f) => f.ccy === 'CNY');
+        exCny.push(Number(findCNY?.exchange_bal) ?? 0);
+        const findEUR = itx.find((f) => f.ccy === 'EUR');
+        exEur.push(Number(findEUR?.exchange_bal) ?? 0);
+        const findLAK = itx.find((f) => f.ccy === 'LAK');
+        exLak.push(Number(findLAK?.exchange_bal) ?? 0);
+        const findTHB = itx.find((f) => f.ccy === 'THB');
+        exThb.push(Number(findTHB?.exchange_bal) ?? 0);
+        const findUSD = itx.find((f) => f.ccy === 'USD');
+        exUsd.push(Number(findUSD?.exchange_bal) ?? 0);
+        const findVND = itx.find((f) => f.ccy === 'VND');
+        exVnd.push(Number(findVND?.exchange_bal) ?? 0);
+      } else {
+        exCny.push(0);
+        exEur.push(0);
+        exLak.push(0);
+        exThb.push(0);
+        exUsd.push(0);
+        exVnd.push(0);
+      }
     });
 
     const totalToday = reduceFunc(today.map((m) => +m.exchange_bal));
@@ -265,10 +290,17 @@ export class MonitorService {
 
     return {
       dates: dates,
-      exchange: exchange,
-      diff: diff,
-      percent: percent,
-      nopLabel: nopLabel,
+      // exchange: exchange,
+      exCny: exCny,
+      exEur: exEur,
+      exLak: exLak,
+      exThb: exThb,
+      exUsd: exUsd,
+      exVnd: exVnd,
+      // exAll: exAll,
+      exDiff: diff,
+      exPercent: percent,
+      // nopLabel: nopLabel,
       nopCny: nopCny,
       nopEur: nopEur,
       nopLak: nopLak,

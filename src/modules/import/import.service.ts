@@ -425,8 +425,6 @@ export class ImportService {
       myDate.push(data);
     }
 
-    console.log('myDate', myDate);
-
     const flatMap = myDate
       .flatMap((m) => m)
       .map((m) => {
@@ -482,7 +480,9 @@ export class ImportService {
           ballak: m.ballak,
         };
       });
-    
+
+    console.log('flatMap', flatMap);
+
     const placeholders = flatMap.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
 
     const query = `INSERT INTO liquidity_nop (date, branch_id, type, ccy, bal, ballak)
