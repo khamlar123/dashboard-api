@@ -8,8 +8,10 @@ import {
 } from '@nestjs/common';
 import { ImportService } from './import.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('import')
+@ApiBearerAuth()
 export class ImportController {
   constructor(private readonly importService: ImportService) {}
 

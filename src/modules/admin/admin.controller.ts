@@ -9,10 +9,11 @@ import {
   Query,
   DefaultValuePipe,
 } from '@nestjs/common';
-import { ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 
 @Controller('admin')
+@ApiBearerAuth()
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 

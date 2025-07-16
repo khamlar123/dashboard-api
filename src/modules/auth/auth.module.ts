@@ -6,6 +6,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
+import { SharedModule } from '../../share/shared.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { HttpModule } from '@nestjs/axios';
       inject: [ConfigService],
     }),
     HttpModule,
+    SharedModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

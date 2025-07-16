@@ -10,8 +10,10 @@ import {
   DefaultValuePipe,
 } from '@nestjs/common';
 import { MonitorService } from './monitor.service';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('monitor')
+@ApiBearerAuth()
 export class MonitorController {
   constructor(private readonly monitorService: MonitorService) {}
 

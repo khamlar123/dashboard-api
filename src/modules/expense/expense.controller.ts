@@ -14,8 +14,10 @@ import {
 import { ExpenseService } from './expense.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DatabaseService } from '../../common/database/database.service';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('expense')
+@ApiBearerAuth()
 export class ExpenseController {
   constructor(private readonly expenseService: ExpenseService) {}
 

@@ -10,9 +10,10 @@ import {
   DefaultValuePipe,
 } from '@nestjs/common';
 import { DepositService } from './deposit.service';
-import { ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 @Controller('deposit')
+@ApiBearerAuth()
 export class DepositController {
   constructor(private readonly depositService: DepositService) {}
 

@@ -13,8 +13,10 @@ import {
 } from '@nestjs/common';
 import { IncomeService } from './income.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('income')
+@ApiBearerAuth()
 export class IncomeController {
   constructor(private readonly incomeService: IncomeService) {}
 
