@@ -8,8 +8,10 @@ import {
   Delete,
 } from '@nestjs/common';
 import { HrService } from './hr.service';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('hr')
+@ApiBearerAuth()
 export class HrController {
   constructor(private readonly hrService: HrService) {}
 

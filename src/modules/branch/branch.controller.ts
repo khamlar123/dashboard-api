@@ -14,15 +14,15 @@ import {
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '../../common/guards/auth.guard';
 
 @Controller('branch')
+@ApiBearerAuth()
 export class BranchController {
   constructor(private readonly branchService: BranchService) {}
 
   @Get()
-  //@UseGuards(AuthGuard)
   async findAll() {
     return await this.branchService.findAll();
   }

@@ -244,7 +244,7 @@ export class ProfitService {
         'all',
       ]);
     }
-    
+
     return [result];
   }
 

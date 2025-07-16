@@ -29,6 +29,7 @@ import { FundManagementModule } from './modules/fund_management/fund_management.
 import { HrModule } from './modules/hr/hr.module';
 import { MonitorModule } from './modules/monitor/monitor.module';
 import { UserModule } from './modules/user/user.module';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -74,7 +75,7 @@ import { UserModule } from './modules/user/user.module';
     MonitorModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, JwtService],
 })
 export class AppModule {
   // configure(consumer: MiddlewareConsumer) {
@@ -83,8 +84,8 @@ export class AppModule {
   //     .forRoutes('*') // applies to all routes
   //     .apply(AuthMiddleware)
   //     .exclude(
-  //       { path: 'users', method: RequestMethod.POST }, // exclude user creation
-  //       'users/(.*)', // exclude all user routes for this example
+  //       { path: 'auth', method: RequestMethod.POST }, // exclude user creation
+  //       'auth/(.*)', // exclude all user routes for this example
   //     )
   //     .forRoutes('*'); // applies to remaining routes
   // }

@@ -1,7 +1,9 @@
 import { Controller, DefaultValuePipe, Get, Query } from '@nestjs/common';
 import { ProfitService } from './profit.service';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('profit')
+@ApiBearerAuth()
 export class ProfitController {
   constructor(private readonly profitService: ProfitService) {}
 

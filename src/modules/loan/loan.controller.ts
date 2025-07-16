@@ -13,9 +13,10 @@ import {
 } from '@nestjs/common';
 import { LoanService } from './loan.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 @Controller('loan')
+@ApiBearerAuth()
 export class LoanController {
   constructor(private readonly loanService: LoanService) {}
 

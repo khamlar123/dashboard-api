@@ -1,7 +1,9 @@
 import { Controller, DefaultValuePipe, Get, Query } from '@nestjs/common';
 import { MarketService } from './market.service';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('market')
+@ApiBearerAuth()
 export class MarketController {
   constructor(private readonly marketService: MarketService) {}
 
