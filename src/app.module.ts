@@ -28,6 +28,7 @@ import { MarketModule } from './modules/market/market.module';
 import { FundManagementModule } from './modules/fund_management/fund_management.module';
 import { HrModule } from './modules/hr/hr.module';
 import { MonitorModule } from './modules/monitor/monitor.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { MonitorModule } from './modules/monitor/monitor.module';
       synchronize: true, // Sync models with database (disable in production)
     }),
     ScheduleModule.forRoot(),
+    UserModule,
     AuthModule,
     BranchModule,
     IncomePlanModule,

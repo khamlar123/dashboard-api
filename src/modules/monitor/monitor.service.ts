@@ -75,18 +75,19 @@ export class MonitorService {
       (f) => f.date === moment(date).add(-1, 'd').format('yyyyMMDD').toString(),
     );
 
-    const diffBalance = findCurrentDate.balance - findLastDate.balance;
-    const diffNpl = findCurrentDate.npl_balance - findLastDate.npl_balance;
+    const diffBalance =
+      Number(findCurrentDate.balance) - Number(findLastDate.balance);
+    const diffNpl =
+      Number(findCurrentDate.npl_balance) - Number(findLastDate.npl_balance);
 
     const calcBalance: number = +(
-      (diffBalance / findLastDate.balance) *
+      (diffBalance / Number(findLastDate.balance)) *
       100
     ).toFixed(2);
-    const calcNpl: number = +(
-      (diffNpl / findLastDate.npl_balance) *
+    const calcNpl = (
+      (diffNpl / Number(findLastDate.npl_balance)) *
       100
     ).toFixed(2);
-
     // const totalLoan: number = reduceFunc(loan.map((m) => +m.balance));
     // const totalFund: number = reduceFunc(fund.map((m) => +m.CAP_AMOUNT1));
     const calcCapital: number[] = [];
