@@ -28,6 +28,24 @@ export class IncomeService {
     private readonly database: DatabaseService,
   ) {}
 
+  async findIncome(
+    date: string,
+    branch: string,
+    option: 'd' | 'm' | 'y',
+  ): Promise<IncomeRes> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_income_dailly(?, ?, ?)`,
+      [date, branch, option],
+    );
+
+    if (!result) {
+      throw new BadRequestException('Data not found');
+    }
+
+    return result;
+  }
+
   async findIncomeDailly(
     date: string,
     branch: string,
