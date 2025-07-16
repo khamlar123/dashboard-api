@@ -19,8 +19,20 @@ import { DatabaseService } from '../../common/database/database.service';
 export class ExpenseController {
   constructor(private readonly expenseService: ExpenseService) {}
 
+  @Get('')
+  async findExpense(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.expenseService.findExpense(date, branch, option);
+  }
+
   @Get('/dailly')
-  async findIncomeDailly(
+  async findExpenseDailly(
     @Query('branch', new DefaultValuePipe(''))
     branch: string,
     @Query('date', new DefaultValuePipe(''))

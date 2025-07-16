@@ -5,6 +5,18 @@ import { ProfitService } from './profit.service';
 export class ProfitController {
   constructor(private readonly profitService: ProfitService) {}
 
+  @Get('')
+  async profit(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.profitService.findProfit(date, branch, option);
+  }
+
   @Get('/dailly')
   async findDaily(
     @Query('branch', new DefaultValuePipe(''))
@@ -33,6 +45,16 @@ export class ProfitController {
     date: string,
   ) {
     return await this.profitService.findProfitYearly(date, branch);
+  }
+
+  @Get('/all')
+  async all(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.profitService.profitAll(date, option);
   }
 
   @Get('/all-daily')

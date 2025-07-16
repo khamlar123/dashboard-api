@@ -23,6 +23,24 @@ export class ExpenseService {
     private readonly database: DatabaseService,
   ) {}
 
+  async findExpense(
+    date: string,
+    branch: string,
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_expense_dailly(?, ?, ?)`,
+      [date, branch, option],
+    );
+
+    if (!result) {
+      throw new BadRequestException('Data not found');
+    }
+
+    return result;
+  }
+
   async findExpenseDaily(
     date: string,
     branch: string,

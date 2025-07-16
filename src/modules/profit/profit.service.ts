@@ -14,6 +14,38 @@ import { reduceFunc } from '../../share/functions/reduce-func';
 export class ProfitService {
   constructor(private readonly database: DatabaseService) {}
 
+  async findProfit(
+    date: string,
+    branch: string,
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+    let result;
+
+    if (option === 'd') {
+      result = await this.database.query(`call proc_profit_dailly(?, ?)`, [
+        date,
+        branch,
+      ]);
+    }
+
+    if (option === 'm') {
+      result = await this.database.query(`call proc_profit_monthly(?, ?)`, [
+        date,
+        branch,
+      ]);
+    }
+
+    if (option === 'y') {
+      result = await this.database.query(`call proc_profit_yearly(?, ?)`, [
+        date,
+        branch,
+      ]);
+    }
+
+    return [result];
+  }
+
   async findProfitDaily(
     date: string,
     branch: string,
@@ -186,6 +218,34 @@ export class ProfitService {
     mapData.totalPlan = mapData.planProfit[mapData.planProfit.length - 1];
 
     return mapData;
+  }
+
+  async profitAll(date: string, oprion: 'd' | 'm' | 'y'): Promise<any> {
+    checkCurrentDate(date);
+    let result;
+
+    if (oprion === 'd') {
+      result = await this.database.query(`call proc_profit_dailly(?, ?)`, [
+        date,
+        'all',
+      ]);
+    }
+
+    if (oprion === 'm') {
+      result = await this.database.query(`call proc_profit_monthly(?, ?)`, [
+        date,
+        'all',
+      ]);
+    }
+
+    if (oprion === 'y') {
+      result = await this.database.query(`call proc_profit_yearly(?, ?)`, [
+        date,
+        'all',
+      ]);
+    }
+    
+    return [result];
   }
 
   async profitAllBranchDaily(date: string): Promise<any> {

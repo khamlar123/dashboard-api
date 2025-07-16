@@ -238,17 +238,17 @@ export class MonitorService {
       }
     });
 
-    const totalToday = reduceFunc(today.map((m) => +m.exchange_bal));
-    const totalLast = reduceFunc(lastDay.map((m) => +m.exchange_bal));
-
-    const diff = totalToday - totalLast;
-    let percent = 0;
-    if (totalLast && totalLast !== 0) {
-      percent = Number(((diff / totalLast) * 100).toFixed(2));
-    }
-    if (isNaN(percent)) {
-      percent = 0;
-    }
+    // const totalToday = reduceFunc(today.map((m) => +m.exchange_bal));
+    // const totalLast = reduceFunc(lastDay.map((m) => +m.exchange_bal));
+    //
+    // const diff = totalToday - totalLast;
+    // let percent = 0;
+    // if (totalLast && totalLast !== 0) {
+    //   percent = Number(((diff / totalLast) * 100).toFixed(2));
+    // }
+    // if (isNaN(percent)) {
+    //   percent = 0;
+    // }
 
     const nopLabel = [...new Set(nop.map((m) => m.date))];
     const nopCny: number[] = [];
@@ -292,14 +292,26 @@ export class MonitorService {
       dates: dates,
       // exchange: exchange,
       exCny: exCny,
+      diffCny: this.calcDiffAndPercent(exCny).diff,
+      percentCny: this.calcDiffAndPercent(exCny).percent,
       exEur: exEur,
+      diffEur: this.calcDiffAndPercent(exEur).diff,
+      percentEur: this.calcDiffAndPercent(exEur).percent,
       exLak: exLak,
+      diffLak: this.calcDiffAndPercent(exLak).diff,
+      percentLak: this.calcDiffAndPercent(exLak).percent,
       exThb: exThb,
+      diffThb: this.calcDiffAndPercent(exThb).diff,
+      percentThb: this.calcDiffAndPercent(exThb).percent,
       exUsd: exUsd,
+      diffUsd: this.calcDiffAndPercent(exUsd).diff,
+      percentUsd: this.calcDiffAndPercent(exUsd).percent,
       exVnd: exVnd,
+      diffVnd: this.calcDiffAndPercent(exVnd).diff,
+      percentVnd: this.calcDiffAndPercent(exVnd).percent,
       // exAll: exAll,
-      exDiff: diff,
-      exPercent: percent,
+      // exDiff: diff,
+      // exPercent: percent,
       // nopLabel: nopLabel,
       nopCny: nopCny,
       nopEur: nopEur,
@@ -430,5 +442,19 @@ export class MonitorService {
       grouped[date].Liquiditylak += Liquiditylak;
     });
     return Object.values(grouped);
+  }
+
+  private calcDiffAndPercent(array: number[]): {
+    diff: number;
+    percent: number;
+  } {
+    const currentDate = array[array.length - 1];
+    const lastDate = array[array.length - 2];
+    const calcDiff = currentDate - lastDate;
+    const calcPercent = Number(((calcDiff / lastDate) * 100).toFixed(2));
+    return {
+      diff: calcDiff,
+      percent: calcPercent,
+    };
   }
 }
