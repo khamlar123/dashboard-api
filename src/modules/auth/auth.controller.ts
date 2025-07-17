@@ -24,8 +24,6 @@ export class AuthController {
       res,
     );
 
-    delete (getUser as any).password;
-
     return {
       accessToken: getToken,
     };

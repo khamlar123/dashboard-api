@@ -21,18 +21,16 @@ export class CreateUserDto {
   @IsString()
   password: string;
 
-  @ApiProperty({
-    enum: ['user', 'admin'],
-    description: 'Role of the user',
-  })
-  @IsEnum(['user', 'admin'], { message: 'role must be either user or admin' })
-  role: 'user' | 'admin';
-
   @ApiProperty()
-  permissions: string;
+  @IsNumber()
+  role_id: number;
 
   @ApiProperty()
   name: string;
+
+  @ApiProperty()
+  @IsOptional()
+  is_admin?: boolean;
 
   @ApiProperty()
   @IsOptional()

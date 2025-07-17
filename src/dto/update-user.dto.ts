@@ -14,15 +14,19 @@ export class UpdateUserDto {
 
   @ApiProperty()
   @IsOptional()
-  role?: 'user' | 'admin';
-
-  @ApiProperty()
-  @IsOptional()
-  permissions?: string;
+  role_id?: number;
 
   @ApiProperty()
   @IsOptional()
   name?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  is_admin?: boolean;
+
+  @ApiProperty()
+  @IsOptional()
+  is_active?: boolean;
 
   @ApiProperty()
   @IsOptional()
