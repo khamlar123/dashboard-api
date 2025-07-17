@@ -19,15 +19,15 @@ export class UserController {
     return await this.userService.findOne(empid);
   }
 
-  @Post()
-  async create(@Body() dto: CreateUserDto) {
-    return await this.userService.create(dto);
-  }
-
-  @Patch(':empid')
-  async update(@Param('empid') empid: string, @Body() dto: UpdateUserDto) {
-    return await this.userService.update(empid, dto);
-  }
+  // @Post()
+  // async create(@Body() dto: CreateUserDto) {
+  //   return await this.userService.create(dto);
+  // }
+  //
+  // @Patch(':empid')
+  // async update(@Param('empid') empid: string, @Body() dto: UpdateUserDto) {
+  //   return await this.userService.update(empid, dto);
+  // }
 
   @Patch('/toggle-status/:empid')
   async toggleStatus(@Param('empid') empid: string) {

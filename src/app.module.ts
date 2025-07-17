@@ -30,6 +30,7 @@ import { HrModule } from './modules/hr/hr.module';
 import { MonitorModule } from './modules/monitor/monitor.module';
 import { UserModule } from './modules/user/user.module';
 import { JwtService } from '@nestjs/jwt';
+import { DatabaseService } from './common/database/database.service';
 
 @Module({
   imports: [
@@ -75,7 +76,7 @@ import { JwtService } from '@nestjs/jwt';
     MonitorModule,
   ],
   controllers: [AppController],
-  providers: [AppService, JwtService],
+  providers: [AppService, JwtService, DatabaseService],
 })
 export class AppModule {
   // configure(consumer: MiddlewareConsumer) {

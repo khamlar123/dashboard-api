@@ -21,8 +21,6 @@ export class AuthController {
     const getToken = await this.authService.signTokens(
       getUser.name,
       getUser.employee_id,
-      getUser.permissions,
-      getUser.role,
       res,
     );
 
