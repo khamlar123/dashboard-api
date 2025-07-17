@@ -34,37 +34,37 @@ export class UserService {
     }
   }
 
-  async create(dto: CreateUserDto): Promise<any> {
-    const hasPassword = await genHash(dto.password);
-    const model = {
-      employee_id: dto.employee_id,
-      password: hasPassword,
-      role: dto.role,
-      permissions: dto.permissions,
-      name: dto.name,
-      phone: dto.phone,
-      email: dto.email,
-      is_active: true,
-    };
-
-    try {
-      return await this.userRes.save(model);
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
-  }
-
-  async update(id: string, dto: UpdateUserDto): Promise<any> {
-    if (dto.password) {
-      dto.password = await genHash(dto.password);
-    }
-    try {
-      const updated = await this.userRes.update({ employee_id: id }, dto);
-      return (updated.affected ?? 0) > 0 ? id : 0;
-    } catch (e) {
-      throw new BadRequestException(e.message);
-    }
-  }
+  // async create(dto: CreateUserDto): Promise<any> {
+  //   const hasPassword = await genHash(dto.password);
+  //   const model = {
+  //     employee_id: dto.employee_id,
+  //     password: hasPassword,
+  //     role: dto.role,
+  //     permissions: dto.permissions,
+  //     name: dto.name,
+  //     phone: dto.phone,
+  //     email: dto.email,
+  //     is_active: true,
+  //   };
+  //
+  //   try {
+  //     return await this.userRes.save(model);
+  //   } catch (error) {
+  //     throw new BadRequestException(error.message);
+  //   }
+  // }
+  //
+  // async update(id: string, dto: UpdateUserDto): Promise<any> {
+  //   if (dto.password) {
+  //     dto.password = await genHash(dto.password);
+  //   }
+  //   try {
+  //     const updated = await this.userRes.update({ employee_id: id }, dto);
+  //     return (updated.affected ?? 0) > 0 ? id : 0;
+  //   } catch (e) {
+  //     throw new BadRequestException(e.message);
+  //   }
+  // }
 
   async toggleStatus(id: string): Promise<any> {
     const findUser = await this.userRes.findOne({

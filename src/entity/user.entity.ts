@@ -7,8 +7,8 @@ import {
   PrimaryColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Branch } from './branch.entity';
-import { Sector } from './sector.entity';
+
+import { Role } from './role.entity';
 
 @Entity()
 export class User {
@@ -21,17 +21,21 @@ export class User {
   @Column()
   password: string;
 
-  @Column()
-  role: 'admin' | 'user';
+  @ManyToOne(() => Role, (role) => role.user)
+  @JoinColumn({ name: 'role_id' }) // optional: custom column name
+  role: Role;
 
   @Column()
-  permissions: string; // use json  for check permission
-
+  role_id: number;
+  
   @Column()
   name: string;
 
   @Column({ type: 'boolean', default: true })
   is_active?: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  is_admin?: boolean;
 
   @Column({ nullable: true })
   phone?: string;

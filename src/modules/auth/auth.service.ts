@@ -47,20 +47,12 @@ export class AuthService {
     return user;
   }
 
-  async signTokens(
-    userName: string,
-    employee_id: string,
-    permissions: string,
-    roel: string,
-    res: Response,
-  ) {
+  async signTokens(userName: string, employee_id: string, res: Response) {
     const secret = process.env.JWT_SECRET;
     // String payload doesn't accept expiresIn option, use object payload instead
     const genToken = {
       userName,
       employee_id,
-      permissions,
-      roel,
     };
 
     // Generate and save new refresh token
