@@ -252,7 +252,7 @@ export class FundManagementService {
     const groupByCash = this.groupByCash(cash);
     const findCash = groupByCash.find((f) => f.type === 'ເງິນສົດ');
     const findDeposit = reduceFunc(deposit.map((m) => +m.dep_amount1));
-    const calcCash = (findCash?.cddballak ?? 0) / findDeposit;
+    const calcCash = ((findCash?.cddballak ?? 0) / findDeposit) * 100;
 
     const groupByApb = this.groupByCash(depositAPB);
     const findBanner5 = groupByApb.find((f) => f.type === 'ເງິນຝາກຢູ່ ທຫລ');
@@ -262,7 +262,7 @@ export class FundManagementService {
     const findBanner7 = groupByApb.find(
       (f) => f.type === 'ເງິນຝາກທະນາຄານອື່ນ ຕ່າງປະເທດ',
     );
-    const calcDeposit = findDeposit / (findBanner5?.cddballak ?? 0);
+    const calcDeposit = ((findBanner5?.cddballak ?? 0) / findDeposit) * 100;
 
     return {
       banner1: reduceFunc(profit.map((m) => +m.profit1)),
