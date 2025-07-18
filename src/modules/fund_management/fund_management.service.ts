@@ -33,7 +33,9 @@ export class FundManagementService {
     return {
       names: names,
       plan: plan,
+      totalPlan: Number(reduceFunc(plan).toFixed(2)),
       amount: amount,
+      totalAmount: Number(reduceFunc(amount).toFixed(2)),
     };
   }
 
@@ -61,7 +63,9 @@ export class FundManagementService {
     return {
       names: names,
       plan: plan,
+      totalPlan: Number(reduceFunc(plan).toFixed(2)),
       amount: amount,
+      totalAmount: Number(reduceFunc(amount).toFixed(2)),
     };
   }
 
