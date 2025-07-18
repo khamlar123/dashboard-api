@@ -219,31 +219,37 @@ export class FundManagementService {
   async banner(date: string, branch: string, option: 'd' | 'm' | 'y') {
     checkCurrentDate(date);
 
-    const [[profit], [cash], [deposit], [depositAPB]] = await Promise.all([
-      this.database.query(`call proc_profit_financial(?, ?, ?)`, [
-        date,
-        branch,
-        option,
-      ]),
+    const [[profit], [cash], [deposit], [depositAPB], [treasury]] =
+      await Promise.all([
+        this.database.query(`call proc_profit_financial(?, ?, ?)`, [
+          date,
+          branch,
+          option,
+        ]),
 
-      this.database.query(`call proc_treasury_Liquidity(?, ?, ?)`, [
-        date,
-        branch,
-        option,
-      ]),
+        this.database.query(`call proc_treasury_Liquidity(?, ?, ?)`, [
+          date,
+          branch,
+          option,
+        ]),
 
-      this.database.query(`call proc_dep_financial(?, ?, ?)`, [
-        date,
-        branch,
-        option,
-      ]),
+        this.database.query(`call proc_dep_financial(?, ?, ?)`, [
+          date,
+          branch,
+          option,
+        ]),
 
-      this.database.query(`call proc_treasury_banner567(?, ?, ?)`, [
-        date,
-        branch,
-        option,
-      ]),
-    ]);
+        this.database.query(`call proc_treasury_banner567(?, ?, ?)`, [
+          date,
+          branch,
+          option,
+        ]),
+        this.database.query(`call proc_treasury_banner4 (?, ?, ?)`, [
+          date,
+          branch,
+          option,
+        ]),
+      ]);
 
     if (!profit) {
       throw new BadRequestException('Data not found');
@@ -262,7 +268,9 @@ export class FundManagementService {
     const findBanner7 = groupByApb.find(
       (f) => f.type === 'ເງິນຝາກທະນາຄານອື່ນ ຕ່າງປະເທດ',
     );
-    const calcDeposit = ((findBanner5?.cddballak ?? 0) / findDeposit) * 100;
+
+    const findTreasury = reduceFunc(treasury.map((m) => +m.cddballak));
+    const calcDeposit = (findTreasury / findDeposit) * 100;
 
     return {
       banner1: reduceFunc(profit.map((m) => +m.profit1)),
