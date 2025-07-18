@@ -119,23 +119,23 @@ export class MarketService {
       dateX.push(e.monthend);
 
       if (e.ccy === 'CNY') {
-        cny.push(e.cdcballak);
+        cny.push(Number(e.cdcbal.toFixed(2)));
       }
 
       if (e.ccy === 'LAK') {
-        lak.push(e.cdcballak);
+        lak.push(Number(e.cdcbal.toFixed(2)));
       }
 
       if (e.ccy === 'THB') {
-        thb.push(e.cdcballak);
+        thb.push(Number(e.cdcbal.toFixed(2)));
       }
 
       if (e.ccy === 'USD') {
-        usd.push(e.cdcballak);
+        usd.push(Number(e.cdcbal.toFixed(2)));
       }
 
       if (e.ccy === 'VND') {
-        vnd.push(e.cdcballak);
+        vnd.push(Number(e.cdcbal.toFixed(2)));
       }
     });
 
