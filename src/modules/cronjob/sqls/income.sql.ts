@@ -39,7 +39,7 @@ export const income = () => `
                       cdcbal
                from AITHMST
                where AC_DATE = (select vdate from par)
-                 and length(itm_no) = '7'
+                 and length(itm_no) = '10'
                  and (
                  substr(itm_no, 1, 6) in
                  ('510712', '510722', '510331', '510332', '410332', '410342', '510711', '510721')
@@ -60,7 +60,7 @@ export const income = () => `
                       cdcbal
                from AITHMST
                where AC_DATE = (select vdate from par)
-                 and length(itm_no) = '7'
+                 and length(itm_no) = '10'
                  and (substr(itm_no, 1, 5) in
                       ('51018', '51028', '51038', '51068', '51078') or
                       substr(itm_no, 1, 6) = '510747' or
@@ -78,7 +78,7 @@ export const income = () => `
                       cdcbal
                from AITHMST
                where AC_DATE = (select vdate from par)
-                 and length(itm_no) = '7'
+                 and length(itm_no) = '10'
                  and substr(itm_no, 1, 5) in
                      ('51061', '41061')),
        ic4 as (select 'IN004'              id,
@@ -93,7 +93,7 @@ export const income = () => `
                       cdcbal
                from AITHMST
                where AC_DATE = (select vdate from par)
-                 and length(itm_no) = '7'
+                 and length(itm_no) = '10'
                  and (substr(itm_no, 1, 5) in
                       ('57011', '57012', '57018', '57028', '57032', '57034') or
                       substr(itm_no, 1, 6) in ('570131') or
@@ -111,7 +111,7 @@ export const income = () => `
                       cdcbal
                from AITHMST
                where AC_DATE = (select vdate from par)
-                 and length(itm_no) = '7'
+                 and length(itm_no) = '10'
                  and substr(itm_no, 1, 6) in
                      ('510741', '510742', '510746', '410741', '410742', '410746')),
        ic6 as (select 'IN006'              id,
@@ -126,7 +126,7 @@ export const income = () => `
                       cdcbal
                from AITHMST
                where AC_DATE = (select vdate from par)
-                 and length(itm_no) = '7'
+                 and length(itm_no) = '10'
                  and (substr(itm_no, 1, 5) in
                       ('51042') or
                       substr(itm_no, 1, 6) in
@@ -143,7 +143,7 @@ export const income = () => `
                       cdcbal
                from AITHMST
                where AC_DATE = (select vdate from par)
-                 and length(itm_no) = '7'
+                 and length(itm_no) = '10'
                  and (substr(itm_no, 1, 5) in
                       ('55061', '55062', '57031', '57038') or
                       substr(itm_no, 1, 6) in ('510731') or

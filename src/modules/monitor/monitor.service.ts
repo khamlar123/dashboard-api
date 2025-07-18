@@ -132,37 +132,48 @@ export class MonitorService {
     const deposits: number[] = [];
     const cashs: number[] = [];
 
-    const findDepositCurrentDate = deposit.find((f) => f.date === date);
-    const findDepositLastDate = deposit.find(
-      (f) => f.date === moment(date).add(-1, 'd').format('yyyyMMDD').toString(),
-    );
-
-    const depositDiff =
-      findDepositCurrentDate.cdcballak - findDepositLastDate.cdcballak;
-    const depositPercent = +(
-      (depositDiff / findDepositLastDate.cdcballak) *
-      100
-    ).toFixed(2);
-
     this.groupByDate(deposit, 'deposit').forEach((e) => {
       dates.push(e.date);
       deposits.push(e.cdcballak);
     });
 
-    const findCashCurrentDate = findCash.find((f) => f.date === date);
-    const findCashLastDate = findCash.find(
+    const groupDeposits = this.groupByDate(deposit, 'deposit');
+
+    const findDepositCurrentDate = groupDeposits.find((f) => f.date === date);
+    const findDepositLastDate = groupDeposits.find(
       (f) => f.date === moment(date).add(-1, 'd').format('yyyyMMDD').toString(),
     );
 
-    const cashDiff = findCashCurrentDate.cddballak - findCashLastDate.cddballak;
-    const cashPercent = +(
-      (cashDiff / findCashLastDate.cddballak) *
+    const depositDiff =
+      (findDepositCurrentDate?.cdcballak ?? 0) -
+      (findDepositLastDate?.cdcballak ?? 0);
+
+    const depositPercent = +(
+      (depositDiff / (findDepositLastDate?.cdcballak ?? 0)) *
       100
     ).toFixed(2);
 
-    this.groupByDate(findCash, 'credit').forEach((e) => {
+    // cash
+    const groupCash = this.groupByDate(findCash, 'credit');
+
+    groupCash.forEach((e) => {
       cashs.push(+e.cdcballak);
     });
+
+    const findCashCurrentDate = groupCash.find((f) => f.date === date);
+    const findCashLastDate = groupCash.find(
+      (f) => f.date === moment(date).add(-1, 'd').format('yyyyMMDD').toString(),
+    );
+
+    const cashDiff =
+      (findCashCurrentDate?.cdcballak ?? 0) -
+      (findCashLastDate?.cdcballak ?? 0);
+
+    const cashPercent = +(
+      (cashDiff / (findCashLastDate?.cdcballak ?? 0)) *
+      100
+    ).toFixed(2);
+    //
 
     const ratio: number[] = [];
 
@@ -178,10 +189,10 @@ export class MonitorService {
       dates: dates,
       deposits: deposits,
       depositPercent: depositPercent,
-      depositDiff: depositDiff,
+      depositDiff: Number(depositDiff.toFixed(2)),
       cash: cashs,
       cashPercent: cashPercent,
-      cashDiff: cashDiff,
+      cashDiff: Number(cashDiff.toFixed(2)),
       ratio: ratio,
     };
   }
@@ -405,7 +416,7 @@ export class MonitorService {
 
     data.forEach((e) => {
       const date = e.date;
-      const cdcbal = +e.cdcbal;
+      const cdcbal = option === 'deposit' ? +e.cdcbal : +e.cddbal;
       const cdcballak = option === 'deposit' ? +e.cdcballak : +e.cddballak;
 
       if (!grouped[date]) {

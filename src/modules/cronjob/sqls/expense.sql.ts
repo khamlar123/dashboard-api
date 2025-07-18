@@ -45,7 +45,7 @@ export const expense = () => `
                from AITHMST
                where AC_DATE = (select vdate from par)
     #and br = '400100'
-    and length (itm_no) = '7'
+    and length (itm_no) = '10'
     and (
     substr(itm_no, 1, 6) in
     ('410711', '410721', '410712', '410722')
@@ -55,7 +55,7 @@ export const expense = () => `
   select 'EX002' id, ac_date, br, itm_no, substr(itm_no, 1, 6) l6, substr(itm_no, 1, 5) l5, substr(itm_no, 1, 4) l4, ccy, cddbal, cdcbal
   from AITHMST
   where AC_DATE = (select vdate from par) #and br = '400100'
-    and length (itm_no) = '7'
+    and length (itm_no) = '10'
     and (substr(itm_no
       , 1
       , 5) in
@@ -77,7 +77,7 @@ export const expense = () => `
   select 'EX003' id, ac_date, br, itm_no, substr(itm_no, 1, 6) l6, substr(itm_no, 1, 5) l5, substr(itm_no, 1, 4) l4, ccy, cddbal, cdcbal
   from AITHMST
   where AC_DATE = (select vdate from par) #and br = '400100'
-    and length (itm_no) = '7'
+    and length (itm_no) = '10'
     and (substr(itm_no
       , 1
       , 5) in
@@ -99,7 +99,7 @@ export const expense = () => `
   select 'Ex004' id, ac_date, br, itm_no, substr(itm_no, 1, 6) l6, substr(itm_no, 1, 5) l5, substr(itm_no, 1, 4) l4, ccy, cddbal, cdcbal
   from AITHMST
   where AC_DATE = (select vdate from par) #and br = '400100'
-    and length (itm_no) = '7'
+    and length (itm_no) = '10'
     and (substr(itm_no
       , 1
       , 5) in
@@ -117,7 +117,7 @@ export const expense = () => `
   select 'EX005' id, ac_date, br, itm_no, substr(itm_no, 1, 6) l6, substr(itm_no, 1, 5) l5, substr(itm_no, 1, 4) l4, ccy, cddbal, cdcbal
   from AITHMST
   where AC_DATE = (select vdate from par) #and br = '400100'
-    and length (itm_no) = '7'
+    and length (itm_no) = '10'
     and (substr(itm_no
       , 1
       , 6) in
@@ -151,7 +151,7 @@ export const expense = () => `
   select 'EX006' id, ac_date, br, itm_no, substr(itm_no, 1, 6) l6, substr(itm_no, 1, 5) l5, substr(itm_no, 1, 4) l4, ccy, cddbal, cdcbal
   from AITHMST
   where AC_DATE = (select vdate from par) #and br like '4017%'
-    and length (itm_no) = '7'
+    and length (itm_no) = '10'
     and substr(itm_no
       , 1
       , 3) in
@@ -160,7 +160,7 @@ export const expense = () => `
   select 'EX007' id, ac_date, br, itm_no, substr(itm_no, 1, 6) l6, substr(itm_no, 1, 5) l5, substr(itm_no, 1, 4) l4, ccy, cddbal, cdcbal
   from AITHMST
   where AC_DATE = (select vdate from par) #and br = '400100'
-    and length (itm_no) = '7'
+    and length (itm_no) = '10'
     and substr(itm_no
       , 1
       , 3) in
@@ -170,7 +170,7 @@ export const expense = () => `
   select 'EX008' id, ac_date, br, itm_no, substr(itm_no, 1, 6) l6, substr(itm_no, 1, 5) l5, substr(itm_no, 1, 4) l4, ccy, cddbal, cdcbal
   from AITHMST
   where AC_DATE = (select vdate from par) #and br = '400100'
-    and length (itm_no) = '7'
+    and length (itm_no) = '10'
     and substr(itm_no
       , 1
       , 3) in
@@ -180,7 +180,7 @@ export const expense = () => `
   select 'EX009' id, ac_date, br, itm_no, substr(itm_no, 1, 6) l6, substr(itm_no, 1, 5) l5, substr(itm_no, 1, 4) l4, ccy, cddbal, cdcbal
   from AITHMST
   where AC_DATE = (select vdate from par) #and br = '400100'
-    and length (itm_no) = '7'
+    and length (itm_no) = '10'
     and substr(itm_no
       , 1
       , 3) in

@@ -12,7 +12,7 @@ export const deposit = () => `
                         CDDBAL,
                         CDCBAL
                  from AITHMST
-                 WHERE LENGTH(ITM_NO) = '7'
+                 WHERE LENGTH(ITM_NO) = '10'
                    AND SUBSTR(ITM_NO, 1, 5) in (
                                                 '22011',
                                                 '22021',

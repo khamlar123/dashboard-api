@@ -4,7 +4,7 @@ export const liquidity = () => `
        rates as (select eff_dt, ccy, buy from r_bpttqph where exr_typ = 'SMR' and eff_dt = (select vdate from par)),
 
        Liquiditys as (select ac_date,
-                             concat(substr(br, 1, 4), '00')                                                    as br,
+                             concat(substr(br, 1, 4), '00') as br,
                              case
                                when substr(itm_no, 1, 7) in ('1101100', '1101200', '1101600') then 'ເງິນສົດ'
                                when substr(itm_no, 1, 7) in ('1121110') then 'ເງິນຝາກກະແສລາຍວັນ ທຫລ'
@@ -13,7 +13,7 @@ export const liquidity = () => `
                                when substr(itm_no, 1, 7) in ('1302111') then 'ພັນທະບັດ ທຫລ 7 ວັນ'
                                when substr(itm_no, 1, 7) in ('1131210') then 'ເງິນຝາກທະນາຄານອື່ນ ຕ່າງປະເທດ'
                                else 'OTHER'
-                               end                                                                             as type,
+                               end                          as type,
                              case
                                when substr(itm_no, 1, 7) in ('1101100', '1101200', '1101600') then 'CASH'
                                when substr(itm_no, 1, 7) in ('1121110') then 'BOL_CURT'
@@ -22,15 +22,15 @@ export const liquidity = () => `
                                when substr(itm_no, 1, 7) in ('1302111') then 'BOL_BLOND'
                                when substr(itm_no, 1, 7) in ('1131210') then 'BANK_FORE'
                                else 'OTHER'
-                               end                                                                             as typeID,
+                               end                          as typeID,
                              ccy,
                              case
                                when nvl(cddbal, 0) < 0 then (nvl(cddbal, 0) * (-1))
-                               else nvl(cddbal, 0) end                                                         as cddbal,
+                               else nvl(cddbal, 0) end      as cddbal,
                              cdcbal
                       from AITHMST
                       where AC_DATE = (select vdate from par)
-                        and length(itm_no) = '7'
+                        and length(itm_no) = '10'
                         and (
                         substr(itm_no, 1, 7) in ('1101100', '1101200', '1101600',
                                                  '1121110',

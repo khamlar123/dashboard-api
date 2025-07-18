@@ -11,7 +11,7 @@ export const admin = () => `
                         cdcbal
                  from AITHMST
                  where AC_DATE = (select vdate from par)
-                   and length(itm_no) = '7'
+                   and length(itm_no) = '10'
                    and (
                    substr(itm_no, 1, 7) in
                    (
