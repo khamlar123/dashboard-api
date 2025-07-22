@@ -129,7 +129,7 @@ export class FundManagementService {
       const findByCode = +use_fund.find((f) => f.code === e.code).loan_balance1;
       names.push(e.name);
       percent.push(
-        +((Number(e.dep_amount1) / Number(findByCode)) * 100).toFixed(2),
+        +((Number(findByCode) / Number(e.dep_amount1)) * 100).toFixed(2),
       );
     });
 

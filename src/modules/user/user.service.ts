@@ -65,7 +65,7 @@ export class UserService {
 
   async create(dto: CreateUserDto): Promise<any> {
     const hasPassword = await genHash(dto.password);
-    const model = {
+    const model = this.userRes.create({
       employee_id: dto.employee_id,
       password: hasPassword,
       name: dto.name,
@@ -73,8 +73,9 @@ export class UserService {
       email: dto.email,
       is_active: true,
       is_admin: dto.is_admin,
-      role: { id: dto.role_id },
-    };
+      role_id: dto.role_id,
+      branch_id: dto.branch, // or dto.branch if that's ID
+    });
 
     try {
       return await this.userRes.save(model);

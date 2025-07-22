@@ -22,6 +22,7 @@ import { admin } from '../cronjob/sqls/admin.sql';
 import { liquidity } from '../cronjob/sqls/liquidity.sql';
 import { liquidityExchange } from '../cronjob/sqls/liquidity_exchange.sql';
 import { liquidityNop } from '../cronjob/sqls/liquidity_nop.sql';
+import { reserve } from '../cronjob/sqls/reserve.sql';
 
 @Injectable()
 export class ImportService {
@@ -481,8 +482,6 @@ export class ImportService {
         };
       });
 
-    console.log('flatMap', flatMap);
-
     const placeholders = flatMap.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
 
     const query = `INSERT INTO liquidity_nop (date, branch_id, type, ccy, bal, ballak)
@@ -494,6 +493,59 @@ export class ImportService {
       item.ccy,
       item.bal,
       item.ballak,
+    ]);
+    return await this.databaseService.query(query, values);
+  }
+
+  async reserve(start: string, end: string) {
+    const startDate = moment(start, 'YYYYMMDD');
+    const endDate = moment(end, 'YYYYMMDD');
+    const dateArray: string[] = [];
+
+    while (startDate.isSameOrBefore(endDate)) {
+      dateArray.push(startDate.format('YYYYMMDD'));
+      startDate.add(1, 'day');
+    }
+
+    const myDate: any[] = [];
+    for (const item of dateArray) {
+      const getQuery = reserve();
+      const data = await this.databaseService.queryOds(getQuery, [item]);
+      myDate.push(data);
+    }
+
+    const flatMap = myDate
+      .flatMap((m) => m)
+      .map((m) => {
+        return {
+          date: m.ac_date,
+          branch_id: m.br,
+          type: m.type,
+          typeid: m.typeID,
+          ccy: m.ccy,
+          cddbal: m.cddbal,
+          cddlak: m.cddlak,
+          cdcbal: m.cdcbal,
+          cdclak: m.cdclak,
+        };
+      });
+
+    const placeholders = flatMap
+      .map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .join(', ');
+
+    const query = `INSERT INTO reserve (date, branch_id, type, typeid, ccy, cddbal, cddlak, cdcbal, cdclak)
+                   VALUES ${placeholders}`;
+    const values = flatMap.flatMap((item) => [
+      item.date,
+      item.branch_id,
+      item.type,
+      item.typeid,
+      item.ccy,
+      item.cddbal,
+      item.cddlak,
+      item.cdcbal,
+      item.cdclak,
     ]);
     return await this.databaseService.query(query, values);
   }

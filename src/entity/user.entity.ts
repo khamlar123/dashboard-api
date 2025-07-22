@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 
 import { Role } from './role.entity';
+import { Branch } from './branch.entity';
 
 @Entity()
 export class User {
@@ -27,7 +28,7 @@ export class User {
 
   @Column()
   role_id: number;
-  
+
   @Column()
   name: string;
 
@@ -42,4 +43,11 @@ export class User {
 
   @Column({ nullable: true })
   email?: string;
+
+  @ManyToOne(() => Branch, (branch) => branch.users)
+  @JoinColumn({ name: 'branch_id' })
+  branch: Branch;
+
+  @Column()
+  branch_id: number;
 }

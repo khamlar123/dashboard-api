@@ -29,6 +29,9 @@ export class CreateUserDto {
   name: string;
 
   @ApiProperty()
+  branch: number;
+
+  @ApiProperty()
   @IsOptional()
   is_admin?: boolean;
 

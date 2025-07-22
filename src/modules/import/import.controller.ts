@@ -114,4 +114,14 @@ export class ImportController {
   ) {
     return await this.importService.liquidityNop(start, end);
   }
+
+  @Post('reseve')
+  async importReseve(
+    @Query('start', new DefaultValuePipe(0))
+    start: string,
+    @Query('end', new DefaultValuePipe(0))
+    end: string,
+  ) {
+    return await this.importService.reserve(start, end);
+  }
 }
