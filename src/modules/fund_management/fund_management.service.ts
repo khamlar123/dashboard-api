@@ -149,9 +149,10 @@ export class FundManagementService {
     if (!result) {
       throw new BadRequestException('Data not found');
     }
-
-    const groupData = this.groupByType(result, 'deposit');
-
+    const convertMont = moment(date).format('YYYYMM').toString();
+    const groupData = this.groupByDateAndType(result, 'deposit').filter(
+      (f) => f.monthend === convertMont,
+    );
     const names: string[] = [];
     const amount: number[] = [];
 
@@ -588,6 +589,44 @@ export class FundManagementService {
         };
       }
       grouped[ccy].bal += bal;
+    });
+    return Object.values(grouped);
+  }
+
+  private groupByDateAndType(data: any[], option: 'deposit' | 'customer') {
+    const grouped: Record<
+      string,
+      {
+        code: number;
+        name: string;
+        monthend: string;
+        ccy: string;
+        dep_type_desc: string;
+        dep_desc: string;
+        cdcbal: number;
+        cdcballak: number;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const key = `${moment(e.monthend).format('YYYYMM')}_${option === 'deposit' ? e.dep_type_desc : e.dep_desc}`;
+      const cdcbal = +e.cdcbal;
+      const cdcballak = +e.cdcballak;
+
+      if (!grouped[key]) {
+        grouped[key] = {
+          code: e.code,
+          name: e.name,
+          monthend: moment(e.monthend).format('YYYYMM'),
+          ccy: e.ccy,
+          dep_type_desc: e.dep_type_desc,
+          dep_desc: e.dep_desc,
+          cdcbal: 0,
+          cdcballak: 0,
+        };
+      }
+      grouped[key].cdcbal += cdcbal;
+      grouped[key].cdcballak += cdcballak;
     });
     return Object.values(grouped);
   }
