@@ -14,7 +14,10 @@ export class MarketService {
       [date, branch],
     );
 
-    const groupData = this.groupByType(result, 'deposit');
+    const convertMont = moment(date).format('YYYYMM').toString();
+    const groupData = this.groupByDateAndType(result, 'deposit').filter(
+      (f) => f.monthend === convertMont,
+    );
 
     const types: string[] = [];
     const currentAcc: number[] = [];
@@ -69,7 +72,10 @@ export class MarketService {
       [date, branch],
     );
 
-    const groupData = this.groupByType(result, 'customer');
+    const convertMont = moment(date).format('YYYYMM').toString();
+    const groupData = this.groupByDateAndType(result, 'customer').filter(
+      (f) => f.monthend === convertMont,
+    );
 
     const types: string[] = [];
     const bankDep: number[] = [];
@@ -152,8 +158,8 @@ export class MarketService {
       vnd: vnd,
     };
   }
-
-  private groupByType(data: any[], option: 'deposit' | 'customer') {
+  
+  private groupByDateAndType(data: any[], option: 'deposit' | 'customer') {
     const grouped: Record<
       string,
       {
@@ -169,15 +175,15 @@ export class MarketService {
     > = {};
 
     data.forEach((e) => {
-      const type = option === 'deposit' ? e.dep_type_desc : e.dep_desc;
+      const key = `${moment(e.monthend).format('YYYYMM')}_${option === 'deposit' ? e.dep_type_desc : e.dep_desc}`;
       const cdcbal = +e.cdcbal;
       const cdcballak = +e.cdcballak;
 
-      if (!grouped[type]) {
-        grouped[type] = {
+      if (!grouped[key]) {
+        grouped[key] = {
           code: e.code,
           name: e.name,
-          monthend: e.monthend,
+          monthend: moment(e.monthend).format('YYYYMM'),
           ccy: e.ccy,
           dep_type_desc: e.dep_type_desc,
           dep_desc: e.dep_desc,
@@ -185,8 +191,8 @@ export class MarketService {
           cdcballak: 0,
         };
       }
-      grouped[type].cdcbal += cdcbal;
-      grouped[type].cdcballak += cdcballak;
+      grouped[key].cdcbal += cdcbal;
+      grouped[key].cdcballak += cdcballak;
     });
     return Object.values(grouped);
   }

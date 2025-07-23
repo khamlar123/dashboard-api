@@ -29,6 +29,35 @@ export class UserService {
     }
   }
 
+  async findActivePermission(): Promise<any> {
+    try {
+      return await this.permissionRes.find();
+    } catch (e) {
+      return e.message;
+    }
+  }
+
+  async permissionToggleStatus(id: string): Promise<any> {
+    const findPermission = await this.permissionRes.findOne({
+      where: { id: Number(id) },
+    });
+
+    if (!findPermission) {
+      throw new NotFoundError('User not found');
+    }
+
+    const isActive = findPermission.is_active ? false : true;
+
+    const update = await this.permissionRes.update(
+      { id: Number(id) },
+      { is_active: isActive },
+    );
+
+    return (update.affected as number) > 0
+      ? `Change status to ${isActive ? 'active' : 'inactive'} successfully`
+      : 'Change Status Failed';
+  }
+
   async createRole(dto: CreateRoleDto) {
     try {
       const create = await this.roleRes.create({ name: dto.name });

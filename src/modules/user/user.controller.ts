@@ -16,6 +16,16 @@ export class UserController {
     return await this.userService.findAll();
   }
 
+  @Get('permission')
+  async findActivePermission() {
+    return await this.userService.findActivePermission();
+  }
+
+  @Patch('permission/toggle-status/:id')
+  async permissionToggle(@Param('id') id: string) {
+    return await this.userService.permissionToggleStatus(id);
+  }
+
   @Get(':empid')
   async findOne(@Param('empid') empid: string) {
     return await this.userService.findOne(empid);
