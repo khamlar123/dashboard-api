@@ -626,8 +626,8 @@ export class LoanService {
         option === 'daily'
           ? e.date
           : option === 'monthly'
-            ? e.monthend
-            : e.monthend;
+            ? moment(e.monthend).format('YYYYMM')
+            : moment(e.monthend).format('YYYY');
       const loan_plan = +e.loan_plan;
       const balance = +e.balance;
       const npl = +e.npl_balance;

@@ -69,6 +69,16 @@ export class UserService {
     }
   }
 
+  async findRole(): Promise<any> {
+    try {
+      return await this.roleRes.find({
+        relations: ['permissions'],
+      });
+    } catch (e) {
+      return e.message;
+    }
+  }
+
   async findAll(): Promise<any> {
     try {
       return await this.userRes.find({
