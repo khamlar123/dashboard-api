@@ -321,8 +321,6 @@ export class FundManagementService {
         [date, branch],
       );
 
-      console.log('result', result);
-
       groupData = this.groupByDate(result, 'yearly');
     }
 
