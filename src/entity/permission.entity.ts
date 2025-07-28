@@ -15,7 +15,7 @@ export class Permission {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @Column({ default: true })

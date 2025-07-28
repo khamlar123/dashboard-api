@@ -29,7 +29,7 @@ export class CreateUserDto {
   name: string;
 
   @ApiProperty()
-  branch: number;
+  branch_id: number;
 
   @ApiProperty()
   @IsOptional()

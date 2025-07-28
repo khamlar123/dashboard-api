@@ -22,6 +22,10 @@ export class UpdateUserDto {
 
   @ApiProperty()
   @IsOptional()
+  branch_id?: number;
+
+  @ApiProperty()
+  @IsOptional()
   is_admin?: boolean;
 
   @ApiProperty()

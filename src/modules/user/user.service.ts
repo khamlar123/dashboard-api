@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../entity/user.entity';
 import { Repository } from 'typeorm';
@@ -22,19 +26,28 @@ export class UserService {
   ) {}
 
   async createPermission(dto: { name: string }): Promise<any> {
-    try {
-      return await this.permissionRes.save(dto);
-    } catch (e) {
-      return e.message;
+    const findItem = await this.permissionRes.findOne({
+      where: {
+        name: dto.name,
+      },
+    });
+
+    if (findItem) {
+      throw new ConflictException(
+        'Duplicate entry: this record already exists.',
+      );
     }
+
+    const user = this.userRes.create(dto);
+    return await this.permissionRes.save(user);
   }
 
   async findActivePermission(): Promise<any> {
-    try {
-      return await this.permissionRes.find();
-    } catch (e) {
-      return e.message;
-    }
+    return await this.permissionRes.find({
+      order: {
+        id: 'DESC',
+      },
+    });
   }
 
   async permissionToggleStatus(id: string): Promise<any> {
@@ -59,14 +72,10 @@ export class UserService {
   }
 
   async createRole(dto: CreateRoleDto) {
-    try {
-      const create = await this.roleRes.create({ name: dto.name });
-      create.permissions = await this.permissionRes.findByIds(dto.rolesIds);
+    const create = await this.roleRes.create({ name: dto.name });
+    create.permissions = await this.permissionRes.findByIds(dto.rolesIds);
 
-      return await this.roleRes.save(create);
-    } catch (e) {
-      return e.message;
-    }
+    return await this.roleRes.save(create);
   }
 
   async findRole(): Promise<any> {
@@ -93,7 +102,7 @@ export class UserService {
     try {
       return await this.userRes.findOne({
         where: {
-          employee_id: id,
+          id: Number(id),
         },
         relations: ['role', 'role.permissions'],
       });
@@ -113,7 +122,7 @@ export class UserService {
       is_active: true,
       is_admin: dto.is_admin,
       role_id: dto.role_id,
-      branch_id: dto.branch, // or dto.branch if that's ID
+      branch_id: dto.branch_id, // or dto.branch if that's ID
     });
 
     try {
@@ -123,12 +132,12 @@ export class UserService {
     }
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<any> {
+  async update(id: number, dto: UpdateUserDto): Promise<any> {
     if (dto.password) {
       dto.password = await genHash(dto.password);
     }
     try {
-      const updated = await this.userRes.update({ employee_id: id }, dto);
+      const updated = await this.userRes.update({ id: id }, dto);
       return (updated.affected ?? 0) > 0 ? id : 0;
     } catch (e) {
       throw new BadRequestException(e.message);

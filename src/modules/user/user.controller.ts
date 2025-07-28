@@ -26,9 +26,9 @@ export class UserController {
     return await this.userService.findRole();
   }
 
-  @Get('user/:empid')
-  async findOne(@Param('empid') empid: string) {
-    return await this.userService.findOne(empid);
+  @Get('user/:id')
+  async findOne(@Param('id') id: string) {
+    return await this.userService.findOne(id);
   }
 
   @Patch('permission/toggle-status/:id')
@@ -51,9 +51,9 @@ export class UserController {
     return await this.userService.create(dto);
   }
 
-  @Patch('update/:empid')
-  async update(@Param('empid') empid: string, @Body() dto: UpdateUserDto) {
-    return await this.userService.update(empid, dto);
+  @Patch('update/:id')
+  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return await this.userService.update(Number(id), dto);
   }
 
   @Patch('/toggle-status/:empid')

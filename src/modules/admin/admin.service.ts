@@ -75,8 +75,8 @@ export class AdminService {
       asset: asset,
       manage: manage,
       salary: salary,
-      total_salary: reduceFunc(salary),
-      total_manage: reduceFunc(manage),
+      total_salary: salary[salary.length - 1],
+      total_manage: manage[manage.length - 1],
     };
   }
 

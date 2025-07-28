@@ -7,6 +7,7 @@ import { LoggingInterceptor } from './common/Interceptors/logging.interceptor';
 import { Logger } from '@nestjs/common';
 import { AuthSwagger } from './common/middleware/auth.swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
+import { ValidationPipe } from './common/pipes/validation.pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,7 +22,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   app.use('/docs', new AuthSwagger().use);
   SwaggerModule.setup('docs', app, document);
-  // app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe());
   app.use(
     '/scalar',
     apiReference({
