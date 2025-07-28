@@ -321,6 +321,8 @@ export class FundManagementService {
         [date, branch],
       );
 
+      console.log('result', result);
+
       groupData = this.groupByDate(result, 'yearly');
     }
 
@@ -542,7 +544,7 @@ export class FundManagementService {
           ? e.date
           : option === 'monthly'
             ? e.monthend
-            : e.i_yearend;
+            : e.l_yearend;
       const cddbal = +e.cddbal;
       const cddballak = +e.cddballak;
 

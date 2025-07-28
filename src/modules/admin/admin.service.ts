@@ -77,6 +77,7 @@ export class AdminService {
       salary: salary,
       total_salary: salary[salary.length - 1],
       total_manage: manage[manage.length - 1],
+      total_plan: salary[salary.length - 1] + manage[manage.length - 1],
     };
   }
 
