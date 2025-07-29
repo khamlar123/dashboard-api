@@ -47,7 +47,6 @@ export class DatabaseService {
   }
 
   async queryOdsUat(sql: string, params?: any[]): Promise<any> {
-    console.log('sql', sql);
     const [rows] = await this.odsUat.query(sql, params);
     return rows;
   }

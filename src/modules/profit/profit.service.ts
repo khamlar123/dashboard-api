@@ -9,6 +9,7 @@ import { IProfitYearly } from '../../common/interfaces/profit-yearly.interface';
 import * as moment from 'moment';
 import { checkCurrentDate } from '../../share/functions/check-current-date';
 import { reduceFunc } from '../../share/functions/reduce-func';
+import { sortFunc } from '../../share/functions/sort-func';
 
 @Injectable()
 export class ProfitService {
@@ -308,14 +309,13 @@ export class ProfitService {
         name: [],
       };
 
-    result
-      .reverse()
-      .slice(-18)
-      .forEach((e) => {
-        mapData.profit.push(e.profit);
-        mapData.planProfit.push(e.plan_amt);
-        mapData.name.push(e.name);
-      });
+    sortFunc(result.reverse().slice(-18), 'code', 'min').forEach((e) => {
+      mapData.profit.push(e.profit);
+      mapData.planProfit.push(e.plan_amt);
+      mapData.name.push(e.name);
+    });
+
+    console.log('result');
 
     return mapData;
   }

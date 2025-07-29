@@ -158,7 +158,7 @@ export class MarketService {
       vnd: vnd,
     };
   }
-  
+
   private groupByDateAndType(data: any[], option: 'deposit' | 'customer') {
     const grouped: Record<
       string,
