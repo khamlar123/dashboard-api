@@ -31,6 +31,7 @@ import { MonitorModule } from './modules/monitor/monitor.module';
 import { UserModule } from './modules/user/user.module';
 import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from './common/database/database.service';
+import { PaidModule } from './modules/paid/paid.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { DatabaseService } from './common/database/database.service';
     FundManagementModule,
     HrModule,
     MonitorModule,
+    PaidModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService, DatabaseService],

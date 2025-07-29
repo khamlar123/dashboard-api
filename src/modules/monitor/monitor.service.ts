@@ -463,7 +463,13 @@ export class MonitorService {
     const currentDate = array[array.length - 1];
     const lastDate = array[array.length - 2];
     const calcDiff = currentDate - lastDate;
-    const calcPercent = Number(((calcDiff / lastDate) * 100).toFixed(2));
+    let calcPercent = 0;
+    if (lastDate < 0) {
+      calcPercent = Number(((calcDiff / lastDate) * 100 * -1).toFixed(2));
+    } else {
+      calcPercent = Number(((calcDiff / lastDate) * 100).toFixed(2));
+    }
+
     return {
       diff: calcDiff,
       percent: calcPercent,
