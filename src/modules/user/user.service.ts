@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../entity/user.entity';
@@ -13,6 +14,7 @@ import { NotFoundError } from 'rxjs';
 import { Role } from '../../entity/role.entity';
 import { Permission } from '../../entity/permission.entity';
 import { CreateRoleDto } from '../../dto/create-role.dto';
+import { UpdateRoleDto } from '../../dto/update-role.dto';
 
 @Injectable()
 export class UserService {
@@ -50,6 +52,28 @@ export class UserService {
     });
   }
 
+  async findOnePermission(id: number): Promise<any> {
+    const findItem = await this.permissionRes.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!findItem) {
+      throw new NotFoundError('permission not found');
+    }
+
+    return findItem;
+  }
+
+  async updatePermission(id: number, name: string): Promise<any> {
+    const updateItem = await this.permissionRes.update(
+      { id: id },
+      { name: name },
+    );
+    return updateItem.raw > 0 ? 'Updated successfully.' : 'Updated error';
+  }
+
   async permissionToggleStatus(id: string): Promise<any> {
     const findPermission = await this.permissionRes.findOne({
       where: { id: Number(id) },
@@ -73,9 +97,31 @@ export class UserService {
 
   async createRole(dto: CreateRoleDto) {
     const create = await this.roleRes.create({ name: dto.name });
-    create.permissions = await this.permissionRes.findByIds(dto.rolesIds);
-
+    create.permissions = await this.permissionRes.findByIds(dto.permissions);
     return await this.roleRes.save(create);
+  }
+
+  async updateRole(id: number, dto: UpdateRoleDto): Promise<Role> {
+    const role = await this.roleRes.findOne({
+      where: { id },
+      relations: ['permissions'], // include existing permissions
+    });
+
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+
+    // Update name or is_active if provided
+    if (dto.name !== undefined) role.name = dto.name;
+    if (dto.is_active !== undefined) role.is_active = dto.is_active;
+
+    // If permission IDs are provided, load Permission entities and assign
+    if (dto.permissions && dto.permissions.length > 0) {
+      const myPermissions = await this.permissionRes.findByIds(dto.permissions);
+      role.permissions = myPermissions;
+    }
+
+    return this.roleRes.save(role);
   }
 
   async findRole(): Promise<any> {
@@ -88,10 +134,26 @@ export class UserService {
     }
   }
 
+  async findOneRole(id: number): Promise<any> {
+    try {
+      return await this.roleRes.findOne({
+        where: {
+          id: id,
+        },
+        relations: ['permissions'],
+      });
+    } catch (e) {
+      return e.message;
+    }
+  }
+
   async findAll(): Promise<any> {
     try {
       return await this.userRes.find({
         relations: ['role', 'role.permissions'],
+        order: {
+          id: 'DESC',
+        },
       });
     } catch (e) {
       return e.message;

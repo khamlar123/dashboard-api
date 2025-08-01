@@ -12,4 +12,6 @@ export interface paidInterface {
   G: string;
   G1: string;
   G2: string;
+  is_header: boolean;
+  header_number: string;
 }

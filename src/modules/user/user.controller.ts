@@ -5,6 +5,7 @@ import { UpdateUserDto } from '../../dto/update-user.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { CreateRoleDto } from '../../dto/create-role.dto';
 import { CreatePermissionDto } from '../../dto/create-permission.dto';
+import { UpdateRoleDto } from '../../dto/update-role.dto';
 
 @Controller('user')
 @ApiBearerAuth()
@@ -26,6 +27,16 @@ export class UserController {
     return await this.userService.findRole();
   }
 
+  @Get('permission/:id')
+  async findOnePermission(@Param('id') id: string) {
+    return await this.userService.findOnePermission(Number(id));
+  }
+
+  @Get('role/:id')
+  async findOneRole(@Param('id') id: string) {
+    return await this.userService.findOneRole(Number(id));
+  }
+
   @Get('user/:id')
   async findOne(@Param('id') id: string) {
     return await this.userService.findOne(id);
@@ -34,6 +45,19 @@ export class UserController {
   @Patch('permission/toggle-status/:id')
   async permissionToggle(@Param('id') id: string) {
     return await this.userService.permissionToggleStatus(id);
+  }
+
+  @Patch('permission/update/:id')
+  async permissionUpdate(
+    @Param('id') id: string,
+    @Body() dto: CreatePermissionDto,
+  ) {
+    return await this.userService.updatePermission(Number(id), dto.name);
+  }
+
+  @Patch('role/update/:id')
+  async roleUpdate(@Param('id') id: string, @Body() dto: UpdateRoleDto) {
+    return await this.userService.updateRole(Number(id), dto);
   }
 
   @Post('create-permission')

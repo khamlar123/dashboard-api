@@ -9,5 +9,5 @@ export class CreateRoleDto {
   @ApiProperty({ type: [Number] })
   @IsArray()
   @IsNumber()
-  rolesIds: number[];
+  permissions: number[];
 }
