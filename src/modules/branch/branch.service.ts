@@ -35,6 +35,33 @@ export class BranchService {
     }
   }
 
+  async findBranchByCode(code?: string): Promise<any> {
+    const query = `   SELECT DISTINCT sub_branch_code, branch_code, branch_local_name
+                      FROM ods.rpt_branch;`;
+    const result = await this.db.queryOds(query, []);
+
+    let res = null;
+    if (code?.toLowerCase() === 'all' || code?.toLowerCase() === '400100') {
+      res = result.map((m) => {
+        return {
+          name: m.branch_local_name,
+          code: m.sub_branch_code,
+        };
+      });
+    } else {
+      res = result
+        .filter((f) => f.sub_branch_code === code || f.branch_code === code)
+        .map((m) => {
+          return {
+            name: m.branch_local_name,
+            code: m.sub_branch_code,
+          };
+        });
+    }
+
+    return res;
+  }
+
   async findOne(code: number) {
     try {
       return await this.branchRepository.findOne({

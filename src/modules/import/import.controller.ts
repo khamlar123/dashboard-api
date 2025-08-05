@@ -1,6 +1,7 @@
 import {
   Controller,
   DefaultValuePipe,
+  Get,
   Post,
   Query,
   UploadedFile,
@@ -14,6 +15,11 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 @ApiBearerAuth()
 export class ImportController {
   constructor(private readonly importService: ImportService) {}
+
+  @Get()
+  async getImport() {
+    return await this.importService.getLastItem();
+  }
 
   @Post('loan')
   async importLoan(

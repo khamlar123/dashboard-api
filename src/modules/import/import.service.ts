@@ -549,4 +549,14 @@ export class ImportService {
     ]);
     return await this.databaseService.query(query, values);
   }
+
+  async getLastItem(): Promise<any> {
+    const [findLoan] = await Promise.all([
+      this.loanRepository.findOne({
+        order: { id: 'DESC' },
+      }),
+    ]);
+
+    return findLoan;
+  }
 }

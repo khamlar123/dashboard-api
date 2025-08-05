@@ -27,6 +27,12 @@ export class BranchController {
     return await this.branchService.findAll();
   }
 
+  @Get('by-code')
+  @ApiQuery({ name: 'code', required: false })
+  async findByCode(@Query('code') code: string) {
+    return await this.branchService.findBranchByCode(code);
+  }
+
   // @Get('income')
   // @ApiQuery({ name: 'bcode', required: false })
   // async income(
