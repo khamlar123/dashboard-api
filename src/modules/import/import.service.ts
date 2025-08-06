@@ -550,13 +550,106 @@ export class ImportService {
     return await this.databaseService.query(query, values);
   }
 
-  async getLastItem(): Promise<any> {
-    const [findLoan] = await Promise.all([
-      this.loanRepository.findOne({
-        order: { id: 'DESC' },
+  async getLastItem() {
+    const bolLoanQuery = `
+  SELECT * FROM bol_loan
+  ORDER BY id DESC
+  LIMIT 1
+`;
+
+    const adminQuery = `
+  SELECT * FROM admin_bal
+  ORDER BY id DESC
+  LIMIT 1
+`;
+
+    const liquidityQuery = `
+  SELECT * FROM liquidity
+  ORDER BY id DESC
+  LIMIT 1
+`;
+
+    const liquidityExQuery = `
+  SELECT * FROM liquidity_exchange
+  ORDER BY date DESC
+  LIMIT 1
+`;
+
+    const liquidityNopQuery = `
+  SELECT * FROM liquidity_nop
+  ORDER BY date DESC
+  LIMIT 1
+`;
+
+    const reseveQuery = `
+  SELECT * FROM reserve
+  ORDER BY id DESC
+  LIMIT 1
+`;
+
+    const [
+      findLoan,
+      findSectorBal,
+      [findBolLoan],
+      findIncome,
+      findExpense,
+      findDeposit,
+      [findAdmin],
+      [findLiquidity],
+      [findLiquidityExchange],
+      [findLiquidityNop],
+      [findReseve],
+    ] = await Promise.all([
+      this.loanRepository.find({
+        take: 1,
+        order: {
+          id: 'desc',
+        },
       }),
+      this.sectorBalRepository.find({
+        take: 1,
+        order: {
+          id: 'desc',
+        },
+      }),
+      this.databaseService.query(bolLoanQuery, []),
+      this.incomeRepository.find({
+        take: 1,
+        order: {
+          id: 'desc',
+        },
+      }),
+      this.expenseRepository.find({
+        take: 1,
+        order: {
+          id: 'desc',
+        },
+      }),
+      this.depositRepository.find({
+        take: 1,
+        order: {
+          id: 'desc',
+        },
+      }),
+      this.databaseService.query(adminQuery, []),
+      this.databaseService.query(liquidityQuery, []),
+      this.databaseService.query(liquidityExQuery, []),
+      this.databaseService.query(liquidityNopQuery, []),
+      this.databaseService.query(reseveQuery, []),
     ]);
 
-    return findLoan;
+    return {
+      loan: findLoan[0].date,
+      'sector-bal': findSectorBal[0].date,
+      'bol-loan': findBolLoan.date,
+      income: findIncome[0].date,
+      expense: findExpense[0].date,
+      deposit: findDeposit[0].date,
+      admin: findAdmin.date,
+      liquidity: findLiquidity.date,
+      'liquidity-exchange': findLiquidityExchange.date,
+      'liquidity-nop': findLiquidityNop.date,
+      reseve: findReseve.date,
+    };
   }
 }

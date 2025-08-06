@@ -187,11 +187,7 @@ export class UserService {
       branch_id: dto.branch_id, // or dto.branch if that's ID
     });
 
-    try {
-      return await this.userRes.save(model);
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
+    return await this.userRes.save(model);
   }
 
   async update(id: number, dto: UpdateUserDto): Promise<any> {
