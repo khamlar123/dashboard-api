@@ -10,6 +10,7 @@ import {
 
 import { Role } from './role.entity';
 import { Branch } from './branch.entity';
+import { RoleEnum } from '../common/enums/role.enum';
 
 @Entity()
 export class User {
@@ -22,12 +23,15 @@ export class User {
   @Column()
   password: string;
 
-  @ManyToOne(() => Role, (role) => role.user)
-  @JoinColumn({ name: 'role_id' }) // optional: custom column name
-  role: Role;
+  // @ManyToOne(() => Role, (role) => role.user)
+  // @JoinColumn({ name: 'role_id' }) // optional: custom column name
+  // role: Role;
 
-  @Column()
-  role_id: number;
+  // @Column()
+  // role_id: number;
+
+  @Column({ type: 'enum', enum: RoleEnum, default: 'USER' })
+  role?: Role;
 
   @Column()
   name: string;

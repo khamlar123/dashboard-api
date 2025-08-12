@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
 } from '@nestjs/class-validator';
+import { RoleEnum } from '../common/enums/role.enum';
 
 export enum RoleType {
   USER = 'user',
@@ -21,9 +22,8 @@ export class CreateUserDto {
   @IsString()
   password: string;
 
-  @ApiProperty()
-  @IsNumber()
-  role_id: number;
+  @ApiProperty({ enum: RoleEnum })
+  role: RoleEnum;
 
   @ApiProperty()
   name: string;

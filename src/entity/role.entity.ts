@@ -23,8 +23,8 @@ export class Role {
   @Column({ type: 'boolean', default: true })
   is_active?: boolean;
 
-  @OneToMany(() => User, (user) => user.role)
-  user: User[];
+  // @OneToMany(() => User, (user) => user.role)
+  // user: User[];
 
   @ManyToMany(() => Permission)
   @JoinTable()

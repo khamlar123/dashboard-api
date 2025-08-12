@@ -183,7 +183,7 @@ export class UserService {
       email: dto.email,
       is_active: true,
       is_admin: dto.is_admin,
-      role_id: dto.role_id,
+      // role_id: dto.role_id,
       branch_id: dto.branch_id, // or dto.branch if that's ID
     });
 
