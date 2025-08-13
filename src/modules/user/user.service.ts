@@ -150,7 +150,6 @@ export class UserService {
   async findAll(): Promise<any> {
     try {
       return await this.userRes.find({
-        relations: ['role', 'role.permissions'],
         order: {
           id: 'DESC',
         },
