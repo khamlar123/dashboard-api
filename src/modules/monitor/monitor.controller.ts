@@ -71,4 +71,15 @@ export class MonitorController {
     const fixDay = String(Number(day) - 1);
     return await this.monitorService.liquidity(date, fixDay);
   }
+
+  @Get('/alc')
+  async alc(
+    @Query('day', new DefaultValuePipe(''))
+    day: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    const fixDay = String(Number(day) - 1);
+    return await this.monitorService.alc(date, fixDay);
+  }
 }

@@ -403,6 +403,61 @@ export class MonitorService {
     };
   }
 
+  async alc(date: string, day: string): Promise<any> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(`call proc_monitor_alc(?, ?)`, [
+      date,
+      day,
+    ]);
+
+    if (!result) {
+      throw new NotFoundException('ALC not found');
+    }
+
+    const capital = result
+      .filter((f) => f.category_code === 'Capital')
+      .map((m) => Number(m.bal));
+    const Liability = result
+      .filter((f) => f.category_code === 'Liability')
+      .map((m) => Number(m.bal));
+    const uniqueNumbers = [...new Set(result.map((m) => m.date))];
+
+    const capitalCalc = this.calcDiffAndPercent(capital);
+    const capitalDiff = capitalCalc.diff;
+    const capitalPercent = capitalCalc.percent;
+
+    const liabilityCalc = this.calcDiffAndPercent(Liability);
+    const liabilityDiff = liabilityCalc.diff;
+    const LiabilityPercent = liabilityCalc.percent;
+
+    const totalCurrent =
+      capital[capital.length - 1] + Liability[Liability.length - 1];
+    const totalLast =
+      capital[capital.length - 2] + Liability[Liability.length - 2];
+
+    const calcAssetsDiff = Number((totalCurrent - totalLast).toFixed(2));
+    const calcAssertsPercent =
+      totalLast !== 0
+        ? Number(((calcAssetsDiff / totalLast) * 100).toFixed(2))
+        : 0;
+
+    return {
+      dates: uniqueNumbers,
+      capital: capital,
+      capitalDiff: capitalDiff,
+      capitalPercent: capitalPercent,
+
+      Liability: Liability,
+      liabilityDiff: liabilityDiff,
+      liabilityPercent: LiabilityPercent,
+
+      totalAssets: Number((totalCurrent + totalLast).toFixed(2)),
+      assetsDiff: calcAssetsDiff,
+      assetsPercent: calcAssertsPercent,
+      // total: reduceFunc(capital) + reduceFunc(Liability),
+    };
+  }
+
   private groupByDate(data: any[], option: 'deposit' | 'credit') {
     const grouped: Record<
       string,
@@ -462,7 +517,7 @@ export class MonitorService {
   } {
     const currentDate = array[array.length - 1];
     const lastDate = array[array.length - 2];
-    const calcDiff = currentDate - lastDate;
+    const calcDiff = Number((currentDate - lastDate).toFixed(2));
     let calcPercent = 0;
     if (lastDate < 0) {
       calcPercent = Number(((calcDiff / lastDate) * 100 * -1).toFixed(2));

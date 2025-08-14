@@ -77,17 +77,19 @@ export class ProfitService {
 
     if (branch !== 'all') {
       result.forEach((e: IProfitDaily) => {
-        const year: number = moment(e.date, 'YYYYMMDD').year();
-        const planAmount: number =
-          yearAmount.find(
-            (f: { year: number; amount: number }) => f.year === year,
-          )?.amount ?? 0;
-        mapData.planProfit.push(Number(planAmount));
+        //const year: number = moment(e.date, 'YYYYMMDD').year();
+        // console.log('yearAmount');
+        // const planAmount: number =
+        //   yearAmount.find(
+        //     (f: { year: number; amount: number }) => f.year === year,
+        //   )?.amount ?? 0;
+        mapData.planProfit.push(Number(e.plan_amt));
         mapData.profit.push(parseFloat(e.profit));
         mapData.dates.push(e.date);
       });
     } else {
       const myArray = this.sumByDate(result, 'daily');
+
       myArray.forEach((e) => {
         const year: number = moment(e.date, 'YYYYMMDD').year();
         const planAmount: number =
@@ -133,12 +135,12 @@ export class ProfitService {
 
     if (branch !== 'all') {
       result.forEach((e: IProfitMonthly) => {
-        const year: number = moment(e.monthend, 'YYYYMMDD').year();
-        const planAmount: number =
-          yearAmount.find(
-            (f: { year: number; amount: number }) => f.year === year,
-          )?.amount ?? 0;
-        mapData.planProfit.push(Number(planAmount));
+        // const year: number = moment(e.monthend, 'YYYYMMDD').year();
+        // const planAmount: number =
+        //   yearAmount.find(
+        //     (f: { year: number; amount: number }) => f.year === year,
+        //   )?.amount ?? 0;
+        mapData.planProfit.push(Number(e.plan_amt));
         mapData.profit.push(parseFloat(e.profit));
         mapData.dates.push(e.monthend);
       });
@@ -192,12 +194,12 @@ export class ProfitService {
 
     if (branch !== 'all') {
       result.forEach((e: IProfitYearly) => {
-        const year: number = moment(e.l_yearend, 'YYYYMMDD').year();
-        const planAmount: number =
-          yearAmount.find(
-            (f: { year: number; amount: number }) => f.year === year,
-          )?.amount ?? 0;
-        mapData.planProfit.push(Number(planAmount));
+        // const year: number = moment(e.l_yearend, 'YYYYMMDD').year();
+        // const planAmount: number =
+        //   yearAmount.find(
+        //     (f: { year: number; amount: number }) => f.year === year,
+        //   )?.amount ?? 0;
+        mapData.planProfit.push(Number(e.plan_amt));
         mapData.profit.push(parseFloat(e.profit));
         mapData.dates.push(e.l_yearend);
       });
