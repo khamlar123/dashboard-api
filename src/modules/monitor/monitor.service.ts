@@ -442,12 +442,12 @@ export class MonitorService {
         : 0;
 
     return {
-      dates: uniqueNumbers,
-      capital: capital,
+      // dates: uniqueNumbers,
+      capital: capital[capital.length - 1],
       capitalDiff: capitalDiff,
       capitalPercent: capitalPercent,
 
-      Liability: Liability,
+      Liability: Liability[Liability.length - 1],
       liabilityDiff: liabilityDiff,
       liabilityPercent: LiabilityPercent,
 
@@ -455,6 +455,118 @@ export class MonitorService {
       assetsDiff: calcAssetsDiff,
       assetsPercent: calcAssertsPercent,
       // total: reduceFunc(capital) + reduceFunc(Liability),
+    };
+  }
+
+  async property(
+    date: string,
+    branch: string,
+    option: 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+    let result;
+    if (option === 'm') {
+      [result] = await this.database.query(`call proc_bd_alc_monthly(?, ?)`, [
+        date,
+        branch,
+      ]);
+    } else {
+      [result] = await this.database.query(`call proc_bd_alc_yearly(?, ?)`, [
+        date,
+        branch,
+      ]);
+    }
+
+    if (!result) {
+      throw new NotFoundException('Property not found');
+    }
+
+    return {
+      dates: result.map((m) => m.new_date),
+      value: result.map((m) => Number(m.bal)),
+    };
+  }
+
+  async bdDeposit(
+    date: string,
+    branch: string,
+    option: 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+    let result;
+    if (option === 'm') {
+      [result] = await this.database.query(`call proc_bd_dep_monthly(?, ?)`, [
+        date,
+        branch,
+      ]);
+    } else {
+      [result] = await this.database.query(`call proc_bd_dep_yearly(?, ?)`, [
+        date,
+        branch,
+      ]);
+    }
+
+    if (!result) {
+      throw new NotFoundException('Property not found');
+    }
+
+    return {
+      dates: result.map((m) => m.new_date),
+      value: result.map((m) => Number(m.bal)),
+    };
+  }
+
+  async useFunding(
+    date: string,
+    branch: string,
+    option: 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+    let result;
+    if (option === 'm') {
+      [result] = await this.database.query(
+        `call proc_bd_use_funding_monthly(?, ?)`,
+        [date, branch],
+      );
+    } else {
+      [result] = await this.database.query(
+        `call proc_bd_use_funding_yearly(?, ?)`,
+        [date, branch],
+      );
+    }
+
+    if (!result) {
+      throw new NotFoundException('Property not found');
+    }
+
+    return {
+      dates: result.map((m) => m.new_date),
+      value: result.map((m) => Number(m.bal)),
+    };
+  }
+
+  async capital(date: string, branch: string, option: 'm' | 'y'): Promise<any> {
+    checkCurrentDate(date);
+    let result;
+    if (option === 'm') {
+      [result] = await this.database.query(
+        `call proc_bd_capital_monthly(?, ?)`,
+        [date, branch],
+      );
+    } else {
+      [result] = await this.database.query(
+        `call proc_bd_capital_yearly(?, ?)`,
+        [date, branch],
+      );
+    }
+
+    if (!result) {
+      throw new NotFoundException('Property not found');
+    }
+
+    return {
+      dates: result.map((m) => m.new_date),
+      value: result.map((m) => Number(m.cap_amount)),
     };
   }
 
