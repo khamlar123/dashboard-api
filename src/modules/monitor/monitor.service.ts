@@ -481,9 +481,12 @@ export class MonitorService {
       throw new NotFoundException('Property not found');
     }
 
+    const value = result.map((m) => Number(m.bal));
+
     return {
       dates: result.map((m) => m.new_date),
-      value: result.map((m) => Number(m.bal)),
+      value: value,
+      total: reduceFunc(value),
     };
   }
 
@@ -510,9 +513,12 @@ export class MonitorService {
       throw new NotFoundException('Property not found');
     }
 
+    const value = result.map((m) => Number(m.bal));
+
     return {
       dates: result.map((m) => m.new_date),
-      value: result.map((m) => Number(m.bal)),
+      value: value,
+      total: reduceFunc(value),
     };
   }
 
@@ -539,9 +545,12 @@ export class MonitorService {
       throw new NotFoundException('Property not found');
     }
 
+    const value = result.map((m) => Number(m.bal));
+
     return {
       dates: result.map((m) => m.new_date),
-      value: result.map((m) => Number(m.bal)),
+      value: value,
+      total: reduceFunc(value),
     };
   }
 
@@ -564,9 +573,12 @@ export class MonitorService {
       throw new NotFoundException('Property not found');
     }
 
+    const value = result.map((m) => Number(m.cap_amount));
+
     return {
       dates: result.map((m) => m.new_date),
-      value: result.map((m) => Number(m.cap_amount)),
+      value: value,
+      total: reduceFunc(value),
     };
   }
 
