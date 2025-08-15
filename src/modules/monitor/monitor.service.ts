@@ -430,10 +430,12 @@ export class MonitorService {
     const liabilityDiff = liabilityCalc.diff;
     const LiabilityPercent = liabilityCalc.percent;
 
-    const totalCurrent =
-      capital[capital.length - 1] + Liability[Liability.length - 1];
-    const totalLast =
-      capital[capital.length - 2] + Liability[Liability.length - 2];
+    const totalCurrent = +(
+      capital[capital.length - 1] + Liability[Liability.length - 1]
+    ).toFixed(2);
+    const totalLast = +(
+      capital[capital.length - 2] + Liability[Liability.length - 2]
+    ).toFixed(2);
 
     const calcAssetsDiff = Number((totalCurrent - totalLast).toFixed(2));
     const calcAssertsPercent =
@@ -451,7 +453,7 @@ export class MonitorService {
       liabilityDiff: liabilityDiff,
       liabilityPercent: LiabilityPercent,
 
-      totalAssets: Number((totalCurrent + totalLast).toFixed(2)),
+      totalAssets: totalCurrent,
       assetsDiff: calcAssetsDiff,
       assetsPercent: calcAssertsPercent,
       // total: reduceFunc(capital) + reduceFunc(Liability),
