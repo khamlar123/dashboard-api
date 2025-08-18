@@ -93,37 +93,30 @@ export class AdminService {
     let result: any = null;
     let groupData: any = null;
 
-    [result] = await this.database.query(
-      `call proc_admin_manage_daily(?, ?, ?)`,
-      [date, branch, option],
-    );
+    if (option === 'd') {
+      [result] = await this.database.query(
+        `call proc_admin_manage_daily(?, ?, ?)`,
+        [date, branch, option],
+      );
 
-    groupData = this.groupBySubGroup(result);
+      groupData = this.groupBySubGroup(result);
+    }
 
-    // if (option === 'd') {
-    //   [result] = await this.database.query(
-    //     `call proc_admin_manage_daily(?, ?, ?)`,
-    //     [date, branch, option],
-    //   );
-    //
-    //   groupData = this.groupBySubGroup(result);
-    // }
-    //
-    // if (option === 'm') {
-    //   [result] = await this.database.query(
-    //     `call proc_admin_manage_daily(?, ?, ?)`,
-    //     [date, branch, option],
-    //   );
-    //   groupData = this.groupBySubGroup(result);
-    // }
-    //
-    // if (option === 'y') {
-    //   [result] = await this.database.query(
-    //     `call proc_admin_manage_daily(?, ?, ?)`,
-    //     [date, branch, option],
-    //   );
-    //   groupData = this.groupBySubGroup(result);
-    // }
+    if (option === 'm') {
+      [result] = await this.database.query(
+        `call proc_admin_manage_daily(?, ?, ?)`,
+        [date, branch, option],
+      );
+      groupData = this.groupBySubGroup(result);
+    }
+
+    if (option === 'y') {
+      [result] = await this.database.query(
+        `call proc_admin_manage_daily(?, ?, ?)`,
+        [date, branch, option],
+      );
+      groupData = this.groupBySubGroup(result);
+    }
 
     const name: string[] = [];
     const amount: number[] = [];
