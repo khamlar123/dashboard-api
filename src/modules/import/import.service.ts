@@ -23,6 +23,7 @@ import { liquidity } from '../cronjob/sqls/liquidity.sql';
 import { liquidityExchange } from '../cronjob/sqls/liquidity_exchange.sql';
 import { liquidityNop } from '../cronjob/sqls/liquidity_nop.sql';
 import { reserve } from '../cronjob/sqls/reserve.sql';
+import { LiabilityCapitalAsset } from '../cronjob/sqls/liability_capital_asset';
 
 @Injectable()
 export class ImportService {
@@ -550,6 +551,47 @@ export class ImportService {
     return await this.databaseService.query(query, values);
   }
 
+  async liquidityCapAsset(start: string, end: string) {
+    const startDate = moment(start, 'YYYYMMDD');
+    const endDate = moment(end, 'YYYYMMDD');
+    const dateArray: string[] = [];
+
+    while (startDate.isSameOrBefore(endDate)) {
+      dateArray.push(startDate.format('YYYYMMDD'));
+      startDate.add(1, 'day');
+    }
+
+    const myData: any[] = [];
+    for (const item of dateArray) {
+      const getQuery = LiabilityCapitalAsset();
+      const data = await this.databaseService.queryOds(getQuery, [item]);
+      myData.push(data);
+    }
+
+    const flatMap = myData
+      .flatMap((m) => m)
+      .map((m) => {
+        return {
+          date: m.AC_DATE,
+          branch_id: m.br,
+          category_code: m.category_code,
+          bal: m.bal,
+        };
+      });
+
+    const placeholders = flatMap.map(() => '(?, ?, ?, ?)').join(', ');
+
+    const query = `INSERT INTO bd_ass_lia_cap (date, branch_id, category_code, bal)
+                   VALUES ${placeholders}`;
+    const values = flatMap.flatMap((item) => [
+      item.date,
+      item.branch_id,
+      item.category_code,
+      item.bal,
+    ]);
+    return await this.databaseService.query(query, values);
+  }
+
   async getLastItem() {
     const bolLoanQuery = `
   SELECT * FROM bol_loan
@@ -587,6 +629,8 @@ export class ImportService {
   LIMIT 1
 `;
 
+    const bdAss = ` SELECT * FROM bd_ass_lia_cap ORDER BY date DESC LIMIT 1 `;
+
     const [
       findLoan,
       findSectorBal,
@@ -599,6 +643,7 @@ export class ImportService {
       [findLiquidityExchange],
       [findLiquidityNop],
       [findReseve],
+      [findBdAss],
     ] = await Promise.all([
       this.loanRepository.find({
         take: 1,
@@ -636,6 +681,7 @@ export class ImportService {
       this.databaseService.query(liquidityExQuery, []),
       this.databaseService.query(liquidityNopQuery, []),
       this.databaseService.query(reseveQuery, []),
+      this.databaseService.query(bdAss, []),
     ]);
 
     return {
@@ -650,6 +696,7 @@ export class ImportService {
       'liquidity-exchange': findLiquidityExchange.date,
       'liquidity-nop': findLiquidityNop.date,
       reseve: findReseve.date,
+      bd_ass_lia_cap: findBdAss.date,
     };
   }
 }

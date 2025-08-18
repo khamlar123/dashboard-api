@@ -130,4 +130,14 @@ export class ImportController {
   ) {
     return await this.importService.reserve(start, end);
   }
+
+  @Post('liquidity-cap-asset')
+  async liquidityCapAsset(
+    @Query('start', new DefaultValuePipe(0))
+    start: string,
+    @Query('end', new DefaultValuePipe(0))
+    end: string,
+  ) {
+    return await this.importService.liquidityCapAsset(start, end);
+  }
 }
