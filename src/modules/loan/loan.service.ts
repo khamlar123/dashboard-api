@@ -495,6 +495,11 @@ export class LoanService {
       short: reduceFunc(short),
       middle: reduceFunc(middle),
       longs: reduceFunc(longs),
+      total: +(
+        reduceFunc(short) +
+        reduceFunc(middle) +
+        reduceFunc(longs)
+      ).toFixed(2),
     };
   }
 
