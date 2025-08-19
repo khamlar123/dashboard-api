@@ -14,17 +14,29 @@ export class AdminService {
     option: 'd' | 'm' | 'y',
   ): Promise<any> {
     checkCurrentDate(date);
+    const params: string[] = [date, branch];
 
     let result: any = null;
     let groupData: any = null;
+    let getCategory031723: any = null; //group 031723
+    let groupCate: any = null; //group 031723
 
     if (option === 'd') {
       [result] = await this.database.query(
         `call proc_admin_group_daily(?, ?)`,
         [date, branch],
       );
-
       groupData = this.groupByDateAndGroup(result, 'd');
+
+      [getCategory031723] = await this.database.query(
+        `call proc_admin_group_031723_daily(?, ?)`,
+        params,
+      );
+      groupCate = this.groupByDateOrBranch(
+        getCategory031723,
+        'd',
+        branch === 'all' ? '' : branch,
+      );
     }
 
     if (option === 'm') {
@@ -34,6 +46,15 @@ export class AdminService {
       );
 
       groupData = this.groupByDateAndGroup(result, 'm');
+      [getCategory031723] = await this.database.query(
+        `call proc_admin_group_031723_monthly(?, ?)`,
+        params,
+      );
+      groupCate = this.groupByDateOrBranch(
+        getCategory031723,
+        'm',
+        branch === 'all' ? '' : branch,
+      );
     }
 
     if (option === 'y') {
@@ -41,8 +62,17 @@ export class AdminService {
         `call proc_admin_group_yearly(?, ?)`,
         [date, branch],
       );
-
       groupData = this.groupByDateAndGroup(result, 'y');
+
+      [getCategory031723] = await this.database.query(
+        `call proc_admin_group_031723_yearly(?, ?)`,
+        params,
+      );
+      groupCate = this.groupByDateOrBranch(
+        getCategory031723,
+        'y',
+        branch === 'all' ? '' : branch,
+      );
     }
 
     const dateX: string[] = [];
@@ -58,7 +88,8 @@ export class AdminService {
       }
 
       if (e.admin_group === 'Manage') {
-        manage.push(e.cddbal);
+        const findItem = groupCate.find((f) => f.date === e.date)?.cddbal ?? 0;
+        manage.push(e.cddbal - findItem);
       }
 
       if (e.admin_group === 'Salary') {
@@ -69,17 +100,17 @@ export class AdminService {
     const unique = Array.from(
       new Map(dateX.map((item) => [item, item])).values(),
     );
+    const lastManage = +manage[manage.length - 1].toFixed(2);
+    const lastSalary = salary[salary.length - 1];
 
     return {
       dateX: unique,
       asset: asset,
       manage: manage,
       salary: salary,
-      total_salary: salary[salary.length - 1],
-      total_manage: manage[manage.length - 1],
-      total_plan: Number(
-        (salary[salary.length - 1] + manage[manage.length - 1]).toFixed(2),
-      ),
+      total_salary: lastSalary,
+      total_manage: lastManage,
+      total_plan: Number((lastSalary + lastManage).toFixed(2)),
     };
   }
 
@@ -212,6 +243,33 @@ export class AdminService {
     );
     const result = Object.values(grouped);
     return result;
+  }
+
+  private groupByDateOrBranch(
+    data: any[],
+    option: 'd' | 'm' | 'y',
+    branch?: string,
+  ) {
+    const grouped = data.reduce(
+      (acc, item) => {
+        const key = branch
+          ? `${option === 'd' ? item.date : item.monthend}_${item.code}`
+          : option === 'd'
+            ? item.date
+            : item.monthend;
+        if (!acc[key]) {
+          acc[key] = {
+            date: item.date,
+            branch: item.code,
+            cddbal: 0,
+          };
+        }
+        acc[key].cddbal += parseFloat(item.cddbal);
+        return acc;
+      },
+      {} as Record<string, { date: string; branch: string; cddbal: number }>,
+    );
+    return Object.values(grouped);
   }
 
   private groupBySubGroup(data: any[]) {
