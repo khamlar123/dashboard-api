@@ -63,7 +63,6 @@ export class AdminService {
         [date, branch],
       );
       groupData = this.groupByDateAndGroup(result, 'y');
-
       [getCategory031723] = await this.database.query(
         `call proc_admin_group_031723_yearly(?, ?)`,
         params,
@@ -268,7 +267,6 @@ export class AdminService {
       [date, branch, option],
     );
     groupData = this.groupBySubGroup(result);
-
     const name: string[] = [];
     const amount: number[] = [];
 
@@ -320,7 +318,8 @@ export class AdminService {
   ) {
     const grouped = data.reduce(
       (acc, item) => {
-        const myDataStr = option === 'd' ? item.date : item.monthend;
+        const myDataStr =
+          option === 'd' ? item.date : moment(item.monthend).format('YYYYMM');
         const key = branch ? `${myDataStr}_${item.code}` : myDataStr;
         if (!acc[key]) {
           acc[key] = {
