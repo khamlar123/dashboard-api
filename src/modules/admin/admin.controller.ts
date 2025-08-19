@@ -52,4 +52,16 @@ export class AdminController {
   ) {
     return await this.adminService.totalAssets(date, branch, option);
   }
+
+  @Get('/salary')
+  async salary(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.adminService.salary(date, branch, option);
+  }
 }

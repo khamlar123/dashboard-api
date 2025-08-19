@@ -21,36 +21,7 @@ export const admin = () => `
                     '1442400',
                     '1442500',
                     '1442600',
-                    '1442700',
-                    '4201100',
-                    '4201200',
-                    '4201400',
-                    '4202100',
-                    '4202800',
-                    '4203100',
-                    '4203200',
-                    '4300000',
-                    '4402000',
-                    '4403120',
-                    '4403200',
-                    '4405100',
-                    '4405200',
-                    '4405300',
-                    '4406100',
-                    '4406200',
-                    '4406300',
-                    '4407100',
-                    '4407200',
-                    '4408100',
-                    '4408200',
-                    '4408300',
-                    '4408400',
-                    '4408500',
-                    '4408600',
-                    '4408710',
-                    '4408720',
-                    '4408730',
-                    '4408800'
+                    '1442700'
                      )
                    )),
 
@@ -69,15 +40,15 @@ export const admin = () => `
          a.ccy,
          a.cddbal,
          case
-           when b.buy > 0 then round(nvl(a.CDDBAL, 0) * nvl(b.buy, 0), 2)
+           when b.buy > 0 then round(nvl(a.CDDBAL, 0 ) * nvl(b.buy, 0), 2)
            else nvl(a.CDDBAL, 0) * (1) end cddlak,
          CDCBAL,
          case
            when b.buy > 0 then round(nvl(a.CDCBAL, 0) * nvl(b.buy, 0), 2)
-           else nvl(a.CDCBAL, 0) * (1) end cdclak
+           else nvl(a.CDCBAL, 0 )* (1) end cdclak
   from admin_all a
-         left outer join rates b on a.AC_DATE = b.eff_dt
-    and a.CCY = b.ccy
+         left outer join rates b on a.AC_DATE=b.eff_dt
+    and a.CCY=b.ccy
   where (a.CDCBAL <> 0 or a.cddbal <> 0);
 
 `;

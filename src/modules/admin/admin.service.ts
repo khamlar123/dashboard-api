@@ -254,6 +254,36 @@ export class AdminService {
     };
   }
 
+  async salary(
+    date: string,
+    branch: string,
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+    let result: any = null;
+    let groupData: any = null;
+
+    [result] = await this.database.query(
+      `call proc_admin_salary_daily(?, ?, ?)`,
+      [date, branch, option],
+    );
+    groupData = this.groupBySubGroup(result);
+
+    const name: string[] = [];
+    const amount: number[] = [];
+
+    groupData.forEach((e) => {
+      name.push(e.sub_group_desc);
+      amount.push(+e.cddbal.toFixed(2));
+    });
+
+    return {
+      name: name,
+      amount: amount,
+      sumAmount: reduceFunc(amount),
+    };
+  }
+
   private groupByDateAndGroup(data: any[], option: 'd' | 'm' | 'y') {
     const grouped = data.reduce(
       (acc, item) => {

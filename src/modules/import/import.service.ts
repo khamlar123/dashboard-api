@@ -24,6 +24,8 @@ import { liquidityExchange } from '../cronjob/sqls/liquidity_exchange.sql';
 import { liquidityNop } from '../cronjob/sqls/liquidity_nop.sql';
 import { reserve } from '../cronjob/sqls/reserve.sql';
 import { LiabilityCapitalAsset } from '../cronjob/sqls/liability_capital_asset';
+import { adminExp } from '../cronjob/sqls/admin_expense.sql';
+import { getDate } from 'date-fns';
 
 @Injectable()
 export class ImportService {
@@ -319,6 +321,9 @@ export class ImportService {
       const getQuery = admin();
       const data = await this.databaseService.queryOds(getQuery, [item]);
       myDate.push(data);
+      const subCatQuery = adminExp();
+      const dataCate = await this.databaseService.queryOds(subCatQuery, [item]);
+      myDate.push(dataCate);
     }
 
     const flatMap = myDate
