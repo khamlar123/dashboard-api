@@ -84,16 +84,16 @@ export class AdminService {
       dateX.push(e.date);
 
       if (e.admin_group === 'Asset') {
-        asset.push(e.cddbal);
+        asset.push(+e.cddbal.toFixed(2));
       }
 
       if (e.admin_group === 'Manage') {
         const findItem = groupCate.find((f) => f.date === e.date)?.cddbal ?? 0;
-        manage.push(e.cddbal - findItem);
+        manage.push(+(e.cddbal - findItem).toFixed(2));
       }
 
       if (e.admin_group === 'Salary') {
-        salary.push(e.cddbal);
+        salary.push(+e.cddbal.toFixed(2));
       }
     });
 
@@ -120,9 +120,11 @@ export class AdminService {
     option: 'd' | 'm' | 'y',
   ): Promise<any> {
     checkCurrentDate(date);
-
+    const params: string[] = [date, branch];
     let result: any = null;
     let groupData: any = null;
+    let getCategory031723: any = null; //group 031723
+    let groupCate: any = null; //group 031723
 
     if (option === 'd') {
       [result] = await this.database.query(
@@ -131,6 +133,16 @@ export class AdminService {
       );
 
       groupData = this.groupBySubGroup(result);
+
+      [getCategory031723] = await this.database.query(
+        `call proc_admin_group_031723_daily(?, ?)`,
+        params,
+      );
+      groupCate = this.groupByDateOrBranch(
+        getCategory031723,
+        'd',
+        branch === 'all' ? '' : branch,
+      );
     }
 
     if (option === 'm') {
@@ -139,6 +151,16 @@ export class AdminService {
         [date, branch, option],
       );
       groupData = this.groupBySubGroup(result);
+
+      [getCategory031723] = await this.database.query(
+        `call proc_admin_group_031723_monthly(?, ?)`,
+        params,
+      );
+      groupCate = this.groupByDateOrBranch(
+        getCategory031723,
+        'm',
+        branch === 'all' ? '' : branch,
+      );
     }
 
     if (option === 'y') {
@@ -147,14 +169,32 @@ export class AdminService {
         [date, branch, option],
       );
       groupData = this.groupBySubGroup(result);
+
+      [getCategory031723] = await this.database.query(
+        `call proc_admin_group_031723_yearly(?, ?)`,
+        params,
+      );
+      groupCate = this.groupByDateOrBranch(
+        getCategory031723,
+        'y',
+        branch === 'all' ? '' : branch,
+      );
     }
 
     const name: string[] = [];
     const amount: number[] = [];
 
     groupData.forEach((e) => {
+      const findCate = groupCate.find((f) => f.date === e.date)?.cddbal ?? 0;
       name.push(e.sub_group_desc);
-      amount.push(e.cddbal);
+
+      if (e.sub_group === 'Manage_009') {
+        console.log('im here', groupCate);
+        console.log('cate', findCate);
+        amount.push(+(e.cddbal - findCate).toFixed(2));
+        return;
+      }
+      amount.push(+e.cddbal.toFixed(2));
     });
 
     return {
@@ -252,14 +292,11 @@ export class AdminService {
   ) {
     const grouped = data.reduce(
       (acc, item) => {
-        const key = branch
-          ? `${option === 'd' ? item.date : item.monthend}_${item.code}`
-          : option === 'd'
-            ? item.date
-            : item.monthend;
+        const myDataStr = option === 'd' ? item.date : item.monthend;
+        const key = branch ? `${myDataStr}_${item.code}` : myDataStr;
         if (!acc[key]) {
           acc[key] = {
-            date: item.date,
+            date: myDataStr,
             branch: item.code,
             cddbal: 0,
           };
@@ -273,35 +310,65 @@ export class AdminService {
   }
 
   private groupBySubGroup(data: any[]) {
-    const grouped: Record<
-      string,
-      {
-        code: number;
-        name: string;
-        date: string;
-        sub_group: string;
-        sub_group_desc: string;
-        cddbal: number;
-      }
-    > = {};
-
-    data.forEach((e) => {
-      const sub_group = e.sub_group;
-      const cddbal = +e.cddbal;
-      if (!grouped[sub_group]) {
-        grouped[sub_group] = {
-          code: e.code,
-          name: e.name,
-          date: e.data,
-          sub_group: e.sub_group,
-          sub_group_desc: e.sub_group_desc,
-          cddbal: 0,
-        };
-      }
-      grouped[sub_group].cddbal += cddbal;
-    });
-
-    return Object.values(grouped);
+    // const grouped: Record<
+    //   string,
+    //   {
+    //     code: number;
+    //     name: string;
+    //     date: string;
+    //     sub_group: string;
+    //     sub_group_desc: string;
+    //     cddbal: number;
+    //   }
+    // > = {};
+    //
+    // data.forEach((e) => {
+    //   const sub_group = e.sub_group;
+    //   const cddbal = +e.cddbal;
+    //   const dateStr = e.date;
+    //   if (!grouped[sub_group]) {
+    //     grouped[sub_group] = {
+    //       code: e.code,
+    //       name: e.name,
+    //       date: dateStr,
+    //       sub_group: e.sub_group,
+    //       sub_group_desc: e.sub_group_desc,
+    //       cddbal: 0,
+    //     };
+    //   }
+    //   grouped[sub_group].cddbal += cddbal;
+    // });
+    //
+    // return Object.values(grouped);
+    const group = data.reduce(
+      (acc, item) => {
+        const key = item.sub_group;
+        if (!acc[key]) {
+          acc[key] = {
+            code: item.code,
+            name: item.name,
+            date: item.date,
+            sub_group: item.sub_group,
+            sub_group_desc: item.sub_group_desc,
+            cddbal: 0,
+          };
+        }
+        acc[key].cddbal += parseFloat(item.cddbal);
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          code: string;
+          name: string;
+          date: string;
+          sub_group: string;
+          sub_group_desc: string;
+          cddbal: number;
+        }
+      >,
+    );
+    return Object.values(group);
   }
 
   private groupByGL(data: any[]) {
