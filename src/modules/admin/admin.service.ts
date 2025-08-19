@@ -189,8 +189,6 @@ export class AdminService {
       name.push(e.sub_group_desc);
 
       if (e.sub_group === 'Manage_009') {
-        console.log('im here', groupCate);
-        console.log('cate', findCate);
         amount.push(+(e.cddbal - findCate).toFixed(2));
         return;
       }
