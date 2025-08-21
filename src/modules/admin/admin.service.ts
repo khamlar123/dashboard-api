@@ -265,7 +265,8 @@ export class AdminService {
       `call proc_admin_salary_daily(?, ?, ?)`,
       [date, branch, option],
     );
-    groupData = this.groupBySubGroup(result, option);
+
+    groupData = this.groupBySubGroup(result, 'd');
     const name: string[] = [];
     const amount: number[] = [];
 
