@@ -56,7 +56,6 @@ export class IncomeService {
       `call proc_income_dailly(?, ?, ?)`,
       [date, branch, option],
     );
-
     if (!result) {
       throw new BadRequestException('Data not found');
     }
