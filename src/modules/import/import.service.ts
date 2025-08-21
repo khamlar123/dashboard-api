@@ -27,6 +27,7 @@ import { LiabilityCapitalAsset } from '../cronjob/sqls/liability_capital_asset';
 import { adminExp } from '../cronjob/sqls/admin_expense.sql';
 import { getDate } from 'date-fns';
 import { loadApp } from '../cronjob/sqls/loan_app.sql';
+import { exchangeRate } from '../cronjob/sqls/exchange_rate.sql';
 
 @Injectable()
 export class ImportService {
@@ -625,6 +626,40 @@ export class ImportService {
     return await this.databaseService.query(query, values);
   }
 
+  async exchangeRate(start: string, end: string) {
+    const startDate = moment(start, 'YYYYMMDD');
+    const endDate = moment(end, 'YYYYMMDD');
+    const dateArray: string[] = [];
+
+    while (startDate.isSameOrBefore(endDate)) {
+      dateArray.push(startDate.format('YYYYMMDD'));
+      startDate.add(1, 'day');
+    }
+
+    const myDate: any[] = [];
+    for (const item of dateArray) {
+      const getQuery = exchangeRate();
+      const data = await this.databaseService.queryOds(getQuery, [item]);
+      myDate.push(data);
+    }
+
+    const flatMap = myDate.flatMap((m) => m);
+    const placeholders = flatMap.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
+
+    const query = `INSERT INTO exchange_rate(eff_dt, ccy, exr_typ, buy, sell, mid)
+                   VALUES ${placeholders}`;
+    const values = flatMap.flatMap((item) => [
+      item.eff_dt,
+      item.ccy,
+      item.exr_typ,
+      item.buy,
+      item.sell,
+      item.mid,
+    ]);
+
+    return await this.databaseService.query(query, values);
+  }
+
   async getLastItem() {
     const bolLoanQuery = `
   SELECT * FROM bol_loan
@@ -666,6 +701,8 @@ export class ImportService {
 
     const loadApp = ` SELECT * FROM loan_app ORDER BY date DESC LIMIT 1 `;
 
+    const exchangeRate = `SELECT * FROM exchange_rate Order BY eff_dt DESC LIMIT 1`;
+
     const [
       findLoan,
       findSectorBal,
@@ -680,6 +717,7 @@ export class ImportService {
       [findReseve],
       [findBdAss],
       [findloadApp],
+      [findExchangeRate],
     ] = await Promise.all([
       this.loanRepository.find({
         take: 1,
@@ -719,6 +757,7 @@ export class ImportService {
       this.databaseService.query(reseveQuery, []),
       this.databaseService.query(bdAss, []),
       this.databaseService.query(loadApp, []),
+      this.databaseService.query(exchangeRate, []),
     ]);
 
     return {
@@ -735,6 +774,7 @@ export class ImportService {
       reseve: findReseve.date,
       bd_ass_lia_cap: findBdAss.date,
       'loan-app': findloadApp.date,
+      'exchange-rate': findExchangeRate.eff_dt,
     };
   }
 }

@@ -150,4 +150,14 @@ export class ImportController {
   ) {
     return await this.importService.loanApp(start, end);
   }
+
+  @Post('exchange-rate')
+  async exchangeRate(
+    @Query('start', new DefaultValuePipe(0))
+    start: string,
+    @Query('end', new DefaultValuePipe(0))
+    end: string,
+  ) {
+    return await this.importService.exchangeRate(start, end);
+  }
 }
