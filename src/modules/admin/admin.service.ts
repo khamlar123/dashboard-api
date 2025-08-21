@@ -131,7 +131,7 @@ export class AdminService {
         [date, branch, option],
       );
 
-      groupData = this.groupBySubGroup(result);
+      groupData = this.groupBySubGroup(result, 'd');
 
       [getCategory031723] = await this.database.query(
         `call proc_admin_group_031723_daily(?, ?)`,
@@ -149,7 +149,7 @@ export class AdminService {
         `call proc_admin_manage_daily(?, ?, ?)`,
         [date, branch, option],
       );
-      groupData = this.groupBySubGroup(result);
+      groupData = this.groupBySubGroup(result, 'm');
 
       [getCategory031723] = await this.database.query(
         `call proc_admin_group_031723_monthly(?, ?)`,
@@ -167,7 +167,7 @@ export class AdminService {
         `call proc_admin_manage_daily(?, ?, ?)`,
         [date, branch, option],
       );
-      groupData = this.groupBySubGroup(result);
+      groupData = this.groupBySubGroup(result, 'y');
 
       [getCategory031723] = await this.database.query(
         `call proc_admin_group_031723_yearly(?, ?)`,
@@ -179,7 +179,6 @@ export class AdminService {
         branch === 'all' ? '' : branch,
       );
     }
-
     const name: string[] = [];
     const amount: number[] = [];
 
@@ -266,7 +265,7 @@ export class AdminService {
       `call proc_admin_salary_daily(?, ?, ?)`,
       [date, branch, option],
     );
-    groupData = this.groupBySubGroup(result);
+    groupData = this.groupBySubGroup(result, option);
     const name: string[] = [];
     const amount: number[] = [];
 
@@ -336,37 +335,7 @@ export class AdminService {
     return Object.values(grouped);
   }
 
-  private groupBySubGroup(data: any[]) {
-    // const grouped: Record<
-    //   string,
-    //   {
-    //     code: number;
-    //     name: string;
-    //     date: string;
-    //     sub_group: string;
-    //     sub_group_desc: string;
-    //     cddbal: number;
-    //   }
-    // > = {};
-    //
-    // data.forEach((e) => {
-    //   const sub_group = e.sub_group;
-    //   const cddbal = +e.cddbal;
-    //   const dateStr = e.date;
-    //   if (!grouped[sub_group]) {
-    //     grouped[sub_group] = {
-    //       code: e.code,
-    //       name: e.name,
-    //       date: dateStr,
-    //       sub_group: e.sub_group,
-    //       sub_group_desc: e.sub_group_desc,
-    //       cddbal: 0,
-    //     };
-    //   }
-    //   grouped[sub_group].cddbal += cddbal;
-    // });
-    //
-    // return Object.values(grouped);
+  private groupBySubGroup(data: any[], option: 'd' | 'm' | 'y') {
     const group = data.reduce(
       (acc, item) => {
         const key = item.sub_group;
@@ -374,7 +343,8 @@ export class AdminService {
           acc[key] = {
             code: item.code,
             name: item.name,
-            date: item.date,
+            date:
+              option === 'd' ? item.date : moment(item.date).format('YYYYMM'),
             sub_group: item.sub_group,
             sub_group_desc: item.sub_group_desc,
             cddbal: 0,
