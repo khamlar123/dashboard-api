@@ -26,6 +26,7 @@ import { reserve } from '../cronjob/sqls/reserve.sql';
 import { LiabilityCapitalAsset } from '../cronjob/sqls/liability_capital_asset';
 import { adminExp } from '../cronjob/sqls/admin_expense.sql';
 import { getDate } from 'date-fns';
+import { loadApp } from '../cronjob/sqls/loan_app.sql';
 
 @Injectable()
 export class ImportService {
@@ -597,6 +598,33 @@ export class ImportService {
     return await this.databaseService.query(query, values);
   }
 
+  async loanApp(start: string, end: string) {
+    const getQuery = loadApp();
+    const data = await this.databaseService.queryOds(getQuery, [start, end]);
+    const mapData = data.map((m) => {
+      return {
+        date: m.AC_DATE,
+        branch_id: m.br,
+        app_amount: m.amount,
+        ccy: m.ccy,
+      };
+    });
+
+    const placeholders = mapData.map(() => '(?, ?, ?, ?)').join(', ');
+
+    const query = `INSERT INTO loan_app(date, branch_id, app_amount, ccy)
+                   VALUES ${placeholders}`;
+
+    const values = mapData.flatMap((item) => [
+      item.date,
+      item.branch_id,
+      item.app_amount,
+      item.ccy,
+    ]);
+
+    return await this.databaseService.query(query, values);
+  }
+
   async getLastItem() {
     const bolLoanQuery = `
   SELECT * FROM bol_loan
@@ -636,6 +664,8 @@ export class ImportService {
 
     const bdAss = ` SELECT * FROM bd_ass_lia_cap ORDER BY date DESC LIMIT 1 `;
 
+    const loadApp = ` SELECT * FROM loan_app ORDER BY date DESC LIMIT 1 `;
+
     const [
       findLoan,
       findSectorBal,
@@ -649,6 +679,7 @@ export class ImportService {
       [findLiquidityNop],
       [findReseve],
       [findBdAss],
+      [findloadApp],
     ] = await Promise.all([
       this.loanRepository.find({
         take: 1,
@@ -687,6 +718,7 @@ export class ImportService {
       this.databaseService.query(liquidityNopQuery, []),
       this.databaseService.query(reseveQuery, []),
       this.databaseService.query(bdAss, []),
+      this.databaseService.query(loadApp, []),
     ]);
 
     return {
@@ -702,6 +734,7 @@ export class ImportService {
       'liquidity-nop': findLiquidityNop.date,
       reseve: findReseve.date,
       bd_ass_lia_cap: findBdAss.date,
+      'loan-app': findloadApp.date,
     };
   }
 }
