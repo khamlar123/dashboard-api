@@ -32,6 +32,7 @@ import { UserModule } from './modules/user/user.module';
 import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from './common/database/database.service';
 import { PaidModule } from './modules/paid/paid.module';
+import { WebsocketsModule } from './modules/websockets/websockets.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { PaidModule } from './modules/paid/paid.module';
     HrModule,
     MonitorModule,
     PaidModule,
+    WebsocketsModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService, DatabaseService],

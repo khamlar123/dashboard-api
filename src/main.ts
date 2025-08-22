@@ -23,12 +23,12 @@ async function bootstrap() {
   app.use('/docs', new AuthSwagger().use);
   SwaggerModule.setup('docs', app, document);
   app.useGlobalPipes(new ValidationPipe());
-  app.use(
-    '/scalar',
-    apiReference({
-      content: document,
-    }),
-  );
+  // app.use(
+  //   '/scalar',
+  //   apiReference({
+  //     content: document,
+  //   }),
+  // );
 
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(new LoggingInterceptor());

@@ -462,7 +462,8 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_daily(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByDate(result, 'daily');
+      // groupData = this.groupByDate(result, 'daily');
+      groupData = result;
     }
 
     if (option === 'm') {
@@ -470,7 +471,8 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_monthly(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByDate(result, 'monthly');
+      // groupData = this.groupByDate(result, 'monthly');
+      groupData = result;
     }
 
     if (option === 'y') {
@@ -478,17 +480,16 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_yearly(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByDate(result, 'yearly');
+      // groupData = this.groupByDate(result, 'yearly');
+      groupData = result;
     }
-
     const short: number[] = [];
     const middle: number[] = [];
     const longs: number[] = [];
-
-    groupData.forEach((e) => {
-      short.push(e.short);
-      middle.push(e.middle);
-      longs.push(e.longs);
+    groupData.slice(groupData.length - 18, groupData.length).forEach((e) => {
+      short.push(Number(e.short));
+      middle.push(Number(e.middle));
+      longs.push(Number(e.longs));
     });
 
     return {
@@ -633,19 +634,19 @@ export class LoanService {
           : option === 'monthly'
             ? moment(e.monthend).format('YYYYMM')
             : moment(e.monthend).format('YYYY');
-      const loan_plan = +e.loan_plan;
-      const balance = +e.balance;
-      const npl = +e.npl_balance;
-      const npl_plan = +e.npl_plan;
-      const app_amount = +e.app_amount;
-      const classA = +e.classA;
-      const classB = +e.classB;
-      const classC = +e.classC;
-      const classD = +e.classD;
-      const classE = +e.classE;
-      const short = +e.short;
-      const middle = +e.middle;
-      const longs = +e.longs;
+      const loan_plan = Number(e.loan_plan);
+      const balance = Number(e.balance);
+      const npl = Number(e.npl_balance);
+      const npl_plan = Number(e.npl_plan);
+      const app_amount = Number(e.app_amount);
+      const classA = Number(e.classA);
+      const classB = Number(e.classB);
+      const classC = Number(e.classC);
+      const classD = Number(e.classD);
+      const classE = Number(e.classE);
+      const short = Number(e.short);
+      const middle = Number(e.middle);
+      const longs = Number(e.longs);
       if (!grouped[date]) {
         grouped[date] = {
           date:
