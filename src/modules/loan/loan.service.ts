@@ -517,16 +517,23 @@ export class LoanService {
         [date, branch],
       );
       // groupData = this.groupByDate(result, 'yearly');
-      groupData = result;
+      groupData = sortFunc(result, 'monthend', 'min');
     }
     const short: number[] = [];
     const middle: number[] = [];
     const longs: number[] = [];
-    groupData.slice(groupData.length - 18, groupData.length).forEach((e) => {
-      short.push(Number(e.short));
-      middle.push(Number(e.middle));
-      longs.push(Number(e.longs));
-    });
+
+    if (branch.toLocaleLowerCase() === 'all') {
+      groupData.slice(groupData.length - 18, groupData.length).forEach((e) => {
+        short.push(Number(e.short));
+        middle.push(Number(e.middle));
+        longs.push(Number(e.longs));
+      });
+    } else {
+      short.push(Number(groupData[groupData.length - 1].short));
+      middle.push(Number(groupData[groupData.length - 1].middle));
+      longs.push(Number(groupData[groupData.length - 1].longs));
+    }
 
     return {
       short: reduceFunc(short),
