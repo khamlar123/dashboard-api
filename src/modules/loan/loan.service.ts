@@ -185,7 +185,11 @@ export class LoanService {
         [date, branch],
       );
       // groupData = this.groupByBranch(result, 'monthly');
-      groupData = this.groupByDateAndBranch(result, 'monthly');
+      groupData = sortFunc(
+        this.groupByDateAndBranch(result, 'monthly'),
+        'date',
+        'min',
+      );
     }
 
     if (option === 'y') {
@@ -386,7 +390,11 @@ export class LoanService {
         [date, branch],
       );
       // groupData = this.groupByBranch(result, 'monthly');
-      groupData = this.groupByDateAndBranch(result, 'monthly');
+      groupData = sortFunc(
+        this.groupByDateAndBranch(result, 'monthly'),
+        'date',
+        'min',
+      );
     }
 
     if (option === 'y') {
@@ -508,7 +516,7 @@ export class LoanService {
         [date, branch],
       );
       // groupData = this.groupByDate(result, 'monthly');
-      groupData = result;
+      groupData = sortFunc(result, 'monthend', 'min');
     }
 
     if (option === 'y') {
@@ -568,7 +576,11 @@ export class LoanService {
         [date, branch],
       );
       // groupData = this.groupByBranch(result, 'monthly');
-      groupData = this.groupByDateAndBranch(result, 'monthly');
+      groupData = sortFunc(
+        this.groupByDateAndBranch(result, 'monthly'),
+        'date',
+        'min',
+      );
     }
 
     if (option === 'y') {
