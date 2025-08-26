@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../entity/user.entity';
 import { Repository } from 'typeorm';
-import { CreateUserDto, RoleType } from '../../dto/create-user.dto';
+import { CreateUserDto } from '../../dto/create-user.dto';
 import { genHash } from '../../share/functions/hash-unity';
 import { UpdateUserDto } from '../../dto/update-user.dto';
 import { NotFoundError } from 'rxjs';
@@ -15,6 +15,7 @@ import { Role } from '../../entity/role.entity';
 import { Permission } from '../../entity/permission.entity';
 import { CreateRoleDto } from '../../dto/create-role.dto';
 import { UpdateRoleDto } from '../../dto/update-role.dto';
+import { RoleEnum } from '../../common/enums/role.enum';
 
 @Injectable()
 export class UserService {
@@ -174,7 +175,7 @@ export class UserService {
 
   async create(dto: CreateUserDto): Promise<any> {
     const hasPassword = await genHash(dto.password);
-    const model = this.userRes.create({
+    const model: User = this.userRes.create({
       employee_id: dto.employee_id,
       password: hasPassword,
       name: dto.name,
@@ -183,10 +184,12 @@ export class UserService {
       is_active: true,
       is_admin: dto.is_admin,
       // role_id: dto.role_id,
+      role: dto.role,
       branch_id: dto.branch_id, // or dto.branch if that's ID
     });
 
     return await this.userRes.save(model);
+    return;
   }
 
   async update(id: number, dto: UpdateUserDto): Promise<any> {

@@ -8,11 +8,6 @@ import {
 } from '@nestjs/class-validator';
 import { RoleEnum } from '../common/enums/role.enum';
 
-export enum RoleType {
-  USER = 'user',
-  ADMIN = 'admin',
-}
-
 export class CreateUserDto {
   @ApiProperty()
   @IsString()

@@ -30,8 +30,8 @@ export class User {
   // @Column()
   // role_id: number;
 
-  @Column({ type: 'enum', enum: RoleEnum, default: 'USER' })
-  role?: Role;
+  @Column({ type: 'enum', enum: RoleEnum, default: RoleEnum.USER })
+  role?: RoleEnum;
 
   @Column()
   name: string;

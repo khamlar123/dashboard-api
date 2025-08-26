@@ -8,6 +8,7 @@ import { DatabaseService } from '../../common/database/database.service';
 import { checkCurrentDate } from '../../share/functions/check-current-date';
 import * as moment from 'moment';
 import { reduceFunc } from '../../share/functions/reduce-func';
+import { sortFunc } from '../../share/functions/sort-func';
 
 @Injectable()
 export class LoanService {
@@ -359,7 +360,8 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_daily(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByBranch(result, 'daily');
+      // groupData = this.groupByBranch(result, 'daily');
+      groupData = this.groupByDateAndBranch(result, 'daily');
     }
 
     if (option === 'm') {
@@ -367,7 +369,8 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_monthly(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByBranch(result, 'monthly');
+      // groupData = this.groupByBranch(result, 'monthly');
+      groupData = this.groupByDateAndBranch(result, 'monthly');
     }
 
     if (option === 'y') {
@@ -375,17 +378,24 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_yearly(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByBranch(result, 'yearly');
+      // groupData = this.groupByBranch(result, 'yearly');
+      groupData = sortFunc(
+        this.groupByDateAndBranch(result, 'yearly'),
+        'date',
+        'min',
+      );
     }
 
     const names: string[] = [];
+    const amountA: number[] = [];
     const amountB: number[] = [];
     const amountC: number[] = [];
     const amountD: number[] = [];
     const amountE: number[] = [];
 
-    groupData.forEach((e) => {
+    groupData.slice(groupData.length - 18, groupData.length).forEach((e) => {
       names.push(e.name);
+      amountA.push(e.classA);
       amountB.push(e.classB);
       amountC.push(e.classC);
       amountD.push(e.classD);
@@ -394,6 +404,7 @@ export class LoanService {
 
     return {
       names: names,
+      amountA: amountA,
       amountB: amountB,
       amountC: amountC,
       amountD: amountD,
@@ -847,6 +858,93 @@ export class LoanService {
       grouped[branch].sector_balance += sector_balance;
     });
 
+    return Object.values(grouped);
+  }
+
+  private groupByDateAndBranch(
+    data: any[],
+    option: 'daily' | 'monthly' | 'yearly',
+  ) {
+    const grouped: Record<
+      string,
+      {
+        name: string;
+        code: string;
+        date: string;
+        loan_plan: number;
+        balance: number;
+        npl_balance: number;
+        npl_plan: number;
+        app_amount: number;
+        classA: number;
+        classB: number;
+        classC: number;
+        classD: number;
+        classE: number;
+        short: number;
+        middle: number;
+        longs: number;
+      }
+    > = {};
+
+    data.forEach((e) => {
+      const dateFormat =
+        option === 'daily'
+          ? e.date
+          : option === 'monthly'
+            ? moment(e.monthend).format('YYYYMM')
+            : moment(e.monthend).format('YYYY');
+
+      const key = `${dateFormat}_${e.code}`;
+      const loan_plan = Number(e.loan_plan);
+      const balance = Number(e.balance);
+      const npl = Number(e.npl_balance);
+      const npl_plan = Number(e.npl_plan);
+      const app_amount = Number(e.app_amount);
+      const classA = Number(e.classA);
+      const classB = Number(e.classB);
+      const classC = Number(e.classC);
+      const classD = Number(e.classD);
+      const classE = Number(e.classE);
+      const short = Number(e.short);
+      const middle = Number(e.middle);
+      const longs = Number(e.longs);
+      const code = e.code;
+      const name = e.name;
+      if (!grouped[key]) {
+        grouped[key] = {
+          name: name,
+          code: code,
+          date: dateFormat,
+          loan_plan: 0,
+          balance: 0,
+          npl_balance: 0,
+          npl_plan: 0,
+          app_amount: 0,
+          classA: 0,
+          classB: 0,
+          classC: 0,
+          classD: 0,
+          classE: 0,
+          short: 0,
+          middle: 0,
+          longs: 0,
+        };
+      }
+      grouped[key].loan_plan += loan_plan;
+      grouped[key].balance += balance;
+      grouped[key].npl_balance += npl;
+      grouped[key].npl_plan += npl_plan;
+      grouped[key].app_amount += app_amount;
+      grouped[key].classA += classA;
+      grouped[key].classB += classB;
+      grouped[key].classC += classC;
+      grouped[key].classD += classD;
+      grouped[key].classE += classE;
+      grouped[key].short += short;
+      grouped[key].middle += middle;
+      grouped[key].longs += longs;
+    });
     return Object.values(grouped);
   }
 }
