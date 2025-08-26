@@ -393,14 +393,23 @@ export class LoanService {
     const amountD: number[] = [];
     const amountE: number[] = [];
 
-    groupData.slice(groupData.length - 18, groupData.length).forEach((e) => {
-      names.push(e.name);
-      amountA.push(e.classA);
-      amountB.push(e.classB);
-      amountC.push(e.classC);
-      amountD.push(e.classD);
-      amountE.push(e.classE);
-    });
+    if (branch.toLocaleLowerCase() === 'all') {
+      groupData.slice(groupData.length - 18, groupData.length).forEach((e) => {
+        names.push(e.name);
+        amountA.push(e.classA);
+        amountB.push(e.classB);
+        amountC.push(e.classC);
+        amountD.push(e.classD);
+        amountE.push(e.classE);
+      });
+    } else {
+      names.push(groupData[groupData.length - 1].name);
+      amountA.push(groupData[groupData.length - 1].classA);
+      amountB.push(groupData[groupData.length - 1].classB);
+      amountC.push(groupData[groupData.length - 1].classC);
+      amountD.push(groupData[groupData.length - 1].classD);
+      amountE.push(groupData[groupData.length - 1].classE);
+    }
 
     return {
       names: names,
