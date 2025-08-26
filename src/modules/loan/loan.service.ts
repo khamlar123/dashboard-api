@@ -175,7 +175,8 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_daily(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByBranch(result, 'daily');
+      // groupData = this.groupByBranch(result, 'daily');
+      groupData = this.groupByDateAndBranch(result, 'daily');
     }
 
     if (option === 'm') {
@@ -183,7 +184,8 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_monthly(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByBranch(result, 'monthly');
+      // groupData = this.groupByBranch(result, 'monthly');
+      groupData = this.groupByDateAndBranch(result, 'monthly');
     }
 
     if (option === 'y') {
@@ -191,18 +193,32 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_yearly(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByBranch(result, 'yearly');
+      // groupData = this.groupByBranch(result, 'yearly');
+      groupData = sortFunc(
+        this.groupByDateAndBranch(result, 'yearly'),
+        'date',
+        'min',
+      );
     }
 
     const names: string[] = [];
     const npl: number[] = [];
     const pl: number[] = [];
 
-    groupData.forEach((e) => {
-      names.push(e.name);
-      npl.push(e.npl_balance);
-      pl.push(e.balance - e.npl_balance);
-    });
+    if (branch.toLocaleLowerCase() === 'all') {
+      groupData.slice(groupData.length - 18, groupData.length).forEach((e) => {
+        names.push(e.name);
+        npl.push(e.npl_balance);
+        pl.push(e.balance - e.npl_balance);
+      });
+    } else {
+      names.push(groupData[groupData.length - 1].name);
+      npl.push(groupData[groupData.length - 1].npl_balance);
+      pl.push(
+        groupData[groupData.length - 1].balance -
+          groupData[groupData.length - 1].npl_balance,
+      );
+    }
 
     return {
       name: names,
@@ -535,7 +551,8 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_daily(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByBranch(result, 'daily');
+      // groupData = this.groupByBranch(result, 'daily');
+      groupData = this.groupByDateAndBranch(result, 'daily');
     }
 
     if (option === 'm') {
@@ -543,7 +560,8 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_monthly(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByBranch(result, 'monthly');
+      // groupData = this.groupByBranch(result, 'monthly');
+      groupData = this.groupByDateAndBranch(result, 'monthly');
     }
 
     if (option === 'y') {
@@ -551,19 +569,32 @@ export class LoanService {
         `call proc_ln_plan_bal_npl_yearly(?, ?)`,
         [date, branch],
       );
-      groupData = this.groupByBranch(result, 'yearly');
+      // groupData = this.groupByBranch(result, 'yearly');
+      groupData = sortFunc(
+        this.groupByDateAndBranch(result, 'yearly'),
+        'date',
+        'min',
+      );
     }
 
     const name: string[] = [];
     const shortAmount: number[] = [];
     const middleAmount: number[] = [];
     const longAmount: number[] = [];
-    groupData.forEach((e) => {
-      name.push(e.name);
-      shortAmount.push(e.short);
-      middleAmount.push(e.middle);
-      longAmount.push(e.longs);
-    });
+
+    if (branch.toLocaleLowerCase() === 'all') {
+      groupData.slice(groupData.length - 18, groupData.length).forEach((e) => {
+        name.push(e.name);
+        shortAmount.push(e.short);
+        middleAmount.push(e.middle);
+        longAmount.push(e.longs);
+      });
+    } else {
+      name.push(groupData[groupData.length - 1].name);
+      shortAmount.push(groupData[groupData.length - 1].short);
+      middleAmount.push(groupData[groupData.length - 1].middle);
+      longAmount.push(groupData[groupData.length - 1].longs);
+    }
 
     return {
       name: name,
