@@ -233,6 +233,7 @@ export const income = () => `
     nvl(sum(CDDBAL), 0) as CDDBAL,
     nvl(sum(CDCBAL), 0) as CDCBAL
   from ic7
+  group by AC_DATE, id, substr(br, 1, 4)
   union
   select AC_DATE,
     id,
