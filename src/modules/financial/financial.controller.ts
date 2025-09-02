@@ -174,4 +174,28 @@ export class FinancialController {
       option,
     );
   }
+
+  @Get('/expense-financial')
+  async expenseFinancial(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.financialService.expense(date, branch, option);
+  }
+
+  @Get('/income-financial')
+  async incomeFinancial(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ) {
+    return await this.financialService.income(date, branch, option);
+  }
 }

@@ -14,6 +14,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Deposit } from '../../entity/deposit.entity';
 import { Repository } from 'typeorm';
 import * as moment from 'moment';
+import { expenseFinancialInterface } from '../../common/interfaces/expense-financial.interface';
+import { incomeFinancialInterface } from '../../common/interfaces/income-financial.interface';
 
 @Injectable()
 export class FinancialService {
@@ -677,6 +679,120 @@ export class FinancialService {
         precent: calcMonthToLastYearThisMonth,
       },
     };
+  }
+
+  async expense(
+    date: string,
+    branch: string,
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_expense_financial (?, ?, ?)`,
+      [date, branch, option],
+    );
+
+    if (!result) {
+      throw new BadRequestException('Data not found');
+    }
+
+    const branches: string[] = [];
+    const percents: number[] = [];
+
+    result.forEach((e: IProfit) => {
+      branches.push(e.name);
+      percents.push(+e.percent);
+    });
+
+    return {
+      tables: result.map((m) => {
+        return {
+          code: m.code,
+          name: m.name,
+          plan_amt: +m.plan_amt,
+          expense_amt1: +m.expense_amt1,
+          expense_amt2: +m.expense_amt2,
+          diff: +m.diff,
+          percent: +m.percent,
+        };
+      }),
+      total: {
+        total_plan: +reduceFunc(result.map((m) => +m.plan_amt)).toFixed(2),
+        total_expense_amt1: +reduceFunc(
+          result.map((m) => +m.expense_amt1),
+        ).toFixed(2),
+        total_expense_amt2: +reduceFunc(
+          result.map((m) => +m.expense_amt2),
+        ).toFixed(2),
+        total_diff: +reduceFunc(result.map((m) => +m.diff)).toFixed(2),
+        total_percent: +(
+          (reduceFunc(result.map((m) => +m.expense_amt1)) /
+            reduceFunc(result.map((m) => +m.plan_amt))) *
+          100
+        ).toFixed(2),
+      },
+      chart: {
+        branches,
+        percents,
+      },
+    } as expenseFinancialInterface;
+  }
+
+  async income(
+    date: string,
+    branch: string,
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    checkCurrentDate(date);
+    const [result] = await this.database.query(
+      `call proc_income_financial (?, ?, ?)`,
+      [date, branch, option],
+    );
+
+    if (!result) {
+      throw new BadRequestException('Data not found');
+    }
+
+    const branches: string[] = [];
+    const percents: number[] = [];
+
+    result.forEach((e: IProfit) => {
+      branches.push(e.name);
+      percents.push(+e.percent);
+    });
+
+    return {
+      tables: result.map((m) => {
+        return {
+          code: m.code,
+          name: m.name,
+          plan_amt: +m.plan_amt,
+          income_amt1: +m.income_amt1,
+          income_amt2: +m.income_amt2,
+          diff: +m.diff,
+          percent: +m.percent,
+        };
+      }),
+      total: {
+        total_plan: +reduceFunc(result.map((m) => +m.plan_amt)).toFixed(2),
+        total_income_amt1: +reduceFunc(
+          result.map((m) => +m.income_amt1),
+        ).toFixed(2),
+        total_income_amt2: +reduceFunc(
+          result.map((m) => +m.income_amt2),
+        ).toFixed(2),
+        total_diff: +reduceFunc(result.map((m) => +m.diff)).toFixed(2),
+        total_percent: +(
+          (reduceFunc(result.map((m) => +m.income_amt1)) /
+            reduceFunc(result.map((m) => +m.plan_amt))) *
+          100
+        ).toFixed(2),
+      },
+      chart: {
+        branches,
+        percents,
+      },
+    } as incomeFinancialInterface;
   }
 
   private groupDataByDate(
