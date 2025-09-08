@@ -543,15 +543,18 @@ export class LoanService {
       longs.push(Number(groupData[groupData.length - 1].longs));
     }
 
+    const total = Number(
+      (reduceFunc(short) + reduceFunc(middle) + reduceFunc(longs)).toFixed(2),
+    );
+
     return {
       short: reduceFunc(short),
+      percentShort: +((reduceFunc(short) / total) * 100).toFixed(2),
       middle: reduceFunc(middle),
+      percentMid: +((reduceFunc(middle) / total) * 100).toFixed(2),
       longs: reduceFunc(longs),
-      total: +(
-        reduceFunc(short) +
-        reduceFunc(middle) +
-        reduceFunc(longs)
-      ).toFixed(2),
+      percentLong: +((reduceFunc(longs) / total) * 100).toFixed(2),
+      total: total,
     };
   }
 
@@ -636,17 +639,27 @@ export class LoanService {
     const name: string[] = [];
     const amount: number[] = [];
     const plan: number[] = [];
+    const percent: number[] = [];
 
     groupData.forEach((e) => {
       name.push(e.description);
-      amount.push(e.sector_balance);
+      amount.push(+e.sector_balance.toFixed(2));
       plan.push(e.sector_plan_amount);
     });
+
+    const total = reduceFunc(amount);
+
+    amount.forEach((e) => {
+      percent.push(Number(((e / total) * 100).toFixed(2)));
+    });
+
+    console.log(total);
 
     return {
       name: name,
       amount: amount,
       plan: plan,
+      percent: percent,
     };
   }
 
