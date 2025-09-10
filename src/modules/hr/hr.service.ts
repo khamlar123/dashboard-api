@@ -85,21 +85,35 @@ export class HrService {
   }
 
   async empPosition() {
-    const findEmp = await this.employeeRepository.find();
-    const groupData = this.groupByPosition(findEmp);
+    // const findEmp = await this.employeeRepository.find();
+    // console.log('findEmp', findEmp);
+    // const groupData = this.groupByPosition(findEmp);
+    //
+    // const pos: string[] = [];
+    // const amount: number[] = [];
+    //
+    // groupData.forEach((e) => {
+    //   pos.push(e.pos);
+    //   amount.push(e.amount);
+    // });
+    //
+    // return {
+    //   label: pos,
+    //   amount: amount,
+    // };
 
-    const pos: string[] = [];
-    const amount: number[] = [];
-
-    groupData.forEach((e) => {
-      pos.push(e.pos);
-      amount.push(e.amount);
-    });
-
-    return {
-      label: pos,
-      amount: amount,
+    //fake data
+    const fakeItem = {
+      label: [
+        'ຄະນະອຳນວຍການ',
+        'ຄະນະພະແນກ, ຄະນະສາຂາ',
+        'ທີ່ປຶກສາສະເພາະດ້ານ',
+        'ຄະນະຂະແໜງ, ຄະນະໜ່ວຍບໍລິການ',
+        'ພະນັກງານວິຊາການ',
+      ],
+      amount: [1, 2, 3, 4, 5],
     };
+    return fakeItem;
   }
 
   async empAge() {
@@ -112,16 +126,14 @@ export class HrService {
     }
 
     function getRangeCategory(value: number): number {
-      if (value <= 30) {
+      if (value <= 28) {
         return 1;
-      } else if (value <= 40) {
+      } else if (value <= 44) {
         return 2;
-      } else if (value <= 50) {
-        return 3;
       } else if (value <= 60) {
+        return 3;
+      } else if (value <= 79) {
         return 4;
-      } else if (value >= 61) {
-        return 5;
       }
       return 0; // Optional: return empty string or throw error if input is invalid
     }
@@ -159,7 +171,17 @@ export class HrService {
       }
     });
 
+    //z 13-28
+    //y 29-44
+    //x 45 - 60
+    //Baby Boomers 61 - 79
     return {
+      detail: [
+        'Gen Z (13 - 28)',
+        'Gen Y (29 - 44)',
+        'Generation X (45 - 60)',
+        'Baby Boomers (61 - 79)',
+      ],
       male: male,
       female: female,
     };
@@ -285,11 +307,10 @@ export class HrService {
       string,
       {
         sex: string;
-        '20-30': number;
-        '31-40': number;
-        '41-50': number;
-        '51-60': number;
-        '61+': number;
+        'Gen Z': number;
+        'Gen Y': number;
+        'Generation X': number;
+        'Baby Boomers': number;
       }
     > = {};
 
@@ -301,23 +322,24 @@ export class HrService {
       if (!group[sex]) {
         group[sex] = {
           sex: sex,
-          '20-30': 0,
-          '31-40': 0,
-          '41-50': 0,
-          '51-60': 0,
-          '61+': 0,
+          'Gen Z': 0,
+          'Gen Y': 0,
+          'Generation X': 0,
+          'Baby Boomers': 0,
         };
       }
+      //z 13-28
+      //y 29-44
+      //x 45 - 60
+      //Baby Boomers 61 - 79
       if (ageCategory === 1) {
-        group[sex]['20-30'] += 1;
+        group[sex]['Gen Z'] += 1;
       } else if (ageCategory === 2) {
-        group[sex]['31-40'] += 1;
+        group[sex]['Gen Y'] += 1;
       } else if (ageCategory === 3) {
-        group[sex]['41-50'] += 1;
+        group[sex]['Generation X'] += 1;
       } else if (ageCategory === 4) {
-        group[sex]['51-60'] += 1;
-      } else {
-        group[sex]['61+'] += 1;
+        group[sex]['Baby Boomers'] += 1;
       }
     });
     return Object.values(group);
