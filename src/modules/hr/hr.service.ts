@@ -146,45 +146,47 @@ export class HrService {
       };
     });
 
-    const groupData = this.groupByAgeCategory(mapData);
+    function getGeneration(age: number): string {
+      if (age >= 13 && age <= 28) return 'Gen Z';
+      if (age >= 29 && age <= 44) return 'Gen Y';
+      if (age >= 45 && age <= 60) return 'Generation X';
+      if (age >= 61 && age <= 79) return 'Baby Boomers';
+      return 'Other';
+    }
 
-    const male: { label: string[]; amount: number[] } = {
-      label: [],
-      amount: [],
-    };
-    const female: { label: string[]; amount: number[] } = {
-      label: [],
-      amount: [],
-    };
+    function groupByGeneration(data: any[]) {
+      const counts: Record<string, number> = {
+        'Gen Z': 0,
+        'Gen Y': 0,
+        'Generation X': 0,
+        'Baby Boomers': 0,
+      };
 
-    groupData.forEach((item) => {
-      const { sex, ...ageGroups } = item;
-      const labels = Object.keys(ageGroups);
-      const amounts = Object.values(ageGroups);
+      data.forEach((person) => {
+        const gen = getGeneration(person.age);
+        if (counts[gen] !== undefined) {
+          counts[gen]++;
+        }
+      });
 
-      if (sex === 'ຊາຍ') {
-        male.label = labels;
-        male.amount = amounts;
-      } else if (sex === 'ຍິງ') {
-        female.label = labels;
-        female.amount = amounts;
-      }
-    });
+      return {
+        labels: Object.keys(counts),
+        values: Object.values(counts),
+      };
+      // return {
+      //   detail: [
+      //     'Gen Z (13 - 28)',
+      //     'Gen Y (29 - 44)',
+      //     'Generation X (45 - 60)',
+      //     'Baby Boomers (61 - 79)',
+      //   ],
+      //   lables: [],
+      //   values: [],
+    }
 
-    //z 13-28
-    //y 29-44
-    //x 45 - 60
-    //Baby Boomers 61 - 79
-    return {
-      detail: [
-        'Gen Z (13 - 28)',
-        'Gen Y (29 - 44)',
-        'Generation X (45 - 60)',
-        'Baby Boomers (61 - 79)',
-      ],
-      male: male,
-      female: female,
-    };
+    const result = groupByGeneration(mapData);
+
+    return result;
   }
 
   async empBranch() {
@@ -306,7 +308,7 @@ export class HrService {
     const group: Record<
       string,
       {
-        sex: string;
+        age: string;
         'Gen Z': number;
         'Gen Y': number;
         'Generation X': number;
@@ -319,9 +321,9 @@ export class HrService {
       const age = e.age;
       const sex = e.sex;
 
-      if (!group[sex]) {
-        group[sex] = {
-          sex: sex,
+      if (!group[age]) {
+        group[age] = {
+          age: age,
           'Gen Z': 0,
           'Gen Y': 0,
           'Generation X': 0,
@@ -333,13 +335,13 @@ export class HrService {
       //x 45 - 60
       //Baby Boomers 61 - 79
       if (ageCategory === 1) {
-        group[sex]['Gen Z'] += 1;
+        group[age]['Gen Z'] += 1;
       } else if (ageCategory === 2) {
-        group[sex]['Gen Y'] += 1;
+        group[age]['Gen Y'] += 1;
       } else if (ageCategory === 3) {
-        group[sex]['Generation X'] += 1;
+        group[age]['Generation X'] += 1;
       } else if (ageCategory === 4) {
-        group[sex]['Baby Boomers'] += 1;
+        group[age]['Baby Boomers'] += 1;
       }
     });
     return Object.values(group);

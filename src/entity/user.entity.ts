@@ -7,8 +7,6 @@ import {
   PrimaryColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-
-import { Role } from './role.entity';
 import { Branch } from './branch.entity';
 import { RoleEnum } from '../common/enums/role.enum';
 
