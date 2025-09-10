@@ -166,7 +166,7 @@ export class UserService {
         where: {
           id: Number(id),
         },
-        relations: ['role', 'role.permissions'],
+        // relations: ['role', 'role.permissions'],
       });
     } catch (e) {
       return e.message;
