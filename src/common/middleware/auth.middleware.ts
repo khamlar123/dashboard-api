@@ -23,8 +23,10 @@ export class AuthMiddleware implements NestMiddleware {
     const token = authHeader.split(' ')[1];
 
     try {
+      const publicKey = fs.readFileSync('src/common/jwt/public.key');
       const payload = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET,
+        secret: publicKey,
+        algorithms: ['RS512'],
       });
 
       const currentTime = Math.floor(Date.now() / 1000);

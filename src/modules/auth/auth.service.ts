@@ -16,6 +16,7 @@ import { User } from '../../entity/user.entity';
 import { Repository } from 'typeorm';
 import { compareHash } from '../../share/functions/hash-unity';
 import { JwtService } from '@nestjs/jwt';
+import fs from 'fs';
 
 @Injectable()
 export class AuthService {
@@ -47,17 +48,25 @@ export class AuthService {
     return user;
   }
 
-  async signTokens(userName: string, employee_id: string, res: Response) {
+  async signTokens(
+    id: number,
+    userName: string,
+    employee_id: string,
+    res: Response,
+  ) {
     const secret = process.env.JWT_SECRET;
     // String payload doesn't accept expiresIn option, use object payload instead
     const genToken = {
+      id,
       userName,
       employee_id,
     };
 
     // Generate and save new refresh token
+    const privateKey = fs.readFileSync('src/common/jwt/private.key');
     const accessToken = this.jwtService.sign(genToken, {
-      secret: secret,
+      secret: privateKey,
+      algorithm: 'RS512',
       expiresIn: process.env.JWT_TIME,
     });
 

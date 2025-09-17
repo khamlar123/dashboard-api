@@ -19,6 +19,7 @@ export class AuthController {
     );
 
     const getToken = await this.authService.signTokens(
+      getUser.id,
       getUser.name,
       getUser.employee_id,
       res,
