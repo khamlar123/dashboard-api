@@ -16,7 +16,7 @@ import { User } from '../../entity/user.entity';
 import { Repository } from 'typeorm';
 import { compareHash } from '../../share/functions/hash-unity';
 import { JwtService } from '@nestjs/jwt';
-import fs from 'fs';
+import * as fs from 'fs';
 
 @Injectable()
 export class AuthService {
