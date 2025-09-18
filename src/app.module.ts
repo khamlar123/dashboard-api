@@ -83,15 +83,15 @@ import { WebsocketsModule } from './modules/websockets/websockets.module';
   providers: [AppService, JwtService, DatabaseService],
 })
 export class AppModule {
-  // configure(consumer: MiddlewareConsumer) {
-  //   consumer
-  //     .apply(logger)
-  //     .forRoutes('*') // applies to all routes
-  //     .apply(AuthMiddleware)
-  //     .exclude(
-  //       { path: 'auth', method: RequestMethod.POST }, // exclude user creation
-  //       'auth/(.*)', // exclude all user routes for this example
-  //     )
-  //     .forRoutes('*'); // applies to remaining routes
-  // }
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(logger)
+      .forRoutes('*') // applies to all routes
+      .apply(AuthMiddleware)
+      .exclude(
+        { path: 'auth', method: RequestMethod.POST }, // exclude user creation
+        'auth/(.*)', // exclude all user routes for this example
+      )
+      .forRoutes('*'); // applies to remaining routes
+  }
 }
