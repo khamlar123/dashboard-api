@@ -33,6 +33,7 @@ import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from './common/database/database.service';
 import { PaidModule } from './modules/paid/paid.module';
 import { WebsocketsModule } from './modules/websockets/websockets.module';
+import { AccountsModule } from './modules/accounts/accounts.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { WebsocketsModule } from './modules/websockets/websockets.module';
     MonitorModule,
     PaidModule,
     WebsocketsModule,
+    AccountsModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService, DatabaseService],
