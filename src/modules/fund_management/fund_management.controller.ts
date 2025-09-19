@@ -145,4 +145,16 @@ export class FundManagementController {
   ) {
     return await this.fundManagementService.nop(date, branch, option);
   }
+
+  @Get('account')
+  async GetAccount(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    return await this.fundManagementService.getAccount(date, branch, option);
+  }
 }
