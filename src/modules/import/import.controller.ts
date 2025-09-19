@@ -160,4 +160,14 @@ export class ImportController {
   ) {
     return await this.importService.exchangeRate(start, end);
   }
+
+  @Post('account')
+  async Account(
+    @Query('start', new DefaultValuePipe(0))
+    start: string,
+    @Query('end', new DefaultValuePipe(0))
+    end: string,
+  ) {
+    return await this.importService.account(start, end);
+  }
 }

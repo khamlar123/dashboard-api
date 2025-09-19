@@ -28,6 +28,7 @@ import { adminExp } from '../cronjob/sqls/admin_expense.sql';
 import { getDate } from 'date-fns';
 import { loadApp } from '../cronjob/sqls/loan_app.sql';
 import { exchangeRate } from '../cronjob/sqls/exchange_rate.sql';
+import { account } from '../cronjob/sqls/account.sql';
 
 @Injectable()
 export class ImportService {
@@ -660,6 +661,71 @@ export class ImportService {
     return await this.databaseService.query(query, values);
   }
 
+  async account(start: string, end: string) {
+    const startDate = moment(start, 'YYYYMMDD');
+    const endDate = moment(end, 'YYYYMMDD');
+    const dateArray: string[] = [];
+
+    while (startDate.isSameOrBefore(endDate)) {
+      dateArray.push(startDate.format('YYYYMMDD'));
+      startDate.add(1, 'day');
+    }
+
+    const myDate: any[] = [];
+    for (const item of dateArray) {
+      const getQuery = account();
+      const data = await this.databaseService.queryOds(getQuery, [item]);
+      myDate.push(data);
+    }
+
+    // const flatMap = myDate
+    //   .flatMap((m) => m)
+    //   .map((m) => {
+    //     const branch = getBranch(m.branch_code.padEnd(6, '0'));
+    //     const expenseCode = getCode(m.id);
+    //
+    //     return {
+    //       branch: { code: branch?.code },
+    //       amount: m.bal,
+    //       scaled_amount: m.balM,
+    //       date: moment(m.ac_date, 'YYYYMMDD').endOf('day').format('YYYYMMDD'),
+    //       expense_code: { code: expenseCode?.code },
+    //       description: expenseCode?.description,
+    //     };
+    //   });
+
+    const flatMap = myDate
+      .flatMap((m) => m)
+      .map((m) => {
+        return {
+          date: m.OPEN_DATE,
+          branch_id: m.branch,
+          PROD_CODE: m.PROD_CODE,
+          PRDT_NAME: m.PRDT_NAME,
+          count: m.count,
+          type: m.type,
+          con: m.con,
+        };
+      });
+
+    const placeholders = flatMap.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+
+    const query = `INSERT INTO accounts(date, branch_id, PROD_CODE, PRDT_NAME, count, type, con)
+                   VALUES ${placeholders}`;
+
+    const values = flatMap.flatMap((item) => [
+      item.date,
+      item.branch_id,
+      item.PROD_CODE,
+      item.PRDT_NAME,
+      item.count,
+      item.type,
+      item.con,
+    ]);
+
+    return await this.databaseService.query(query, values);
+  }
+
   async getLastItem() {
     const bolLoanQuery = `
   SELECT * FROM bol_loan
@@ -703,6 +769,8 @@ export class ImportService {
 
     const exchangeRate = `SELECT * FROM exchange_rate Order BY eff_dt DESC LIMIT 1`;
 
+    const account = `SELECT * FROM accounts Order BY date DESC LIMIT 1`;
+
     const [
       findLoan,
       findSectorBal,
@@ -718,6 +786,7 @@ export class ImportService {
       [findBdAss],
       [findloadApp],
       [findExchangeRate],
+      [findAccount],
     ] = await Promise.all([
       this.loanRepository.find({
         take: 1,
@@ -758,6 +827,7 @@ export class ImportService {
       this.databaseService.query(bdAss, []),
       this.databaseService.query(loadApp, []),
       this.databaseService.query(exchangeRate, []),
+      this.databaseService.query(account, []),
     ]);
 
     return {
@@ -775,6 +845,7 @@ export class ImportService {
       bd_ass_lia_cap: findBdAss.date,
       'loan-app': findloadApp.date,
       'exchange-rate': findExchangeRate.eff_dt,
+      account: findAccount.date,
     };
   }
 }
