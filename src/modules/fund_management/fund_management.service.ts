@@ -666,7 +666,7 @@ export class FundManagementService {
     const closeTd: number[] = [];
     const closeCasa: number[] = [];
 
-    sumItem.forEach((item: any) => {
+    sortFunc(sumItem, 'date', 'min').forEach((item: any) => {
       if (item.con === 'OPEN') {
         openDate.push(item.date);
         openTd.push(item.TD);
