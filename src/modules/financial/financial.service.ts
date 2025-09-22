@@ -614,46 +614,90 @@ export class FinancialService {
 
     const currentMonth = groupData[groupData.length - 1];
 
-    //month_to_month
-    const findPlan =
-      (currentMonth.plan_amount / 12) * Number(moment(date).format('MM'));
-    const calcProfitMonthToMonth: number = Number(
-      ((currentMonth.amount / findPlan) * 100).toFixed(2),
-    );
+    let resx;
 
-    //month_to_last_month
-    const beforeMonth = groupData[groupData.length - 2];
-    const calcMonthToLastMonth = Number(
-      ((currentMonth.amount / beforeMonth.amount) * 100).toFixed(2),
-    );
+    if (option === 'm') {
+      const findPlan =
+        (currentMonth.plan_amount / 12) * Number(moment(date).format('MM'));
+      const calcProfitMonthToMonth: number = Number(
+        ((currentMonth.amount / findPlan) * 100).toFixed(2),
+      );
 
-    //
-    const [findBefore] = await this.database.query(
-      `call proc_acc_comp_monthly(?, ?)`,
-      [date, branch],
-    );
-    const beforeYearThisMouth = this.groupByTypeAndBrand(findBefore, 'expense');
-    const calcMonthToLastYearThisMonth = Number(
-      ((currentMonth.amount / beforeYearThisMouth) * 100).toFixed(2),
-    );
+      //month_to_last_month
+      const beforeMonth = groupData[groupData.length - 2];
+      const calcMonthToLastMonth = Number(
+        ((currentMonth.amount / beforeMonth.amount) * 100).toFixed(2),
+      );
 
-    return {
-      month_to_month: {
-        amount: currentMonth.amount,
-        beforeAmount: findPlan,
-        precent: calcProfitMonthToMonth,
-      },
-      month_to_last_month: {
-        amount: currentMonth.amount,
-        beforeAmount: beforeMonth.amount,
-        precent: calcMonthToLastMonth,
-      },
-      month_to_last_year_month: {
-        amount: currentMonth.amount,
-        beforeAmount: beforeYearThisMouth,
-        precent: calcMonthToLastYearThisMonth,
-      },
-    };
+      //
+      const [findBefore] = await this.database.query(
+        `call proc_acc_comp_monthly(?, ?)`,
+        [date, branch],
+      );
+      const beforeYearThisMouth = this.groupByTypeAndBrand(
+        findBefore,
+        'expense',
+      );
+      const calcMonthToLastYearThisMonth = Number(
+        ((currentMonth.amount / beforeYearThisMouth) * 100).toFixed(2),
+      );
+
+      resx = {
+        month_to_month: {
+          amount: currentMonth.amount,
+          beforeAmount: findPlan,
+          precent: calcProfitMonthToMonth,
+        },
+        month_to_last_month: {
+          amount: currentMonth.amount,
+          beforeAmount: beforeMonth.amount,
+          precent: calcMonthToLastMonth,
+        },
+        month_to_last_year_month: {
+          amount: currentMonth.amount,
+          beforeAmount: beforeYearThisMouth,
+          precent: calcMonthToLastYearThisMonth,
+        },
+      };
+    } else {
+      const before2yearAmount = groupData[0].amount;
+      const before2yearPlan = groupData[0].plan_amount;
+
+      const before1yearAmount = groupData[1].amount;
+      const before1yearPlan = groupData[1].plan_amount;
+
+      const currentYearAmount = groupData[2].amount;
+      const currentYearPlan = groupData[2].plan_amount;
+
+      resx = {
+        month_to_month: {
+          amount: currentYearAmount,
+          beforeAmount: currentYearPlan,
+          precent:
+            before2yearAmount && before1yearAmount
+              ? +((before1yearAmount / before2yearAmount) * 100).toFixed(2)
+              : 0,
+        },
+        month_to_last_month: {
+          amount: currentYearAmount,
+          beforeAmount: currentYearPlan,
+          precent:
+            before1yearAmount && before1yearPlan
+              ? +((before1yearAmount / before1yearPlan) * 100).toFixed(2)
+              : 0,
+        },
+        month_to_last_year_month: {
+          amount: currentYearAmount,
+          beforeAmount: currentYearPlan,
+          precent:
+            before1yearAmount && currentYearPlan
+              ? +((before1yearAmount / currentYearPlan) * 100).toFixed(2)
+              : 0,
+        },
+      };
+    }
+
+    return resx;
   }
 
   async profitCompareProfit(
@@ -685,46 +729,90 @@ export class FinancialService {
 
     const currentMonth = groupData[groupData.length - 1];
 
-    //month_to_month
-    const findPlan =
-      (currentMonth.plan_amount / 12) * Number(moment(date).format('MM'));
-    const calcProfitMonthToMonth: number = Number(
-      ((currentMonth.amount / findPlan) * 100).toFixed(2),
-    );
+    let resx;
 
-    //month_to_last_month
-    const beforeMonth = groupData[groupData.length - 2];
-    const calcMonthToLastMonth = Number(
-      ((currentMonth.amount / beforeMonth.amount) * 100).toFixed(2),
-    );
+    if (option === 'm') {
+      const findPlan =
+        (currentMonth.plan_amount / 12) * Number(moment(date).format('MM'));
+      const calcProfitMonthToMonth: number = Number(
+        ((currentMonth.amount / findPlan) * 100).toFixed(2),
+      );
 
-    //
-    const [findBefore] = await this.database.query(
-      `call proc_acc_comp_monthly(?, ?)`,
-      [date, branch],
-    );
-    const beforeYearThisMouth = this.groupByTypeAndBrand(findBefore, 'profit');
-    const calcMonthToLastYearThisMonth = Number(
-      ((currentMonth.amount / beforeYearThisMouth) * 100).toFixed(2),
-    );
+      //month_to_last_month
+      const beforeMonth = groupData[groupData.length - 2];
+      const calcMonthToLastMonth = Number(
+        ((currentMonth.amount / beforeMonth.amount) * 100).toFixed(2),
+      );
 
-    return {
-      month_to_month: {
-        amount: currentMonth.amount,
-        beforeAmount: findPlan,
-        precent: calcProfitMonthToMonth,
-      },
-      month_to_last_month: {
-        amount: currentMonth.amount,
-        beforeAmount: beforeMonth.amount,
-        precent: calcMonthToLastMonth,
-      },
-      month_to_last_year_month: {
-        amount: currentMonth.amount,
-        beforeAmount: beforeYearThisMouth,
-        precent: calcMonthToLastYearThisMonth,
-      },
-    };
+      //
+      const [findBefore] = await this.database.query(
+        `call proc_acc_comp_monthly(?, ?)`,
+        [date, branch],
+      );
+      const beforeYearThisMouth = this.groupByTypeAndBrand(
+        findBefore,
+        'expense',
+      );
+      const calcMonthToLastYearThisMonth = Number(
+        ((currentMonth.amount / beforeYearThisMouth) * 100).toFixed(2),
+      );
+
+      resx = {
+        month_to_month: {
+          amount: currentMonth.amount,
+          beforeAmount: findPlan,
+          precent: calcProfitMonthToMonth,
+        },
+        month_to_last_month: {
+          amount: currentMonth.amount,
+          beforeAmount: beforeMonth.amount,
+          precent: calcMonthToLastMonth,
+        },
+        month_to_last_year_month: {
+          amount: currentMonth.amount,
+          beforeAmount: beforeYearThisMouth,
+          precent: calcMonthToLastYearThisMonth,
+        },
+      };
+    } else {
+      const before2yearAmount = groupData[0].amount;
+      const before2yearPlan = groupData[0].plan_amount;
+
+      const before1yearAmount = groupData[1].amount;
+      const before1yearPlan = groupData[1].plan_amount;
+
+      const currentYearAmount = groupData[2].amount;
+      const currentYearPlan = groupData[2].plan_amount;
+
+      resx = {
+        month_to_month: {
+          amount: currentYearAmount,
+          beforeAmount: currentYearPlan,
+          precent:
+            before2yearAmount && before1yearAmount
+              ? +((before1yearAmount / before2yearAmount) * 100).toFixed(2)
+              : 0,
+        },
+        month_to_last_month: {
+          amount: currentYearAmount,
+          beforeAmount: currentYearPlan,
+          precent:
+            before1yearAmount && before1yearPlan
+              ? +((before1yearAmount / before1yearPlan) * 100).toFixed(2)
+              : 0,
+        },
+        month_to_last_year_month: {
+          amount: currentYearAmount,
+          beforeAmount: currentYearPlan,
+          precent:
+            before1yearAmount && currentYearPlan
+              ? +((before1yearAmount / currentYearPlan) * 100).toFixed(2)
+              : 0,
+        },
+      };
+    }
+
+    return resx;
   }
 
   async expense(
