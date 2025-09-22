@@ -65,8 +65,10 @@ export class LoanService {
       dateX.push(e.date);
     });
 
-    dateX = dateX.slice(0, dateX.length - 1);
-    dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    if (option === 'm') {
+      dateX = dateX.slice(0, dateX.length - 1);
+      dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    }
     return {
       plan: plan,
       balance: balance,
@@ -115,8 +117,10 @@ export class LoanService {
       dateX.push(e.date);
     });
 
-    dateX = dateX.slice(0, dateX.length - 1);
-    dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    if (option === 'm') {
+      dateX = dateX.slice(0, dateX.length - 1);
+      dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    }
 
     return {
       plan: plan,
@@ -163,8 +167,10 @@ export class LoanService {
       dateX.push(e.date);
     });
 
-    dateX = dateX.slice(0, dateX.length - 1);
-    dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    if (option === 'm') {
+      dateX = dateX.slice(0, dateX.length - 1);
+      dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    }
     return {
       amount: app_amount,
       date: dateX,
@@ -276,8 +282,10 @@ export class LoanService {
       amount.push(e.classA);
     });
 
-    dateX = dateX.slice(0, dateX.length - 1);
-    dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    if (option === 'm') {
+      dateX = dateX.slice(0, dateX.length - 1);
+      dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    }
 
     return {
       date: dateX,
@@ -323,8 +331,10 @@ export class LoanService {
       amount.push(e.classB);
     });
 
-    dateX = dateX.slice(0, dateX.length - 1);
-    dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    if (option === 'm') {
+      dateX = dateX.slice(0, dateX.length - 1);
+      dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    }
 
     return {
       date: dateX,
@@ -374,8 +384,10 @@ export class LoanService {
       amountE.push(e.classE);
     });
 
-    dateX = dateX.slice(0, dateX.length - 1);
-    dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    if (option === 'm') {
+      dateX = dateX.slice(0, dateX.length - 1);
+      dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    }
 
     return {
       date: dateX,
@@ -496,8 +508,10 @@ export class LoanService {
     const middle: number[] = [];
     const longs: number[] = [];
 
-    dateX = dateX.slice(0, dateX.length - 1);
-    dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    if (option === 'm') {
+      dateX = dateX.slice(0, dateX.length - 1);
+      dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
+    }
 
     groupData.forEach((e) => {
       dateX.push(e.date);
