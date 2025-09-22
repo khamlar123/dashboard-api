@@ -56,7 +56,7 @@ export class LoanService {
     const plan: number[] = [];
     const balance: number[] = [];
     const npl: number[] = [];
-    const dateX: string[] = [];
+    let dateX: string[] = [];
 
     groupData.forEach((e) => {
       plan.push(e.loan_plan);
@@ -65,6 +65,8 @@ export class LoanService {
       dateX.push(e.date);
     });
 
+    dateX = dateX.slice(0, dateX.length - 1);
+    dateX.push(moment(date).format('YYYYMMDD'));
     return {
       plan: plan,
       balance: balance,
@@ -105,13 +107,16 @@ export class LoanService {
 
     const plan: number[] = [];
     const npl: number[] = [];
-    const dateX: string[] = [];
+    let dateX: string[] = [];
 
     groupData.forEach((e) => {
       plan.push(e.npl_plan);
       npl.push(e.npl_balance);
       dateX.push(e.date);
     });
+
+    dateX = dateX.slice(0, dateX.length - 1);
+    dateX.push(moment(date).format('YYYYMMDD'));
 
     return {
       plan: plan,
@@ -151,13 +156,15 @@ export class LoanService {
     }
 
     const app_amount: number[] = [];
-    const dateX: string[] = [];
+    let dateX: string[] = [];
 
     groupData.forEach((e) => {
       app_amount.push(e.app_amount);
       dateX.push(e.date);
     });
 
+    dateX = dateX.slice(0, dateX.length - 1);
+    dateX.push(moment(date).format('YYYYMMDD'));
     return {
       amount: app_amount,
       date: dateX,
@@ -261,13 +268,16 @@ export class LoanService {
       groupData = this.groupByDate(result, 'yearly');
     }
 
-    const dateX: string[] = [];
+    let dateX: string[] = [];
     const amount: number[] = [];
 
     groupData.forEach((e) => {
       dateX.push(e.date);
       amount.push(e.classA);
     });
+
+    dateX = dateX.slice(0, dateX.length - 1);
+    dateX.push(moment(date).format('YYYYMMDD'));
 
     return {
       date: dateX,
@@ -305,13 +315,16 @@ export class LoanService {
       groupData = this.groupByDate(result, 'yearly');
     }
 
-    const dateX: string[] = [];
+    let dateX: string[] = [];
     const amount: number[] = [];
 
     groupData.forEach((e) => {
       dateX.push(e.date);
       amount.push(e.classB);
     });
+
+    dateX = dateX.slice(0, dateX.length - 1);
+    dateX.push(moment(date).format('YYYYMMDD'));
 
     return {
       date: dateX,
@@ -349,7 +362,7 @@ export class LoanService {
       groupData = this.groupByDate(result, 'yearly');
     }
 
-    const dateX: string[] = [];
+    let dateX: string[] = [];
     const amountC: number[] = [];
     const amountD: number[] = [];
     const amountE: number[] = [];
@@ -360,6 +373,9 @@ export class LoanService {
       amountD.push(e.classD);
       amountE.push(e.classE);
     });
+
+    dateX = dateX.slice(0, dateX.length - 1);
+    dateX.push(moment(date).format('YYYYMMDD'));
 
     return {
       date: dateX,
@@ -475,10 +491,13 @@ export class LoanService {
       groupData = this.groupByDate(result, 'yearly');
     }
 
-    const dateX: string[] = [];
+    let dateX: string[] = [];
     const short: number[] = [];
     const middle: number[] = [];
     const longs: number[] = [];
+
+    dateX = dateX.slice(0, dateX.length - 1);
+    dateX.push(moment(date).format('YYYYMMDD'));
 
     groupData.forEach((e) => {
       dateX.push(e.date);
@@ -653,8 +672,6 @@ export class LoanService {
       percent.push(Number(((e / total) * 100).toFixed(2)));
     });
 
-    console.log(total);
-
     return {
       name: name,
       amount: amount,
@@ -736,8 +753,8 @@ export class LoanService {
             option === 'daily'
               ? date
               : option === 'monthly'
-                ? moment(date).format('YYYYMM').toString()
-                : moment(date).format('YYYY'),
+                ? moment(date, 'YYYYMM').endOf('month').format('YYYYMMDD')
+                : moment(date, 'YYYY').endOf('year').format('YYYYMMDD'),
           loan_plan: 0,
           balance: 0,
           npl_balance: 0,
