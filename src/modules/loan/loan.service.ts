@@ -66,7 +66,7 @@ export class LoanService {
     });
 
     if (option === 'm') {
-      dateX = dateX.slice(0, dateX.length - 1);
+      dateX = dateX.slice(0, dateX.length - 2);
       dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
     }
     return {
@@ -118,7 +118,7 @@ export class LoanService {
     });
 
     if (option === 'm') {
-      dateX = dateX.slice(0, dateX.length - 1);
+      dateX = dateX.slice(0, dateX.length - 2);
       dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
     }
 
@@ -168,7 +168,7 @@ export class LoanService {
     });
 
     if (option === 'm') {
-      dateX = dateX.slice(0, dateX.length - 1);
+      dateX = dateX.slice(0, dateX.length - 2);
       dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
     }
     return {
@@ -283,7 +283,7 @@ export class LoanService {
     });
 
     if (option === 'm') {
-      dateX = dateX.slice(0, dateX.length - 1);
+      dateX = dateX.slice(0, dateX.length - 2);
       dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
     }
 
@@ -332,7 +332,7 @@ export class LoanService {
     });
 
     if (option === 'm') {
-      dateX = dateX.slice(0, dateX.length - 1);
+      dateX = dateX.slice(0, dateX.length - 2);
       dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
     }
 
@@ -385,7 +385,7 @@ export class LoanService {
     });
 
     if (option === 'm') {
-      dateX = dateX.slice(0, dateX.length - 1);
+      dateX = dateX.slice(0, dateX.length - 2);
       dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
     }
 
@@ -509,7 +509,7 @@ export class LoanService {
     const longs: number[] = [];
 
     if (option === 'm') {
-      dateX = dateX.slice(0, dateX.length - 1);
+      dateX = dateX.slice(0, dateX.length - 2);
       dateX.push(moment().add(-1, 'd').format('YYYYMMDD'));
     }
 
