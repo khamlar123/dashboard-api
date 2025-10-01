@@ -34,6 +34,7 @@ import { DatabaseService } from './common/database/database.service';
 import { PaidModule } from './modules/paid/paid.module';
 import { WebsocketsModule } from './modules/websockets/websockets.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
+import { MainModule } from './modules/main/main.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { AccountsModule } from './modules/accounts/accounts.module';
     PaidModule,
     WebsocketsModule,
     AccountsModule,
+    MainModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService, DatabaseService],
