@@ -38,4 +38,28 @@ export class MainController {
   ) {
     return await this.mainService.group3(date);
   }
+
+  @Get('group4')
+  async group4(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.mainService.group4(date);
+  }
+
+  @Get('group5')
+  async group5(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.mainService.group5(date);
+  }
+
+  @Get('group6')
+  async group6(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.mainService.group6(date);
+  }
 }
