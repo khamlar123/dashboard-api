@@ -357,7 +357,8 @@ export class MainService {
       name,
       deposits,
       plans,
-      deposit_type: result,
+      // deposit_type: result,
+      treasury,
     };
   }
 
