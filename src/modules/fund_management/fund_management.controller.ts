@@ -157,4 +157,96 @@ export class FundManagementController {
   ): Promise<any> {
     return await this.fundManagementService.getAccount(date, branch, option);
   }
+
+  @Get('exchange')
+  async GetExchange(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    return await this.fundManagementService.getExchange(date, branch, option);
+  }
+
+  @Get('nop-all')
+  async GetAllNop(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    return await this.fundManagementService.allNop(date, branch, option);
+  }
+
+  @Get('ccy-all')
+  async NopCcy(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    return await this.fundManagementService.ccyNop(date, branch, option);
+  }
+
+  @Get('ccy-type')
+  async NopType(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    return await this.fundManagementService.ccyType(date, branch, option);
+  }
+
+  @Get('deposit-by-type')
+  async DepositType(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    return await this.fundManagementService.depositType(date, branch, option);
+  }
+
+  @Get('deposit-by-customer-type')
+  async DepositCustomerType(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    return await this.fundManagementService.depositCustomerType(
+      date,
+      branch,
+      option,
+    );
+  }
+
+  @Get('cash-deposit')
+  async CashDeposit(
+    @Query('branch', new DefaultValuePipe(''))
+    branch: string,
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+    @Query('option', new DefaultValuePipe(''))
+    option: 'd' | 'm' | 'y',
+  ): Promise<any> {
+    return await this.fundManagementService.cashAndDeposit(
+      date,
+      branch,
+      option,
+    );
+  }
 }
