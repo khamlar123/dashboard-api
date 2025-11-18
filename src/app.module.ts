@@ -35,6 +35,7 @@ import { PaidModule } from './modules/paid/paid.module';
 import { WebsocketsModule } from './modules/websockets/websockets.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { MainModule } from './modules/main/main.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -53,7 +54,7 @@ import { MainModule } from './modules/main/main.module';
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'test',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true, // Sync models with database (disable in production)
+      synchronize: false, // Sync models with database (disable in production)
     }),
     ScheduleModule.forRoot(),
     UserModule,
@@ -82,6 +83,7 @@ import { MainModule } from './modules/main/main.module';
     WebsocketsModule,
     AccountsModule,
     MainModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService, DatabaseService],

@@ -170,7 +170,7 @@ export class FundManagementController {
     return await this.fundManagementService.getExchange(date, branch, option);
   }
 
-  @Get('nop-all')
+  @Get('all-nop')
   async GetAllNop(
     @Query('branch', new DefaultValuePipe(''))
     branch: string,
@@ -182,7 +182,7 @@ export class FundManagementController {
     return await this.fundManagementService.allNop(date, branch, option);
   }
 
-  @Get('ccy-all')
+  @Get('all-ccy')
   async NopCcy(
     @Query('branch', new DefaultValuePipe(''))
     branch: string,

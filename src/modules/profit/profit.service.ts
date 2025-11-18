@@ -317,8 +317,6 @@ export class ProfitService {
       mapData.name.push(e.name);
     });
 
-    console.log('result');
-
     return mapData;
   }
 

@@ -159,18 +159,22 @@ export class ImportService {
           bol_type: m.bol_code,
           date: m.AC_DT,
           amount: m.amount,
+          credit: m.credit,
+          ccy: m.ccy,
         };
       });
 
-    const placeholders = mapData.map(() => '(?, ?, ?, ?)').join(', ');
+    const placeholders = mapData.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
     const values = mapData.flatMap((item) => [
       item.branch_id,
       item.bol_type,
       item.date,
       item.amount,
+      item.ccy,
+      item.credit,
     ]);
 
-    const query = `INSERT INTO bol_loan (branch_id, bol_type, date, amount)
+    const query = `INSERT INTO bol_loan (branch_id, bol_type, date, amount, ccy, credit)
                    VALUES ${placeholders}`;
 
     return await this.databaseService.query(query, values);

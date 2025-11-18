@@ -51,7 +51,9 @@ export const loan_bol = () => `
   select
     a.branch,
     a.bol_code,
+    a.ccy,
     a.AC_DT,
+    nvl(sum(credit),0) as credit,
     sum(a.CDCBALLAK) as amount
-  from loan_bol a group by branch, ccy, bol_code;
+  from loan_bol a group by branch, ccy, bol_code, AC_DT;
 `;

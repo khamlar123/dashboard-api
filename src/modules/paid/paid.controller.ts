@@ -15,15 +15,15 @@ import { PaidService } from './paid.service';
 export class PaidController {
   constructor(private readonly paidService: PaidService) {}
 
-  @Get('/paid')
-  async planNplDaily(
-    @Query('branch', new DefaultValuePipe(''))
-    branch: string,
-    @Query('date', new DefaultValuePipe(''))
-    date: string,
-    @Query('option', new DefaultValuePipe(''))
-    option: string,
-  ) {
-    return await this.paidService.paid(date, branch, option);
-  }
+  // @Get('/paid')
+  // async planNplDaily(
+  //   @Query('branch', new DefaultValuePipe(''))
+  //   branch: string,
+  //   @Query('date', new DefaultValuePipe(''))
+  //   date: string,
+  //   @Query('option', new DefaultValuePipe(''))
+  //   option: string,
+  // ) {
+  //   return await this.paidService.paid(date, branch, option);
+  // }
 }

@@ -23,6 +23,12 @@ export class BolLoan {
   @JoinColumn({ name: 'branch_id' })
   branch: Branch;
 
+  @Column({ type: 'varchar', length: 30 })
+  ccy: string;
+
+  @Column({ type: 'decimal', precision: 30, scale: 2 }) // Adjusted decimal size
+  credit: number;
+
   @ManyToOne(() => BolType, (b) => b.bolLoan)
   @JoinColumn({ name: 'bol_type' })
   capitalType: BolType;

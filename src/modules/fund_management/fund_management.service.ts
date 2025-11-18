@@ -747,7 +747,6 @@ export class FundManagementService {
     const exVnd: number[] = [];
 
     function loopSetData(array: any) {
-      console.log('array', array);
       dates.forEach((m) => {
         const itx = array.filter((f) => f.date === m);
 
