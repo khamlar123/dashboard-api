@@ -170,4 +170,14 @@ export class ImportController {
   ) {
     return await this.importService.account(start, end);
   }
+
+  @Post('loan-ccy')
+  async loanCcy(
+    @Query('start', new DefaultValuePipe(0))
+    start: string,
+    @Query('end', new DefaultValuePipe(0))
+    end: string,
+  ) {
+    return await this.importService.loanCcyImport(start, end);
+  }
 }

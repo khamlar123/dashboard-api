@@ -29,6 +29,7 @@ import { getDate } from 'date-fns';
 import { loadApp } from '../cronjob/sqls/loan_app.sql';
 import { exchangeRate } from '../cronjob/sqls/exchange_rate.sql';
 import { account } from '../cronjob/sqls/account.sql';
+import { loanCcy } from '../cronjob/sqls/loan_ccy.sql';
 
 @Injectable()
 export class ImportService {
@@ -730,6 +731,50 @@ export class ImportService {
     return await this.databaseService.query(query, values);
   }
 
+  async loanCcyImport(start: string, end: string) {
+    const startDate = moment(start, 'YYYYMMDD');
+    const endDate = moment(end, 'YYYYMMDD');
+    const dateArray: string[] = [];
+
+    while (startDate.isSameOrBefore(endDate)) {
+      dateArray.push(startDate.format('YYYYMMDD'));
+      startDate.add(1, 'day');
+    }
+
+    const myData: any[] = [];
+    for (const item of dateArray) {
+      const getQuery = loanCcy();
+      const data = await this.databaseService.queryOds(getQuery, [item]);
+      myData.push(data);
+    }
+
+    const flatMap = myData
+      .flatMap((m) => m)
+      .map((m) => {
+        return {
+          AC_DATE: m.AC_DATE,
+          CCY: m.ccy,
+          CDDBAL: m.CDDBAL,
+          CDCBAL: m.CDCBAL,
+          BALLAK: m.BAL_LAK,
+        };
+      });
+
+    const placeholders = flatMap.map(() => '(?, ?, ?, ?, ?)').join(', ');
+    const query = `INSERT INTO loan_ccy (AC_DATE, CCY, CDDBAL, CDCBAL, BALLAK)
+                   VALUES ${placeholders}`;
+
+    const values = flatMap.flatMap((item) => [
+      item.AC_DATE,
+      item.CCY,
+      item.CDDBAL,
+      item.CDCBAL,
+      item.BALLAK,
+    ]);
+
+    return await this.databaseService.query(query, values);
+  }
+
   async getLastItem() {
     const bolLoanQuery = `
   SELECT * FROM bol_loan
@@ -775,6 +820,8 @@ export class ImportService {
 
     const account = `SELECT * FROM accounts Order BY date DESC LIMIT 1`;
 
+    const loanCcy = `SELECT * FROM loan_ccy Order BY AC_DATE DESC LIMIT 1`;
+
     const [
       findLoan,
       findSectorBal,
@@ -791,6 +838,7 @@ export class ImportService {
       [findloadApp],
       [findExchangeRate],
       [findAccount],
+      [findLoanCcy],
     ] = await Promise.all([
       this.loanRepository.find({
         take: 1,
@@ -832,6 +880,7 @@ export class ImportService {
       this.databaseService.query(loadApp, []),
       this.databaseService.query(exchangeRate, []),
       this.databaseService.query(account, []),
+      this.databaseService.query(loanCcy, []),
     ]);
 
     return {
@@ -850,6 +899,7 @@ export class ImportService {
       'loan-app': findloadApp.date,
       'exchange-rate': findExchangeRate.eff_dt,
       account: findAccount.date,
+      'loan-ccy': findLoanCcy.AC_DATE,
     };
   }
 }

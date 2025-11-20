@@ -60,4 +60,36 @@ export class DashboardController {
   ) {
     return await this.dashboardService.funds(date);
   }
+
+  @Get('/use-fund')
+  async useFunds(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.dashboardService.useFunds(date);
+  }
+
+  @Get('/loan-sector')
+  async loanSector(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.dashboardService.loanSector(date);
+  }
+
+  @Get('/pl-npl')
+  async plNpl(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.dashboardService.plNpl(date);
+  }
+
+  @Get('/financial-ratios')
+  async financialRatios(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.dashboardService.financialRatios(date);
+  }
 }
