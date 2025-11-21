@@ -471,7 +471,14 @@ export class DashboardService {
     pushItxToRes(Number(allNop.nopall), 'NOP (All)');
 
     nopCcy.forEach((e) => {
-      pushItxToRes(Number(e.nop), 'NOP ' + `(${e.ccy})`);
+      if (
+        e.ccy !== 'CNY' &&
+        e.ccy !== 'EUR' &&
+        e.ccy !== 'LAK' &&
+        e.ccy !== 'VND'
+      ) {
+        pushItxToRes(Number(e.nop), 'NOP ' + `(${e.ccy})`);
+      }
     });
 
     pushItxToRes(
