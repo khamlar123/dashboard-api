@@ -9,7 +9,6 @@ import {
   PrimaryColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from './user.entity';
 import { Permission } from './permission.entity';
 
 @Entity()
@@ -22,9 +21,6 @@ export class Role {
 
   @Column({ type: 'boolean', default: true })
   is_active?: boolean;
-
-  // @OneToMany(() => User, (user) => user.role)
-  // user: User[];
 
   @ManyToMany(() => Permission)
   @JoinTable()

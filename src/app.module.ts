@@ -28,7 +28,6 @@ import { MarketModule } from './modules/market/market.module';
 import { FundManagementModule } from './modules/fund_management/fund_management.module';
 import { HrModule } from './modules/hr/hr.module';
 import { MonitorModule } from './modules/monitor/monitor.module';
-import { UserModule } from './modules/user/user.module';
 import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from './common/database/database.service';
 import { PaidModule } from './modules/paid/paid.module';
@@ -57,7 +56,6 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
       synchronize: false, // Sync models with database (disable in production)
     }),
     ScheduleModule.forRoot(),
-    UserModule,
     AuthModule,
     BranchModule,
     IncomePlanModule,

@@ -14,7 +14,6 @@ import { BolLoan } from './bol_loan.entity';
 import { AdminBal } from './admin_bal.entity';
 import { Liquidity } from './liquidity.entity';
 import { Employee } from './employee.entity';
-import { User } from './user.entity';
 
 @Entity()
 export class Branch {
@@ -68,7 +67,4 @@ export class Branch {
 
   @OneToMany(() => Employee, (e) => e.branch)
   employee: Employee[];
-
-  @OneToMany(() => User, (e) => e.branch)
-  users: User[];
 }

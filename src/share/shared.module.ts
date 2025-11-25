@@ -15,7 +15,6 @@ import { Deposit } from '../entity/deposit.entity';
 import { Employee } from '../entity/employee.entity';
 import { EmployeeNew } from '../entity/employee_new.entity';
 import { EmployeeLeft } from '../entity/employee_left.entity';
-import { User } from '../entity/user.entity';
 import { Role } from '../entity/role.entity';
 import { Permission } from '../entity/permission.entity';
 
@@ -37,7 +36,6 @@ import { Permission } from '../entity/permission.entity';
       Employee,
       EmployeeNew,
       EmployeeLeft,
-      User,
       Role,
       Permission,
     ]),

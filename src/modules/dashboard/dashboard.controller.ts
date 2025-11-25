@@ -92,4 +92,20 @@ export class DashboardController {
   ) {
     return await this.dashboardService.financialRatios(date);
   }
+
+  @Get('/sum-period')
+  async sumPeriod(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.dashboardService.sumPeriod(date, 'all', 'd');
+  }
+
+  @Get('/dp-product')
+  async dpProduct(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ) {
+    return await this.dashboardService.dpProduct(date);
+  }
 }

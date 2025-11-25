@@ -29,7 +29,9 @@ export class BranchService {
 
   async findAll() {
     try {
-      return await this.branchRepository.find();
+      const query = `   SELECT DISTINCT sub_branch_code as code, branch_local_name as name
+                      FROM ods.rpt_branch;`;
+      return await this.db.queryOds(query, []);
     } catch (e) {
       return e.message;
     }

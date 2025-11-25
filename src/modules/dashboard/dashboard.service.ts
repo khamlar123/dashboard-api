@@ -11,10 +11,15 @@ import { FundInterface } from '../../common/interfaces/fund.interface';
 import * as moment from 'moment';
 import { reduceFunc } from '../../share/functions/reduce-func';
 import { sortFunc } from '../../share/functions/sort-func';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly httpService: HttpService,
+  ) {}
 
   async allAssets(date: string): Promise<AssetsInterface> {
     checkCurrentDate(date);
@@ -517,6 +522,88 @@ export class DashboardService {
     );
 
     return resx;
+  }
+
+  async sumPeriod(date: string, branch: string, option: 'd' | 'm' | 'y') {
+    checkCurrentDate(date);
+
+    let result: any = null;
+    let groupData: any = null;
+
+    if (option === 'd') {
+      [result] = await this.database.query(
+        `call proc_ln_plan_bal_npl_daily(?, ?)`,
+        [date, branch],
+      );
+      // groupData = this.groupByDate(result, 'daily');
+      groupData = result;
+    }
+
+    if (option === 'm') {
+      [result] = await this.database.query(
+        `call proc_ln_plan_bal_npl_monthly(?, ?)`,
+        [date, branch],
+      );
+      // groupData = this.groupByDate(result, 'monthly');
+      groupData = sortFunc(result, 'monthend', 'min');
+    }
+
+    if (option === 'y') {
+      [result] = await this.database.query(
+        `call proc_ln_plan_bal_npl_yearly(?, ?)`,
+        [date, branch],
+      );
+      // groupData = this.groupByDate(result, 'yearly');
+      groupData = sortFunc(result, 'monthend', 'min');
+    }
+    const short: number[] = [];
+    const middle: number[] = [];
+    const longs: number[] = [];
+
+    if (branch.toLocaleLowerCase() === 'all') {
+      groupData.slice(groupData.length - 18, groupData.length).forEach((e) => {
+        short.push(Number(e.short));
+        middle.push(Number(e.middle));
+        longs.push(Number(e.longs));
+      });
+    } else {
+      short.push(Number(groupData[groupData.length - 1].short));
+      middle.push(Number(groupData[groupData.length - 1].middle));
+      longs.push(Number(groupData[groupData.length - 1].longs));
+    }
+
+    const total = Number(
+      (reduceFunc(short) + reduceFunc(middle) + reduceFunc(longs)).toFixed(2),
+    );
+
+    return {
+      short: reduceFunc(short),
+      percentShort: +((reduceFunc(short) / total) * 100).toFixed(2),
+      middle: reduceFunc(middle),
+      percentMid: +((reduceFunc(middle) / total) * 100).toFixed(2),
+      longs: reduceFunc(longs),
+      percentLong: +((reduceFunc(longs) / total) * 100).toFixed(2),
+      total: total,
+    };
+  }
+
+  async dpProduct(date: string) {
+    checkCurrentDate(date);
+    try {
+      const getYear = moment(date).format('YYYY');
+
+      const response = await firstValueFrom(
+        this.httpService.get(
+          `${process.env.DP_URL}/epd-product/api/product/all-product?date=${date}&year=${getYear}`,
+        ),
+      );
+
+      console.log('response.data', response.data);
+
+      return response.data.data;
+    } catch (error) {
+      throw error;
+    }
   }
 
   private groupByDateAndType(data: any[], option: 'deposit' | 'customer') {

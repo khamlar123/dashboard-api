@@ -8,27 +8,27 @@ import { cookie } from '../../share/functions/cookie';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('login')
-  async login(
-    @Body() dto: LoginDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const getUser = await this.authService.validateUser(
-      dto.employee_id,
-      dto.password,
-    );
-
-    const getToken = await this.authService.signTokens(
-      getUser.id,
-      getUser.name,
-      getUser.employee_id,
-      res,
-    );
-
-    return {
-      accessToken: getToken,
-    };
-  }
+  // @Post('login')
+  // async login(
+  //   @Body() dto: LoginDto,
+  //   @Res({ passthrough: true }) res: Response,
+  // ) {
+  //   const getUser = await this.authService.validateUser(
+  //     dto.employee_id,
+  //     dto.password,
+  //   );
+  //
+  //   const getToken = await this.authService.signTokens(
+  //     getUser.id,
+  //     getUser.name,
+  //     getUser.employee_id,
+  //     res,
+  //   );
+  //
+  //   return {
+  //     accessToken: getToken,
+  //   };
+  // }
 
   //keycloak
   // @Post('login')

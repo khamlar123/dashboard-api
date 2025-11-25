@@ -9,7 +9,6 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Repository } from 'typeorm';
-import { User } from '../../entity/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 
 @WebSocketGateway({
@@ -22,10 +21,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  constructor(
-    @InjectRepository(User)
-    private readonly userRes: Repository<User>,
-  ) {}
+  constructor() {}
 
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
@@ -45,7 +41,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('get_users')
   async handleGetUsers() {
     console.log('📩 get_user event:');
-    return await this.userRes.find({});
+    // return await this.userRes.find({});
   }
 
   @SubscribeMessage('join-room')
