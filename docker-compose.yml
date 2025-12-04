@@ -1,0 +1,22 @@
+services:
+  api:
+    build: .
+    container_name: dashboard-api
+    ports:
+      - "3004:3004"
+    networks:
+      - nginx_report_custom_net
+    restart: always
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - .:/app
+    command: npm run start:prod
+
+networks:
+  nginx_report_custom_net:
+    external: true
+    driver: bridge
+
+#RUN docker compose up -d
+#DELETE docker compose down
