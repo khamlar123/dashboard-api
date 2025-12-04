@@ -406,7 +406,6 @@ export class DashboardService {
     ]);
 
     const lastData = result[result.length - 1];
-    console.log('🚀 ~ plNpl ~ lastData: ', lastData);
 
     let calcPercent: number = 0;
 
