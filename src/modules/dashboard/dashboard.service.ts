@@ -164,10 +164,11 @@ export class DashboardService {
   async funds(date: string): Promise<FundInterface> {
     checkCurrentDate(date);
 
-    const [[capital], [ccy], [deposits]] = await Promise.all([
+    const [[capital], [ccy], [deposits], [rate]] = await Promise.all([
       this.database.query(`call proc_main_capital(?)`, [date]),
       this.database.query(`call proc_main_capital_ccy(?)`, [date]),
-      this.database.query(`call proc_treasury_dep_daily(?, ?)`, [date, 'all']),
+      this.database.query(`call proc_market_dep_monthly(?, ?)`, [date, 'all']),
+      this.database.query(`call proc_main_exchange_rate(?)`, [date]),
     ]);
 
     if (!capital) {
@@ -183,6 +184,9 @@ export class DashboardService {
     const depCcy: string[] = [];
     const bolAmount: number[] = [];
     const bolCcy: string[] = [];
+    const capAmount: number[] = [];
+    const convertBolLak: number[] = [];
+    const convertDepLak: number[] = [];
 
     ccy.forEach((e) => {
       const itx = {
@@ -195,6 +199,14 @@ export class DashboardService {
       depCcy.push(e.code);
       bolAmount.push(Number(e.bol_amt));
       bolCcy.push(e.code);
+      if (e.code !== 'LAK') {
+        const myRate = rate.find((f) => f.ccy === e.code).rate;
+        convertBolLak.push(Number((e.bol_amt * myRate).toFixed(2)));
+        convertDepLak.push(Number((e.dep_amt * myRate).toFixed(2)));
+      } else {
+        convertBolLak.push(Number(e.bol_amt));
+        convertDepLak.push(Number(e.dep_amt));
+      }
     });
 
     const mapItem = capital.map((m) => {
@@ -203,6 +215,7 @@ export class DashboardService {
         deposit: Number(m.dep_amt),
         bol: Number(m.bol_amt),
         plan: Number(m.CAP_PLAN),
+        capAmount: Number(m.CAP_AMOUNT),
       };
     });
 
@@ -211,6 +224,7 @@ export class DashboardService {
       deposit.push(e.deposit);
       bol.push(e.bol);
       plan.push(e.plan);
+      capAmount.push(e.capAmount);
     });
 
     const convertMont = moment(date).format('YYYYMM').toString();
@@ -253,10 +267,10 @@ export class DashboardService {
       }
     });
 
-    const mergeKeys = ['CURRENT ACCOUNT', 'DORMANT ACCOUNT', 'OTHER ACCOUNT'];
+    const mergeKeys = ['DAILY ACCOUNT', 'DORMANT ACCOUNT', 'OTHER ACCOUNT'];
     let merged: any = null;
 
-    const res = groupData.reduce((acc: any, item: any) => {
+    const mergerOther = groupData.reduce((acc: any, item: any) => {
       if (mergeKeys.includes(item.dep_type_desc)) {
         // Create merged object if first time
         if (!merged) {
@@ -278,28 +292,41 @@ export class DashboardService {
       return acc;
     }, []);
 
-    res.push(merged);
+    mergerOther.push(merged);
 
-    const depositType: { types: string[]; amounts: number[] } = {
+    const depositType: { types: string[]; amounts: number[]; total: number } = {
       types: [],
       amounts: [],
+      total: 0,
     };
 
-    res.forEach((e) => {
-      depositType.types.push(e.dep_type_desc);
+    mergerOther.forEach((e) => {
+      depositType.types.push(
+        e.dep_type_desc === 'CURRENT ACCOUNT'
+          ? ' ເງິນຝາກກະແສລາຍວັນ'
+          : e.dep_type_desc === 'FIX ACCOUNT'
+            ? ' ເງິນຝາກປະຈຳ'
+            : e.dep_type_desc === 'SAVING ACCOUNT'
+              ? ' ເງິນຝາກອັດຕາໄວ'
+              : e.dep_type_desc === 'OTHER ACCOUNT'
+                ? ' ເງິນຝາກອື່ນໆ'
+                : e.dep_type_desc,
+      );
       depositType.amounts.push(Number(e.cdcballak));
     });
 
+    depositType.total = reduceFunc(depositType.amounts);
     return {
       chart: {
         dates,
         deposit,
         bol,
         plan,
+        capAmount,
       },
       ccyItem: ccyItem,
-      deposits: { amount: depAmount, ccy: depCcy },
-      bols: { amount: bolAmount, ccy: bolCcy },
+      deposits: { amount: depAmount, ccy: depCcy, lakAmount: convertDepLak },
+      bols: { amount: bolAmount, ccy: bolCcy, lakAmount: convertBolLak },
       depositType: depositType,
     };
   }
@@ -378,22 +405,24 @@ export class DashboardService {
       date,
     ]);
 
-    const npl: number[] = [];
-    const pl: number[] = [];
+    const lastData = result[result.length - 1];
+    console.log('🚀 ~ plNpl ~ lastData: ', lastData);
+
     let calcPercent: number = 0;
 
-    result.forEach((e) => {
-      npl.push(Number(e.npl_balance));
-      pl.push(+(Number(e.balance) - Number(e.npl_balance)).toFixed(2));
-    });
-
-    calcPercent = +(reduceFunc(npl) + reduceFunc(pl)).toFixed(2);
-    const calcNpl = +((reduceFunc(npl) * 100) / calcPercent).toFixed(2);
-    const calcPl = +((reduceFunc(pl) * 100) / calcPercent).toFixed(2);
+    calcPercent = +(
+      Number(lastData.npl_balance) + Number(lastData.balance)
+    ).toFixed(2);
+    const calcNpl = +(
+      (Number(lastData.npl_balance) * 100) /
+      calcPercent
+    ).toFixed(2);
+    const calcPl = +((Number(lastData.balance) * 100) / calcPercent).toFixed(2);
 
     return {
-      npl: reduceFunc(npl),
-      pl: reduceFunc(pl),
+      npl: Number(lastData.npl_balance),
+      pl: +(Number(lastData.balance) - Number(lastData.npl_balance)).toFixed(2),
+      total: Number(lastData.balance),
       nplPercent: calcNpl,
       plPercent: calcPl,
     };
@@ -510,7 +539,7 @@ export class DashboardService {
 
     pushItxToRes(
       +(
-        (Number(depositLast.CAP_AMOUNT) / Number(loanLast.balance)) *
+        (Number(loanLast.balance) / Number(depositLast.CAP_AMOUNT)) *
         100
       ).toFixed(2),
       'ແຫຼ່ງທືນ/ນຳໃຊ້ທືນ',
@@ -598,9 +627,23 @@ export class DashboardService {
         ),
       );
 
-      console.log('response.data', response.data);
+      const res = response.data.data;
+      // res.allProducts.calcAtm =
+      //   res.allProducts.atm - res.allProducts.atmLastMonth;
+      // res.allProducts.calcMeporm =
+      //   res.allProducts.meporm - res.allProducts.mepormLastMonth;
+      // res.allProducts.calcMebank =
+      //   res.allProducts.mebank - res.allProducts.mebankLastMonth;
+      // res.allProducts.calcQr = res.allProducts.qr - res.allProducts.qrLastMonth;
+      // res.allProducts.calcSms =
+      //   res.allProducts.sms - res.allProducts.smsLastMonth;
+      //
+      // delete res.allProducts.atmLastMonth;
+      // delete res.allProducts.mebankLastMonth;
+      // delete res.allProducts.qrLastMonth;
+      // delete res.allProducts.smsLastMonth;
 
-      return response.data.data;
+      return res;
     } catch (error) {
       throw error;
     }
