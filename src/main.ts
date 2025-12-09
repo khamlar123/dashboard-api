@@ -6,7 +6,6 @@ import { HttpExceptionFilter } from './common/Interceptors/http-exception.filter
 import { LoggingInterceptor } from './common/Interceptors/logging.interceptor';
 import { Logger } from '@nestjs/common';
 import { AuthSwagger } from './common/middleware/auth.swagger';
-import { apiReference } from '@scalar/nestjs-api-reference';
 import { ValidationPipe } from './common/pipes/validation.pipe';
 
 async function bootstrap() {
@@ -20,30 +19,31 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
+  app.enableCors({
+    origin:
+      process.env.NODE_ENV !== 'production'
+        ? true
+        : 'http://report.apb.com.local:5000',
+  });
   app.use('/docs', new AuthSwagger().use);
   SwaggerModule.setup('docs', app, document);
   app.useGlobalPipes(new ValidationPipe());
-  // app.use(
-  //   '/scalar',
-  //   apiReference({
-  //     content: document,
-  //   }),
-  // );
-
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.enableCors();
 
-  // const port = process.env.PORT as string;
-  // const host = process.env.HOST as any;
-  //
-  // await app.listen(parseInt(port), host);
-  // const url = await app.getUrl(); // works now
-  // Logger.log(`🚀 App running at ${url}`);
+  const port = process.env.PORT as string;
 
-  await app.listen(process.env.PORT ?? 5004, () => {
-    Logger.log(`Listening at http://localhost:${process.env.PORT}`);
+  await app.listen(parseInt(port), () => {
+    const server = app.getHttpServer();
+    const address = server.address();
+    const host =
+      address.address === '::' || address.address === '0.0.0.0'
+        ? process.env.HOST // 👈 replace with ENV or auto-detect
+        : address.address;
+
+    Logger.log(`Listening at http://${host}/api`);
+    Logger.log(`Swagger UI: http://${host}/docs`);
   });
 }
 
