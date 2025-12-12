@@ -19,12 +19,13 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  app.enableCors({
-    origin:
-      process.env.NODE_ENV !== 'production'
-        ? true
-        : 'http://report.apb.com.local:5000',
-  });
+  app.enableCors(true);
+  // app.enableCors({
+  //   origin:
+  //     process.env.NODE_ENV !== 'production'
+  //       ? true
+  //       : 'http://report.apb.com.local:5000',
+  // });
   app.use('/docs', new AuthSwagger().use);
   SwaggerModule.setup('docs', app, document);
   app.useGlobalPipes(new ValidationPipe());
