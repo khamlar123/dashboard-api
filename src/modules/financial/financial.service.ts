@@ -114,7 +114,17 @@ export class FinancialService {
     });
 
     return {
-      tables: result,
+      tables: result.map((m) => {
+        return {
+          cap_amount1: +m.CAP_AMOUNT1,
+          cap_amount2: +m.CAP_AMOUNT2,
+          cap_plan: +m.CAP_PLAN,
+          code: m.code,
+          name: m.name,
+          diff: +m.diff,
+          percent: +m.percent,
+        };
+      }),
       total: {
         total_plan: reduceFunc(result.map((m) => +m.CAP_PLAN)),
         total_amount1: reduceFunc(result.map((m) => +m.CAP_AMOUNT1)),
@@ -317,7 +327,17 @@ export class FinancialService {
     });
 
     return {
-      tables: result,
+      tables: result.map((m) => {
+        return {
+          code: m.code,
+          name: m.name,
+          dep_plan: +m.dep_plan,
+          dep_amount1: +m.dep_amount1,
+          dep_amount2: +m.dep_amount2,
+          diff: +m.diff,
+          percent: +m.percent,
+        };
+      }),
       total: {
         total_plan: reduceFunc(result.map((m) => +m.dep_plan)),
         total_amount1: reduceFunc(result.map((m) => +m.dep_amount1)),
