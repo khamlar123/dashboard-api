@@ -13,6 +13,7 @@ import { reduceFunc } from '../../share/functions/reduce-func';
 import { sortFunc } from '../../share/functions/sort-func';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { checkInputDate } from '../../share/functions/check-input-date';
 
 @Injectable()
 export class DashboardService {
@@ -22,8 +23,11 @@ export class DashboardService {
   ) {}
 
   async allAssets(date: string): Promise<AssetsInterface> {
-    checkCurrentDate(date);
-    const [result] = await this.database.query(`call proc_main_ACL(?)`, [date]);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
+    const [result] = await this.database.query(`call proc_main_ACL(?)`, [
+      myDate,
+    ]);
 
     if (!result) {
       throw new NotFoundException('Profit not found');
@@ -42,8 +46,11 @@ export class DashboardService {
   }
 
   async allLiability(date: string): Promise<LiabilityInterface> {
-    checkCurrentDate(date);
-    const [result] = await this.database.query(`call proc_main_ACL(?)`, [date]);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
+    const [result] = await this.database.query(`call proc_main_ACL(?)`, [
+      myDate,
+    ]);
 
     if (!result) {
       throw new NotFoundException('Profit not found');
@@ -65,8 +72,11 @@ export class DashboardService {
   }
 
   async allCapital(date: string): Promise<CapitalInterface> {
-    checkCurrentDate(date);
-    const [result] = await this.database.query(`call proc_main_ACL(?)`, [date]);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
+    const [result] = await this.database.query(`call proc_main_ACL(?)`, [
+      myDate,
+    ]);
 
     if (!result) {
       throw new NotFoundException('Profit not found');
@@ -87,9 +97,10 @@ export class DashboardService {
   }
 
   async profit(date: string): Promise<ProfitInterface> {
-    checkCurrentDate(date);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
     const [result] = await this.database.query(`call proc_main_profit(?)`, [
-      date,
+      myDate,
     ]);
 
     if (!result) {
@@ -112,9 +123,10 @@ export class DashboardService {
   }
 
   async income(date: string): Promise<DashboardIncomeInterface> {
-    checkCurrentDate(date);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
     const [result] = await this.database.query(`call proc_main_profit(?)`, [
-      date,
+      myDate,
     ]);
 
     if (!result) {
@@ -137,9 +149,10 @@ export class DashboardService {
   }
 
   async expense(date: string): Promise<DashboardExpense> {
-    checkCurrentDate(date);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
     const [result] = await this.database.query(`call proc_main_profit(?)`, [
-      date,
+      myDate,
     ]);
 
     if (!result) {
@@ -162,13 +175,17 @@ export class DashboardService {
   }
 
   async funds(date: string): Promise<FundInterface> {
-    checkCurrentDate(date);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
 
     const [[capital], [ccy], [deposits], [rate]] = await Promise.all([
-      this.database.query(`call proc_main_capital(?)`, [date]),
-      this.database.query(`call proc_main_capital_ccy(?)`, [date]),
-      this.database.query(`call proc_market_dep_monthly(?, ?)`, [date, 'all']),
-      this.database.query(`call proc_main_exchange_rate(?)`, [date]),
+      this.database.query(`call proc_main_capital(?)`, [myDate]),
+      this.database.query(`call proc_main_capital_ccy(?)`, [myDate]),
+      this.database.query(`call proc_market_dep_monthly(?, ?)`, [
+        myDate,
+        'all',
+      ]),
+      this.database.query(`call proc_main_exchange_rate(?)`, [myDate]),
     ]);
 
     if (!capital) {
@@ -227,7 +244,7 @@ export class DashboardService {
       capAmount.push(e.capAmount);
     });
 
-    const convertMont = moment(date).format('YYYYMM').toString();
+    const convertMont = moment(myDate).format('YYYYMM').toString();
     const groupData = this.groupByDateAndType(deposits, 'deposit').filter(
       (f) => f.monthend === convertMont,
     );
@@ -332,11 +349,12 @@ export class DashboardService {
   }
 
   async useFunds(date: string): Promise<any> {
-    checkCurrentDate(date);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
 
     const [[useFund], [loanCcy]] = await Promise.all([
-      this.database.query(`call proc_main_loan(?)`, [date]),
-      this.database.query(`call proc_main_loan_ccy (?)`, [date]),
+      this.database.query(`call proc_main_loan(?)`, [myDate]),
+      this.database.query(`call proc_main_loan_ccy (?)`, [myDate]),
     ]);
 
     const dates: string[] = [];
@@ -365,11 +383,12 @@ export class DashboardService {
   }
 
   async loanSector(date: string) {
-    checkCurrentDate(date);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
 
     const [result] = await this.database.query(
       `call proc_ln_plan_sector_daily(?, ?, ?)`,
-      [date, 'ALL', 'M'],
+      [myDate, 'ALL', 'M'],
     );
 
     const groupData = this.groupByCode(result);
@@ -400,9 +419,10 @@ export class DashboardService {
   }
 
   async plNpl(date: string) {
-    checkCurrentDate(date);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
     const [result] = await this.database.query(`call proc_main_loan(?)`, [
-      date,
+      myDate,
     ]);
 
     const lastData = result[result.length - 1];
@@ -428,7 +448,8 @@ export class DashboardService {
   }
 
   async financialRatios(date: string) {
-    checkCurrentDate(date);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
 
     const [
       [nopAll],
@@ -440,18 +461,18 @@ export class DashboardService {
       [depositCustomer],
       [cash],
     ] = await Promise.all([
-      this.database.query(`call proc_main_nop_all(?)`, [date]),
-      this.database.query(`call proc_monitor_nop(?, ?)`, [date, '0']),
-      this.database.query(`call proc_main_ACL(?)`, [date]),
-      this.database.query(`call proc_main_profit(?)`, [date]),
-      this.database.query(`call proc_main_capital(?)`, [date]),
-      this.database.query(`call proc_main_loan(?)`, [date]),
+      this.database.query(`call proc_main_nop_all(?)`, [myDate]),
+      this.database.query(`call proc_monitor_nop(?, ?)`, [myDate, '0']),
+      this.database.query(`call proc_main_ACL(?)`, [myDate]),
+      this.database.query(`call proc_main_profit(?)`, [myDate]),
+      this.database.query(`call proc_main_capital(?)`, [myDate]),
+      this.database.query(`call proc_main_loan(?)`, [myDate]),
       this.database.query(`call proc_treasury_dep_monthly(?, ?)`, [
-        date,
+        myDate,
         'ALL',
       ]),
       this.database.query(`call proc_treasury_cash_monthly(?, ?)`, [
-        date,
+        myDate,
         'ALL',
       ]),
     ]);
@@ -553,7 +574,8 @@ export class DashboardService {
   }
 
   async sumPeriod(date: string, branch: string, option: 'd' | 'm' | 'y') {
-    checkCurrentDate(date);
+    const myDate = checkInputDate(date);
+    checkCurrentDate(myDate);
 
     let result: any = null;
     let groupData: any = null;
@@ -561,7 +583,7 @@ export class DashboardService {
     if (option === 'd') {
       [result] = await this.database.query(
         `call proc_ln_plan_bal_npl_daily(?, ?)`,
-        [date, branch],
+        [myDate, branch],
       );
       // groupData = this.groupByDate(result, 'daily');
       groupData = result;
@@ -570,7 +592,7 @@ export class DashboardService {
     if (option === 'm') {
       [result] = await this.database.query(
         `call proc_ln_plan_bal_npl_monthly(?, ?)`,
-        [date, branch],
+        [myDate, branch],
       );
       // groupData = this.groupByDate(result, 'monthly');
       groupData = sortFunc(result, 'monthend', 'min');
@@ -579,7 +601,7 @@ export class DashboardService {
     if (option === 'y') {
       [result] = await this.database.query(
         `call proc_ln_plan_bal_npl_yearly(?, ?)`,
-        [date, branch],
+        [myDate, branch],
       );
       // groupData = this.groupByDate(result, 'yearly');
       groupData = sortFunc(result, 'monthend', 'min');
@@ -646,6 +668,103 @@ export class DashboardService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async getExchange(_date: string) {
+    const myDate = checkInputDate(_date);
+    checkCurrentDate(myDate);
+    let branch = 'all';
+    let option = 'd';
+
+    let result: any = null;
+    if (option === 'd') {
+      [result] = await this.database.query(`call proc_treasury_ex_daily(?,?)`, [
+        myDate,
+        branch,
+      ]);
+    }
+
+    const dates = [
+      ...new Set(result.map((m) => (option === 'd' ? m.date : m.monthend))),
+    ];
+    const exCny: number[] = [];
+    const exEur: number[] = [];
+    const exLak: number[] = [];
+    const exThb: number[] = [];
+    const exUsd: number[] = [];
+    const exVnd: number[] = [];
+
+    function loopSetData(array: any) {
+      dates.forEach((m) => {
+        const itx = array.filter((f) => f.date === m);
+
+        if (itx) {
+          const findCNY = itx.find((f) => f.ccy === 'CNY');
+          exCny.push(Number(findCNY?.exchange_bal) ?? 0);
+          const findEUR = itx.find((f) => f.ccy === 'EUR');
+          exEur.push(Number(findEUR?.exchange_bal) ?? 0);
+          const findLAK = itx.find((f) => f.ccy === 'LAK');
+          exLak.push(Number(findLAK?.exchange_bal) ?? 0);
+          const findTHB = itx.find((f) => f.ccy === 'THB');
+          exThb.push(Number(findTHB?.exchange_bal) ?? 0);
+          const findUSD = itx.find((f) => f.ccy === 'USD');
+          exUsd.push(Number(findUSD?.exchange_bal) ?? 0);
+          const findVND = itx.find((f) => f.ccy === 'VND');
+          exVnd.push(Number(findVND?.exchange_bal) ?? 0);
+        } else {
+          exCny.push(0);
+          exEur.push(0);
+          exLak.push(0);
+          exThb.push(0);
+          exUsd.push(0);
+          exVnd.push(0);
+        }
+      });
+    }
+
+    function mapMonthendToDate(array: any) {
+      const summed = array.reduce((acc, item) => {
+        const key = `${option === 'd' ? item.date : item.monthend}_${item.ccy}`;
+        const myDate = option === 'd' ? item.date : item.monthend;
+        if (!acc[key]) {
+          acc[key] = {
+            date: myDate,
+            branch_id: item.branch_id,
+            ccy: item.ccy,
+            exchange_bal: 0,
+          };
+        }
+        acc[key].exchange_bal += parseFloat(item.exchange_bal);
+        return acc;
+      }, {});
+
+      return summed;
+    }
+
+    const summed = mapMonthendToDate(result);
+    loopSetData(Object.values(summed) as any);
+
+    return {
+      dates: dates,
+      exCny: exCny,
+      diffCny: this.calcDiffAndPercent(exCny).diff,
+      percentCny: this.calcDiffAndPercent(exCny).percent,
+      exEur: exEur,
+      diffEur: this.calcDiffAndPercent(exEur).diff,
+      percentEur: this.calcDiffAndPercent(exEur).percent,
+      exLak: exLak,
+      diffLak: this.calcDiffAndPercent(exLak).diff,
+      percentLak: this.calcDiffAndPercent(exLak).percent,
+      exThb: exThb,
+      diffThb: this.calcDiffAndPercent(exThb).diff,
+      percentThb: this.calcDiffAndPercent(exThb).percent,
+      exUsd: exUsd,
+      diffUsd: this.calcDiffAndPercent(exUsd).diff,
+      percentUsd: this.calcDiffAndPercent(exUsd).percent,
+      exVnd: exVnd,
+      diffVnd: this.calcDiffAndPercent(exVnd).diff,
+      percentVnd: this.calcDiffAndPercent(exVnd).percent,
+    };
   }
 
   private groupByDateAndType(data: any[], option: 'deposit' | 'customer') {
@@ -723,5 +842,25 @@ export class DashboardService {
     });
 
     return Object.values(grouped);
+  }
+
+  private calcDiffAndPercent(array: number[]): {
+    diff: number;
+    percent: number;
+  } {
+    const currentDate = array[array.length - 1];
+    const lastDate = array[array.length - 2];
+    const calcDiff = Number((currentDate - lastDate).toFixed(2));
+    let calcPercent = 0;
+    if (lastDate < 0) {
+      calcPercent = Number(((calcDiff / lastDate) * 100 * -1).toFixed(2));
+    } else {
+      calcPercent = Number(((calcDiff / lastDate) * 100).toFixed(2));
+    }
+
+    return {
+      diff: calcDiff,
+      percent: calcPercent,
+    };
   }
 }

@@ -110,4 +110,12 @@ export class DashboardController {
   ) {
     return await this.dashboardService.dpProduct(date);
   }
+
+  @Get('exchange')
+  async GetExchange(
+    @Query('date', new DefaultValuePipe(''))
+    date: string,
+  ): Promise<any> {
+    return await this.dashboardService.getExchange(date);
+  }
 }
