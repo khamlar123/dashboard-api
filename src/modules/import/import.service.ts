@@ -778,19 +778,19 @@ export class ImportService {
   async getLastItem() {
     const bolLoanQuery = `
   SELECT * FROM bol_loan
-  ORDER BY id DESC
+  ORDER BY date DESC
   LIMIT 1
 `;
 
     const adminQuery = `
   SELECT * FROM admin_bal
-  ORDER BY id DESC
+  ORDER BY date DESC
   LIMIT 1
 `;
 
     const liquidityQuery = `
   SELECT * FROM liquidity
-  ORDER BY id DESC
+  ORDER BY date DESC
   LIMIT 1
 `;
 
@@ -808,7 +808,7 @@ export class ImportService {
 
     const reseveQuery = `
   SELECT * FROM reserve
-  ORDER BY id DESC
+  ORDER BY date DESC
   LIMIT 1
 `;
 
@@ -843,32 +843,32 @@ export class ImportService {
       this.loanRepository.find({
         take: 1,
         order: {
-          id: 'desc',
+          date: 'desc',
         },
       }),
       this.sectorBalRepository.find({
         take: 1,
         order: {
-          id: 'desc',
+          date: 'desc',
         },
       }),
       this.databaseService.query(bolLoanQuery, []),
       this.incomeRepository.find({
         take: 1,
         order: {
-          id: 'desc',
+          date: 'desc',
         },
       }),
       this.expenseRepository.find({
         take: 1,
         order: {
-          id: 'desc',
+          date: 'desc',
         },
       }),
       this.depositRepository.find({
         take: 1,
         order: {
-          id: 'desc',
+          date: 'desc',
         },
       }),
       this.databaseService.query(adminQuery, []),
