@@ -641,10 +641,10 @@ export class DashboardService {
     checkCurrentDate(date);
     try {
       const getYear = moment(date).format('YYYY');
-
+      const lastData = moment().subtract(1, 'day').format('YYYYMMDD');
       const response = await firstValueFrom(
         this.httpService.get(
-          `${process.env.DP_URL}/epd-product/api/product/all-product?date=${date}&year=${getYear}`,
+          `${process.env.DP_URL}/epd-product/api/product/all-product?date=${lastData}&year=${getYear}`,
         ),
       );
 
