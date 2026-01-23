@@ -35,6 +35,7 @@ import { WebsocketsModule } from './modules/websockets/websockets.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { MainModule } from './modules/main/main.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -82,20 +83,21 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     AccountsModule,
     MainModule,
     DashboardModule,
+    HttpModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService, DatabaseService],
 })
 export class AppModule {
-  // configure(consumer: MiddlewareConsumer) {
-  //   consumer
-  //     .apply(logger)
-  //     .forRoutes('*') // applies to all routes
-  //     .apply(AuthMiddleware)
-  //     .exclude(
-  //       { path: 'auth', method: RequestMethod.POST }, // exclude user creation
-  //       'auth/(.*)', // exclude all user routes for this example
-  //     )
-  //     .forRoutes('*'); // applies to remaining routes
-  // }
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(logger)
+      .forRoutes('*') // applies to all routes
+      .apply(AuthMiddleware)
+      .exclude(
+        { path: 'auth', method: RequestMethod.POST }, // exclude user creation
+        'auth/(.*)', // exclude all user routes for this example
+      )
+      .forRoutes('*'); // applies to remaining routes
+  }
 }

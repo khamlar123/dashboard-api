@@ -8,12 +8,17 @@ import { JwtService } from '@nestjs/jwt';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as moment from 'moment';
+import { firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly httpService: HttpService,
+  ) {}
 
-  use(req: Request, res: Response, next: NextFunction) {
+  async use(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -23,6 +28,10 @@ export class AuthMiddleware implements NestMiddleware {
     const token = authHeader.split(' ')[1];
 
     try {
+      console.log(
+        "🚀 ~ use ~ req.originalUrl.split('-')[0]: ",
+        req.originalUrl,
+      );
       const publicKey = fs.readFileSync('src/common/jwt/public.key');
       const payload = this.jwtService.verify(token, {
         secret: publicKey,
@@ -36,6 +45,30 @@ export class AuthMiddleware implements NestMiddleware {
 
       // You can attach user info to request if needed
       (req as any).user = payload;
+
+      if (
+        req.originalUrl.split('-')[0] === '/import' &&
+        req.method === 'POST'
+      ) {
+        await firstValueFrom(
+          this.httpService.post(
+            `${process.env.AUTHEN_URL}/actions`,
+            {
+              method: req.method,
+              url: req.originalUrl,
+              user_id: payload.user_id,
+              request: JSON.stringify(req.body) ?? null,
+              system_name: 'Dashboard System',
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            },
+          ),
+        );
+      }
 
       const log = `userId:${payload.employee_id} user:${payload.userName} [${new Date().toISOString()}] ${req.method} ${req.originalUrl} }\n`;
       const logFolder = path.join(__dirname, '../../../logs');
